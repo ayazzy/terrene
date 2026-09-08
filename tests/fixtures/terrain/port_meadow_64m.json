@@ -1,0 +1,78 @@
+{
+  "description": "Real 64m x 64m Port Meadow native EA DTM subset for deterministic offline processing tests. Pixels are copied unchanged from the original WCS download; this GeoTIFF is a derived crop, not original HTTP bytes. The test parcel is the central 60m x 60m square, not the full SSSI.",
+  "publisher": "Environment Agency",
+  "dataset": "LIDAR Composite Digital Terrain Model (DTM) - 1m",
+  "source_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs?service=WCS&version=2.0.1&request=GetCoverage&coverageId=13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m&format=image%2Ftiff&subset=E%28448559%2C450275%29&subset=N%28207203%2C209893%29",
+  "catalog_url": "https://environment.data.gov.uk/dataset/13787b9a-26a4-4775-8523-806d13af58fc",
+  "retrieved_at": "2026-09-08T14:23:24.261082+00:00",
+  "observation_date": null,
+  "source_sha256": "b386dd3e503a90bfe14c8a101c306485b8516597871e434e9669e7c5de60b43e",
+  "fixture_sha256": "46dc257bc8fe0dce489c1d86fe55738bf92da487124fb428d4b99046f0291162",
+  "licence": "Open Government Licence v3.0",
+  "attribution": "Contains public sector information licensed under the Open Government Licence v3.0. \u00a9 Environment Agency.",
+  "crop_window": [
+    641,
+    1293,
+    64,
+    64
+  ],
+  "native_resolution_m": 1,
+  "crs": "EPSG:27700",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -1.2874425404679226,
+          51.773354019577994
+        ],
+        [
+          -1.2874340482139046,
+          51.77389344036325
+        ],
+        [
+          -1.2883035726905177,
+          51.77389870551072
+        ],
+        [
+          -1.2883120545799545,
+          51.77335928462413
+        ],
+        [
+          -1.2874425404679226,
+          51.773354019577994
+        ]
+      ]
+    ]
+  },
+  "expected": {
+    "statistics": {
+      "terrain.elevation_m": 57.42354801389906,
+      "terrain.elevation_min_m": 57.11199951171875,
+      "terrain.elevation_max_m": 57.53900146484375,
+      "terrain.elevation_std_m": 0.04491406379949676,
+      "terrain.slope_deg": 0.5352894663005384,
+      "terrain.slope_p90_deg": 0.9271936703111857,
+      "terrain.slope_max_deg": 5.485956534231499
+    },
+    "elevation_coverage": 1.0,
+    "slope_coverage": 1.0,
+    "parcel_cells": 3600,
+    "resolution_m": 1.0,
+    "transform": [
+      1.0,
+      0.0,
+      449200.0,
+      0.0,
+      -1.0,
+      208600.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "shape": [
+      64,
+      64
+    ]
+  }
+}

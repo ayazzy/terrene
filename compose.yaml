@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgis/postgis:17-3.5
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: crc
+      POSTGRES_USER: crc
+      POSTGRES_PASSWORD: crc_local_only
+    ports: ['127.0.0.1:54329:5432']
+    volumes: ['crc-postgres:/var/lib/postgresql/data']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U crc']
+      interval: 5s
+      retries: 10
+volumes:
+  crc-postgres:

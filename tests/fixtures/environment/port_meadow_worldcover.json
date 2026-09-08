@@ -1,0 +1,46 @@
+{
+  "artifacts": [
+    {
+      "path": "/Users/ayazvural/Documents/ChatGPT/Climate Restoration Company/data/environmental/landcover/105283ecb0ac75db47a6f66ab1d48c383d52ec8694644efb8975d40baa04f32c.tif",
+      "sha256": "105283ecb0ac75db47a6f66ab1d48c383d52ec8694644efb8975d40baa04f32c"
+    }
+  ],
+  "coverage": 1.0,
+  "raster": {
+    "path": "/Users/ayazvural/Documents/ChatGPT/Climate Restoration Company/data/environmental/landcover/105283ecb0ac75db47a6f66ab1d48c383d52ec8694644efb8975d40baa04f32c.tif",
+    "sha256": "105283ecb0ac75db47a6f66ab1d48c383d52ec8694644efb8975d40baa04f32c"
+  },
+  "retrieved_at": "2026-09-08T14:27:22.974743+00:00",
+  "source_url": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N51W003_Map.tif",
+  "statistics": {
+    "class_fractions": {
+      "arable": 0.002646217762111178,
+      "bare_ground": 0.0,
+      "developed": 0.0007011924048548014,
+      "grassland": 0.9641051981774719,
+      "mangroves": 0.0,
+      "moss_lichen": 0.0,
+      "shrubland": 0.0,
+      "snow_ice": 0.0,
+      "water": 0.00035064447282728297,
+      "wetland": 0.008927013348618083,
+      "woodland": 0.023269733834116794
+    },
+    "ecology.mapped_wetland_fraction": 0.008927013348618083,
+    "hydrology.surface_water_fraction": 0.00035064447282728297,
+    "land_use.current_cover": "grassland",
+    "land_use.developed_fraction": 0.0007011924048548014
+  },
+  "status": "available",
+  "transform": [
+    8.333333333333333e-05,
+    0.0,
+    -1.2975833333333333,
+    0.0,
+    -8.333333333333333e-05,
+    51.7855,
+    0.0,
+    0.0,
+    1.0
+  ]
+}

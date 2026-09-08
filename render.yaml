@@ -1,0 +1,45 @@
+# Connect DATABASE_URL to Supabase Postgres (direct/session URL), not a transaction pooler.
+# Set secret environment values through Render. Never commit real credentials.
+services:
+  - type: web
+    name: crc-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: CRC_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: CRC_ORIGINS
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+  - type: worker
+    name: crc-worker
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerCommand: python -m backend.worker
+    envVars:
+      - key: CRC_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false

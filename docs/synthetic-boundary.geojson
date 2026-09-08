@@ -1,0 +1,35 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "SYNTHETIC boundary for workflow verification",
+    "synthetic": true,
+    "limitations": "Not a real land opportunity. No ownership claim."
+  },
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -1.3146899442237605,
+          51.79202601216348
+        ],
+        [
+          -1.2996867398783005,
+          51.79202601216348
+        ],
+        [
+          -1.3009913663429282,
+          51.783955942698526
+        ],
+        [
+          -1.3153422574565063,
+          51.784359482267334
+        ],
+        [
+          -1.3146899442237605,
+          51.79202601216348
+        ]
+      ]
+    ]
+  }
+}
