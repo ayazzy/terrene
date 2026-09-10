@@ -14,6 +14,7 @@ import {
   observationValue,
 } from './site-evidence';
 import OverlayFindings from './overlay-findings';
+import ScreeningContextPanel from './screening-context-panel';
 import type { OverlayFinding } from './site-evidence';
 import SiteMap from './map';
 import {
@@ -966,6 +967,14 @@ export default function Home() {
                     'evidence',
                   ].map((section) => (
                     <TabsContent value={section} key={section}>
+                      {section === 'overview' && assessment && (
+                        <ScreeningContextPanel
+                          key={assessment.id}
+                          assessment={assessment}
+                          hasResult={!!result}
+                          onEvidence={() => setTab('evidence')}
+                        />
+                      )}
                       <NaturePanel
                         key={(assessment?.id || current.id) + section}
                         section={section}

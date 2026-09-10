@@ -75,3 +75,11 @@ This is a lightweight append-only log of durable product and architecture decisi
 Terrene Earth continues to represent reality and evidence; Terrene Reasoning interprets it; Terrene Scenario tests interventions; and Terrene Applications operationalize useful workflows. Workflow state must not turn Terrene Earth into a CRM or become mixed with core environmental facts.
 
 **References:** [Customer Discovery](CUSTOMER-DISCOVERY.md), [North Star](TERRENE-NORTH-STAR.md).
+
+## 2026-09-10 — Screening context publication requires an intentional action
+
+**Decision:** Create or reuse assessment Evidence Snapshots and screening ModuleRuns through an explicit prepare action. Ordinary discovery, stored-run reads and export reads do not publish immutable records. Preserve an existing assessment origin rather than silently projecting it under a newer registry.
+
+**Rationale:** Opening a site or historical assessment must not create new scientific history. Reviewers need a reproducible context for the selected saved evidence, while unsupported or ambiguous historical origins require an explicit limitation.
+
+**References:** [Screening Context v1](SCREENING-CONTEXT-V1.md), [Architecture](ARCHITECTURE.md).

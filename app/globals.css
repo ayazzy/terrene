@@ -2589,3 +2589,23 @@ summary {
 .portfolio-main .mobile-menu { background: #29312c; border-color: #48514a; color: #d5ddd4; }
 .sites-views > [role='tabpanel'] { min-width: 0; width: 100%; }
 .sites-views > [role='tabpanel'][hidden] { display: none; }
+
+/* Screening Context v1 extends the existing compact evidence panel. */
+.screening-context { padding: 20px; border-bottom: 1px solid var(--border); font-size: 14px; }
+.screening-heading, .screening-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.screening-heading h2 { margin: 0; font-size: 18px; }
+.screening-context > p { margin: 10px 0; }
+.screening-section { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 12px; }
+.screening-section summary { cursor: pointer; font-weight: 600; }
+.screening-section summary small { display: block; font-size: 12px; font-weight: 400; margin: 4px 0; }
+.screening-section article { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.screening-section h3 { font-size: 16px; margin: 16px 0 8px; }
+.screening-section h4 { font-size: 14px; font-weight: 600; margin: 0 0 8px; }
+.screening-section p { margin: 8px 0; }
+.screening-context pre, .screening-inspector pre { white-space: pre-wrap; font-size: 12px; line-height: 1.5; }
+.screening-context, .screening-inspector { overflow-wrap: anywhere; min-width: 0; }
+.screening-inspector { overflow-y: auto; padding: 20px; }
+.screening-refs { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 8px; }
+.screening-refs button { font-size: 12px; text-align: left; overflow-wrap: anywhere; white-space: normal; max-width: 100%; }
+.screening-context dt { font-weight: 600; margin-top: 8px; }
+.screening-context dd { margin: 4px 0; font-size: 12px; }

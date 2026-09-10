@@ -48,11 +48,21 @@ The legacy assessment is never updated by projection. Earlier manifests remain b
 
 ### Terrene Reasoning
 
-The implemented module is the deterministic `wetland_restoration_v0_1` model. It runs without network access from the bound state and pinned model specification. Its interpretations remain separate from core Evidence Snapshot membership. Priority Habitat and built-world additions do not alter this model unless a future versioned binding/model explicitly adopts them.
+The historical wetland module is the deterministic `wetland_restoration_v0_1` model. It runs without network access from the bound state and pinned model specification. Its interpretations remain separate from core Evidence Snapshot membership. Priority Habitat and built-world additions do not alter this model unless a future versioned binding/model explicitly adopts them.
+
+`site_screening_context` is an additive non-scoring module, version `site_screening_context_v1`, using `screening_context_binding_v1`. It consumes validated committed `land_evidence_v1` content directly and copies source measurements, support, gaps and provenance into a typed review contract. Declared deterministic rules generate mapped-zero qualifications, source-semantic contexts and human questions. The specification signature pins configuration, rule declarations and result-contract schema; runtime timestamps and mutable team status are outside the semantic result. No network acquisition or free-form model interpretation occurs.
 
 ### Immutable ModuleRuns
 
 A ModuleRun records organization, site/boundary, Evidence Snapshot/content hash, module and binding versions, model signature/specification, exact saved result and a deterministic content hash. Repeated identical execution reuses the same identity; contradictory content fails rather than overwrites it.
+
+Screening uses the same ModuleRun table, deterministic identity and immutable persistence primitives, with a narrow module-specific validation dispatch. Its scoped reader also recalculates from committed evidence and rejects contradictions. The existing wetland validation and execution branch is unchanged; no database migration is required.
+
+### Intentional screening application action
+
+`POST /api/assessments/{id}/screening-context` verifies ownership and a completed or terminal partial saved result, reuses its existing snapshot origin (including historical registry versions), or explicitly creates one before executing the module. Ordinary discovery, run reads and export GETs never create snapshots or runs. Multiple existing origins require explicit version selection that v1 does not offer; unsupported historical evidence is reported and preserved.
+
+The Overview panel is keyed to the selected assessment. Stored facts and rule-generated review items remain separate from mutable team status. The self-contained HTML export contains run/snapshot/boundary identities and inspectable evidence, with current team status labelled as operational state at export. Public raw-reference identities and checksums remain visible; private storage locations and asset paths are omitted.
 
 ## Existing application records
 
@@ -79,4 +89,4 @@ The current UI implements early screening, portfolio navigation and evidence rev
 - Add new entities, versions and bindings when meaning changes; do not silently mutate historical records.
 - Do not optimize the current architecture around 3D visualization.
 
-Detailed implementation references: [Land Intelligence Foundation](LAND-INTELLIGENCE-FOUNDATION.md), [Evidence Snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [wetland binding and ModuleRuns](WETLAND-SNAPSHOT-MODULE-RUN.md), [Priority Habitats](PRIORITY-HABITATS-EVIDENCE.md), and [OpenMap Local built world](OPENMAP-LOCAL-BUILT-WORLD.md).
+Detailed implementation references: [Land Intelligence Foundation](LAND-INTELLIGENCE-FOUNDATION.md), [Evidence Snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [wetland binding and ModuleRuns](WETLAND-SNAPSHOT-MODULE-RUN.md), [Priority Habitats](PRIORITY-HABITATS-EVIDENCE.md), [OpenMap Local built world](OPENMAP-LOCAL-BUILT-WORLD.md), and [Screening Context v1](SCREENING-CONTEXT-V1.md).

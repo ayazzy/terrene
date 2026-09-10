@@ -22,6 +22,7 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 - View source lineage and exact bounded overlay geometry, compare selected sites, record a current team review status, and export self-contained HTML reports.
 - Project legacy saved assessments into immutable `land_evidence_v1` snapshots without changing the original assessment.
 - Bind a committed snapshot through `wetland_input_binding_v1`, execute the unchanged wetland model, and persist an immutable ModuleRun.
+- Intentionally prepare or reuse Screening Context v1 for a selected saved assessment, inspect its non-scoring facts/gaps/provenance in Overview, and download a self-contained HTML review artifact.
 
 Implementation reports: [snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [snapshot-driven wetland runs](WETLAND-SNAPSHOT-MODULE-RUN.md), [evidence-aware site analysis](UI-STAGE-2.md), and [map-first home](UI-STAGE-3-MAP-HOME.md).
 
@@ -54,13 +55,17 @@ Priority Habitat Inventory observations preserve contributing source features an
 
 ## Terrene Reasoning today
 
-The implemented reasoning module is `wetland_restoration_v0_1`, using retained historical feature and processing identifiers such as `crc_wetland_features_v0_1_1`. It separates physical potential, current restoration need and implementation feasibility and refuses an overall result when required evidence is insufficient. Its snapshot execution path records the binding, model specification/signature, result and immutable ModuleRun identity.
+The historical wetland reasoning module is `wetland_restoration_v0_1`, using retained historical feature and processing identifiers such as `crc_wetland_features_v0_1_1`. It separates physical potential, current restoration need and implementation feasibility and refuses an overall result when required evidence is insufficient. Its snapshot execution path records the binding, model specification/signature, result and immutable ModuleRun identity.
 
 The 12 retained Oxford verification locations have inspectable physical and hydrological components, but the model still reports overall `INSUFFICIENT_DATA`. New Priority Habitat and OpenMap Local evidence is intentionally not silently rebound into the historical wetland model.
+
+`site_screening_context_v1` adds deterministic, offline human-review context over a committed snapshot through `screening_context_binding_v1`. It preserves source-bounded facts and gaps, qualifies mapped zeros, presents fixed source-semantic comparisons and asks unresolved review questions. It produces no score or progression decision. These are pilot rules, not customer-validated requirements.
 
 ## Application/UI state
 
 The current home is a map-first portfolio view with a preserved list workflow. Site analysis is evidence-aware, keeps calculated findings separate from team review status, switches map and evidence together for historical assessments, and exposes missing/partial evidence without manufacturing locations or values. The UI remains a small-portfolio application and fetches site/history collections without pagination.
+
+Screening Context is an explicit assessment action: POST creates/reuses a snapshot and ModuleRun; GET only discovers or reads stored records. History selection scopes the action to the saved assessment and boundary. Unsupported legacy evidence fails without rewriting it. Export labels current team review status separately from the immutable context. See [Screening Context v1](SCREENING-CONTEXT-V1.md).
 
 ## Verification baseline
 
@@ -74,6 +79,8 @@ Housekeeping verification on 10 September 2026:
 
 The latest OpenMap Local implementation report also records **160 passed** on disposable PostgreSQL 17/PostGIS 3.5 and real-data verification across 12 Oxford locations. That PostgreSQL suite was not rerun during housekeeping.
 
+Screening Context verification: **176 backend tests passed on SQLite and disposable PostgreSQL/PostGIS**, **24 frontend tests passed**, TypeScript and production build passed. New frontend modules pass focused lint; the changed page retains its existing 20 diagnostics. The report records retained-source replay, browser QA and the pre-existing newer-fixture wetland provenance discrepancy.
+
 ## Known limitations
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
@@ -85,8 +92,8 @@ The latest OpenMap Local implementation report also records **160 passed** on di
 
 ## Latest meaningful implementation
 
-The latest implementation is the [OS OpenMap – Local built-world iteration](OPENMAP-LOCAL-BUILT-WORLD.md), completed 10 September 2026. It adds four source-backed object types, parcel relationships and reusable observations while preserving previous Evidence Snapshots and exact wetland binding/ModuleRun parity.
+The latest implementation is [Screening Context v1](SCREENING-CONTEXT-V1.md), completed 10 September 2026. It connects the existing Earth snapshot foundation to a non-scoring reasoning and application path. Acquisition, evidence projection and wetland implementation remain unchanged; retained snapshots and pre-existing wetland runs are preserved.
 
 ## Current recommended engineering question
 
-Do not start another product iteration until this Terrene project setup is reviewed. After that review, use customer discovery to decide whether the next bounded engineering work should operationalize a specific diligence workflow and, if so, which minimum non-scoring reasoning adapter or missing evidence source is necessary for that validated decision.
+Use the Screening Context pilot with a prospective reviewer to establish which source distinctions and unresolved evidence questions matter in an actual diligence workflow before expanding its rules or datasets.
