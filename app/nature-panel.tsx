@@ -72,7 +72,7 @@ type Score = {
   band?: string;
   supporting_evidence?: string[];
 };
-type Model = {
+export type Model = {
   current_state?: Record<
     string,
     {
@@ -105,7 +105,7 @@ type Model = {
   synthetic: boolean;
   config: object;
 };
-type Earth = {
+export type Earth = {
   normalized: Record<string, Record<string, Observation[]>>;
   derived: Record<string, Observation>;
   selection_notes: Record<string, string>;
@@ -155,10 +155,10 @@ export default function NaturePanel({
           <Droplets size={28} />
           <p>
             {hasResult
-              ? 'This saved V0 assessment predates the wetland model. Run screening to create a new assessment; the original evidence will remain in history.'
+              ? 'This saved V0 assessment predates the wetland model. Create a new assessment to run the current model; the original evidence will remain in history.'
               : ['queued', 'running'].includes(assessmentState || '')
                 ? `Assessment ${assessmentState}. Environmental inputs and model results will appear here.`
-                : 'Run screening to inspect this parcel’s physical environment, ecological evidence and constraints.'}
+                : 'Create a new assessment to inspect this parcel’s physical environment, ecological evidence and constraints.'}
           </p>
         </div>
         <p className="nature-muted">
