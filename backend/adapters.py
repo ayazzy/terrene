@@ -83,9 +83,14 @@ def normalize_findings(job: dict, findings: list[dict]) -> EarthState:
     candidates = []
     for f in findings:
         adapter = adapters.get(f['key'])
+        # PHI and built-world objects are native Land Evidence families, not
+        # legacy wetland inputs. Their findings carry independent immutable
+        # lineage and are projected without entering EarthState.
+        if f['key'] in ('priority_habitats', 'built_world'):
+            continue
         state.raw.append(RawSource(
-            id=f['dataset_version'], source=adapter.publisher if adapter else f['dataset'],
-            source_dataset=f['dataset'], source_version=f['dataset_version'],
+            id=f['dataset_version'], source=adapter.publisher if adapter else f.get('publisher',f['dataset']),
+            source_dataset=f['dataset'], source_version=f.get('source_release') or f['dataset_version'],
             source_url=f['source_url'], retrieved_at=f['retrieved'], timestamp=f.get('observed_at'),
             storage_reference=f.get('raw_storage_reference'), checksum=f.get('raw_sha256'),
             raw_semantics=f.get('raw_semantics', 'Legacy snapshot: attributes retained; repaired original geometries, when present, are retained in metadata. Not an untouched source response.'),

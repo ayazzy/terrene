@@ -1,0 +1,342 @@
+{
+  "schema_version": "land_evidence_v1",
+  "example_scope": "Inspectable subset of the complete project_land_evidence output; registry definitions, unselected physical summaries, capabilities and repeated legacy prose are omitted here only for readability.",
+  "identity": {
+    "schema_version": "land_evidence_v1",
+    "projection_id": "land-evidence:5f7bdf2d3e7b6e8ad8ed5ce9dea849f0c1f39b1f5fd58ff7da695031125af27e",
+    "registry_version": "land_evidence_registry_v1",
+    "legacy_assessment_fingerprint": "cc25ccff1cd28525312e78e718f5f8c34065e06c069f360d5271d5a215691463",
+    "legacy_state_fingerprint": "ebdbf560a56979b99b20a418b64c72c39e52a0680a83935b60d61e3a9fe62e7c",
+    "legacy_location_id": "verification-port-meadow",
+    "site_name": "Port Meadow with Wolvercote Common & Green",
+    "boundary_version": 1,
+    "boundary_reference": "verification-port-meadow/boundary/1",
+    "boundary_geometry_fingerprint": "e12bf971721a922ef16daa5d91d9f4585255d46ff971e05f5c95fdfcdb196fa0",
+    "geography": "England",
+    "evidence_as_of": "2026-09-08T14:50:39.030617Z"
+  },
+  "observations": [
+    {
+      "definition_id": "physical.elevation.mean",
+      "dimensions": {},
+      "value": {"kind": "number", "value": 57.52826672018964},
+      "unit": "m",
+      "availability": "available",
+      "known_zero": false,
+      "support": {
+        "crs": "EPSG:27700",
+        "spatial_resolution_m": 1.0,
+        "coverage_status": "full",
+        "coverage_fraction": 1.0,
+        "coverage_basis": "eligible_native_elevation_cell_centres",
+        "denominator_metadata_status": "not_recorded_legacy"
+      },
+      "provenance": {
+        "legacy_observation_id": "5dd5528809c997a9784dd396390ba956575658d4dfe6d9cffe376db42f360d25",
+        "legacy_variable": "terrain.elevation_m",
+        "legacy_value_path": "environmental_state.normalized.terrain.elevation_m[0].value",
+        "source_version": "b386dd3e503a90bfe14c8a101c306485b8516597871e434e9669e7c5de60b43e",
+        "source_reference_ids": [
+          "source:9f97049361979d188051bea7647039151cb74dcb68753b67be3d892c091de958",
+          "source:b386dd3e503a90bfe14c8a101c306485b8516597871e434e9669e7c5de60b43e"
+        ],
+        "raw_reference_ids": [
+          "raw:9f97049361979d188051bea7647039151cb74dcb68753b67be3d892c091de958",
+          "raw:b386dd3e503a90bfe14c8a101c306485b8516597871e434e9669e7c5de60b43e"
+        ],
+        "observation_period": "not_recorded_legacy",
+        "retrieved_at": "2026-09-08T14:23:24.261082Z",
+        "derivation_method": "crc_ea_dtm_horn_v1; elevation cell-centre arithmetic mean in metres above ODN; exact original method retained by the complete projection"
+      }
+    },
+    {
+      "definition_id": "physical.slope.mean",
+      "dimensions": {},
+      "value": {"kind": "number", "value": 1.1761786447140652},
+      "unit": "degree",
+      "availability": "available",
+      "known_zero": false,
+      "support": {
+        "crs": "EPSG:27700",
+        "spatial_resolution_m": 1.0,
+        "coverage_status": "full",
+        "coverage_fraction": 1.0,
+        "coverage_basis": "eligible_native_slope_cell_centres",
+        "denominator_metadata_status": "not_recorded_legacy"
+      },
+      "provenance": {
+        "legacy_observation_id": "e40fa6e4384a7607787d53dd9882bb6db3c28b5d57df0e5bd6431a46e2be343a",
+        "legacy_variable": "terrain.slope_deg",
+        "legacy_value_path": "environmental_state.normalized.terrain.slope_deg[0].value",
+        "source_version": "b386dd3e503a90bfe14c8a101c306485b8516597871e434e9669e7c5de60b43e",
+        "source_reference_ids": [
+          "source:9f97049361979d188051bea7647039151cb74dcb68753b67be3d892c091de958",
+          "source:b386dd3e503a90bfe14c8a101c306485b8516597871e434e9669e7c5de60b43e"
+        ],
+        "raw_reference_ids": [
+          "raw:9f97049361979d188051bea7647039151cb74dcb68753b67be3d892c091de958",
+          "raw:b386dd3e503a90bfe14c8a101c306485b8516597871e434e9669e7c5de60b43e"
+        ],
+        "observation_period": "not_recorded_legacy",
+        "retrieved_at": "2026-09-08T14:23:24.261082Z",
+        "derivation_method": "crc_ea_dtm_horn_v1; Horn 3x3 arithmetic mean; exact original method retained by the complete projection"
+      }
+    },
+    {
+      "definition_id": "physical.watercourse.distance_min",
+      "dimensions": {},
+      "value": {"kind": "number", "value": 0.0},
+      "unit": "m",
+      "availability": "available",
+      "known_zero": true,
+      "support": {
+        "crs": "EPSG:27700",
+        "coverage_status": "full",
+        "coverage_fraction": 1.0,
+        "coverage_basis": "complete_mapped_network_search_within_5000m",
+        "denominator_metadata_status": "not_recorded_legacy"
+      },
+      "provenance": {
+        "legacy_observation_id": "596d44bf039bda7cef7e0786ece55bbf35a805ca6f2fde9b0689cf68204a038f",
+        "legacy_variable": "hydrology.distance_to_water_m",
+        "legacy_value_path": "environmental_state.normalized.hydrology.distance_to_water_m[0].value",
+        "provider": "Ordnance Survey",
+        "source_dataset": "OS Open Rivers",
+        "source_version": "b31e85f9fd412a48f61012c3945e9a60e284cab9f9fb7c49fa54c3cfc6c7053e",
+        "source_reference_ids": [
+          "source:b31e85f9fd412a48f61012c3945e9a60e284cab9f9fb7c49fa54c3cfc6c7053e",
+          "source:84dd39426d58554454402d876d89227eb9ff88c785fe704965c97287cae9e282",
+          "source:81fbe8d88396a8d45ab29a9ee14468aa41a325c57fe68d16e9b48ed06daa0644"
+        ],
+        "observation_period": "not_recorded_legacy",
+        "retrieved_at": "2026-09-08T14:24:15.133261Z"
+      }
+    },
+    {
+      "definition_id": "ecology.land_cover.class_distribution",
+      "dimensions": {"classification": "esa_worldcover_2021_v200"},
+      "value": {
+        "kind": "distribution",
+        "entries": [
+          {"code": 10, "category": "woodland", "value": 0.023269733834116794},
+          {"code": 20, "category": "shrubland", "value": 0.0},
+          {"code": 30, "category": "grassland", "value": 0.9641051981774719},
+          {"code": 40, "category": "arable", "value": 0.002646217762111178},
+          {"code": 50, "category": "developed", "value": 0.0007011924048548014},
+          {"code": 60, "category": "bare_ground", "value": 0.0},
+          {"code": 70, "category": "snow_ice", "value": 0.0},
+          {"code": 80, "category": "water", "value": 0.00035064447282728297},
+          {"code": 90, "category": "wetland", "value": 0.008927013348618083},
+          {"code": 95, "category": "mangroves", "value": 0.0},
+          {"code": 100, "category": "moss_lichen", "value": 0.0}
+        ]
+      },
+      "unit": "fraction",
+      "availability": "available",
+      "known_zero": false,
+      "support": {
+        "crs": "EPSG:4326",
+        "spatial_resolution_m": 10.0,
+        "coverage_status": "full",
+        "coverage_fraction": 1.0,
+        "coverage_basis": "eligible_worldcover_cell_centres",
+        "value_denominator": "valid_sample_area",
+        "denominator_metadata_status": "not_recorded_legacy"
+      },
+      "provenance": {
+        "legacy_observation_id": "b2414c6724de7d3a3bbd26188c56321681a274791be1ee28c3ad2a47521fc468",
+        "legacy_variable": "land_use.current_cover",
+        "legacy_value_path": "environmental_state.normalized.land_use.current_cover[0].method.Full class fractions",
+        "provider": "European Space Agency",
+        "source_dataset": "ESA WorldCover 2021 v200",
+        "source_version": "105283ecb0ac75db47a6f66ab1d48c383d52ec8694644efb8975d40baa04f32c",
+        "source_reference_ids": ["source:105283ecb0ac75db47a6f66ab1d48c383d52ec8694644efb8975d40baa04f32c"],
+        "raw_reference_ids": ["raw:105283ecb0ac75db47a6f66ab1d48c383d52ec8694644efb8975d40baa04f32c"],
+        "observation_period": "2021 annual reference period",
+        "retrieved_at": "2026-09-08T14:27:22.974743Z"
+      }
+    },
+    {
+      "definition_id": "ecology.mapped_herbaceous_wetland_fraction",
+      "dimensions": {"classification": "esa_worldcover_2021_v200"},
+      "value": {"kind": "number", "value": 0.008927013348618083},
+      "unit": "fraction",
+      "availability": "available",
+      "known_zero": false,
+      "parent_definition": "ecology.land_cover.class_distribution",
+      "provenance": {
+        "legacy_observation_id": "d5d1ec91feccd0b272d0f32f174bed3ba782770d96f23f6f8bea54c3392611d9",
+        "legacy_variable": "ecology.mapped_wetland_fraction",
+        "legacy_value_path": "environmental_state.normalized.ecology.mapped_wetland_fraction[0].value",
+        "source_reference_ids": ["source:105283ecb0ac75db47a6f66ab1d48c383d52ec8694644efb8975d40baa04f32c"]
+      }
+    },
+    {
+      "definition_id": "physical.flood.mapped_extent_fraction",
+      "dimensions": {
+        "zone_set": [2, 3],
+        "scenario": "present_day",
+        "defence_basis": "ignored",
+        "sources": ["rivers", "sea"]
+      },
+      "value": {"kind": "number", "value": 0.9703827262282114},
+      "unit": "fraction",
+      "availability": "available",
+      "known_zero": false,
+      "provenance": {
+        "legacy_observation_id": "f0c91b5f7a8a9b4c0f2886472a1318b8600ff5344b862bc9292147f5b3c07c7e",
+        "legacy_variable": "hydrology.mapped_flood_extent_fraction",
+        "legacy_value_path": "environmental_state.normalized.hydrology.mapped_flood_extent_fraction[0].value",
+        "provider": "Environment Agency",
+        "source_dataset": "Flood Map for Planning · Zones 2 & 3 combined",
+        "source_version": "f877fc6b-de26-4085-a244-4cbcf1877c2f",
+        "source_reference_ids": ["source:f877fc6b-de26-4085-a244-4cbcf1877c2f"],
+        "raw_reference_ids": ["raw:f877fc6b-de26-4085-a244-4cbcf1877c2f"]
+      }
+    },
+    {
+      "definition_id": "designations.overlap_fraction",
+      "dimensions": {"designation_type": "SSSI", "status": "notified"},
+      "value": {"kind": "number", "value": 0.9999999999999987},
+      "unit": "fraction",
+      "availability": "available",
+      "known_zero": false,
+      "provenance": {
+        "legacy_observation_id": "7e1550f7be582e6dd4782b39e215a5465e4c544565f332e7abab5ccbb9e5a23e",
+        "legacy_variable": "regulatory.protected_area_fraction",
+        "legacy_value_path": "environmental_state.normalized.regulatory.protected_area_fraction[0].value",
+        "provider": "Natural England",
+        "source_dataset": "Sites of Special Scientific Interest",
+        "source_version": "f8db9506-196a-4feb-8c30-076583692118",
+        "source_reference_ids": ["source:f8db9506-196a-4feb-8c30-076583692118"],
+        "raw_reference_ids": ["raw:f8db9506-196a-4feb-8c30-076583692118"]
+      }
+    },
+    {
+      "definition_id": "ecology.ancient_woodland.mapped_overlap_fraction",
+      "dimensions": {"inventory": "legacy"},
+      "value": {"kind": "number", "value": 0.0},
+      "unit": "fraction",
+      "availability": "available",
+      "known_zero": true,
+      "thematic_completeness": "partial_inventory",
+      "provenance": {
+        "legacy_observation_id": "02c4fbeff28607613603fe50a2c6373d1d0468f52d3bfac828ea324735cadc49",
+        "legacy_variable": "ecology.irreplaceable_habitat_fraction",
+        "legacy_observation_value": null,
+        "legacy_value_path": "findings[3].fraction",
+        "provider": "Natural England",
+        "source_dataset": "Ancient woodland · legacy inventory",
+        "source_version": "1c76a51d-0bce-4383-8c73-6a2d5580bc46",
+        "source_reference_ids": ["source:1c76a51d-0bce-4383-8c73-6a2d5580bc46"],
+        "raw_reference_ids": ["raw:1c76a51d-0bce-4383-8c73-6a2d5580bc46"]
+      }
+    },
+    {
+      "definition_id": "ecology.ancient_woodland.mapped_overlap_fraction",
+      "dimensions": {"inventory": "revised"},
+      "value": {"kind": "number", "value": 0.0},
+      "unit": "fraction",
+      "availability": "available",
+      "known_zero": true,
+      "thematic_completeness": "partial_inventory",
+      "provenance": {
+        "legacy_observation_id": "a6b045de8771448fb8a60bac706eaadce932bdbb1cb420a4d0ac1863b10fad80",
+        "legacy_variable": "ecology.irreplaceable_habitat_fraction",
+        "legacy_observation_value": null,
+        "legacy_value_path": "findings[2].fraction",
+        "provider": "Natural England",
+        "source_dataset": "Ancient woodland · revised inventory",
+        "source_version": "723fd232-5708-49d1-baf9-4dcc0b0f4f7f",
+        "source_reference_ids": ["source:723fd232-5708-49d1-baf9-4dcc0b0f4f7f"],
+        "raw_reference_ids": ["raw:723fd232-5708-49d1-baf9-4dcc0b0f4f7f"]
+      }
+    }
+  ],
+  "gaps": [
+    {
+      "legacy_variable": "soil.drainage_class",
+      "state": "source_not_connected",
+      "reason_code": "source_unconnected",
+      "reason": "No licensed, spatially appropriate soil drainage dataset connected for this parcel."
+    },
+    {
+      "legacy_variable": "ecology.wetland_fraction",
+      "state": "source_not_connected",
+      "reason_code": "source_unconnected",
+      "reason": "WorldCover herbaceous-wetland class is incomplete; true wetland extent remains unknown."
+    },
+    {
+      "legacy_variable": "ecology.habitat_condition",
+      "state": "source_not_connected",
+      "reason_code": "source_unconnected",
+      "reason": "No current ecological condition survey connected."
+    },
+    {
+      "legacy_variable": "human.infrastructure_fraction",
+      "state": "source_not_connected",
+      "reason_code": "source_unconnected",
+      "reason": "No complete infrastructure footprint dataset connected."
+    },
+    {
+      "legacy_variable": "ecology.irreplaceable_habitat_fraction",
+      "state": "incomplete_inventory",
+      "reason_code": "incomplete_inventory",
+      "reason": "The two mapped ancient-woodland inventory zeroes do not establish broad irreplaceable-habitat absence."
+    }
+  ],
+  "source_references": {
+    "source:b386dd3e503a90bfe14c8a101c306485b8516597871e434e9669e7c5de60b43e": {
+      "provider": "Environment Agency",
+      "dataset": "LIDAR Composite Digital Terrain Model (DTM) - 1m",
+      "raw_reference": "environmental/raw/b386dd3e503a90bfe14c8a101c306485b8516597871e434e9669e7c5de60b43e/b386dd3e503a90bfe14c8a101c306485b8516597871e434e9669e7c5de60b43e.tif"
+    },
+    "source:b31e85f9fd412a48f61012c3945e9a60e284cab9f9fb7c49fa54c3cfc6c7053e": {
+      "provider": "Ordnance Survey",
+      "dataset": "OS Open Rivers",
+      "raw_reference": "environmental/raw/b31e85f9fd412a48f61012c3945e9a60e284cab9f9fb7c49fa54c3cfc6c7053e/b31e85f9fd412a48f61012c3945e9a60e284cab9f9fb7c49fa54c3cfc6c7053e.zip"
+    },
+    "source:105283ecb0ac75db47a6f66ab1d48c383d52ec8694644efb8975d40baa04f32c": {
+      "provider": "European Space Agency",
+      "dataset": "ESA WorldCover 2021 v200",
+      "raw_reference": "environmental/raw/105283ecb0ac75db47a6f66ab1d48c383d52ec8694644efb8975d40baa04f32c/105283ecb0ac75db47a6f66ab1d48c383d52ec8694644efb8975d40baa04f32c.tif"
+    },
+    "source:f877fc6b-de26-4085-a244-4cbcf1877c2f": {
+      "provider": "Environment Agency",
+      "dataset": "Flood Map for Planning · Zones 2 & 3 combined",
+      "raw_reference": "reference/f877fc6b-de26-4085-a244-4cbcf1877c2f/source.json"
+    },
+    "source:f8db9506-196a-4feb-8c30-076583692118": {
+      "provider": "Natural England",
+      "dataset": "Sites of Special Scientific Interest",
+      "raw_reference": "reference/f8db9506-196a-4feb-8c30-076583692118/source.json"
+    },
+    "source:1c76a51d-0bce-4383-8c73-6a2d5580bc46": {
+      "provider": "Natural England",
+      "dataset": "Ancient woodland · legacy inventory",
+      "raw_reference": "reference/1c76a51d-0bce-4383-8c73-6a2d5580bc46/source.json"
+    },
+    "source:723fd232-5708-49d1-baf9-4dcc0b0f4f7f": {
+      "provider": "Natural England",
+      "dataset": "Ancient woodland · revised inventory",
+      "raw_reference": "reference/723fd232-5708-49d1-baf9-4dcc0b0f4f7f/source.json"
+    }
+  },
+  "legacy_wetland_module": {
+    "location": "outside_core_observations",
+    "result": {
+      "status": "referenced_not_copied",
+      "payload_fingerprint": "6a103aa70c1fcf38d070c32cb592bc86ff79070119ea3920790d4b0b92bab5d3",
+      "model_version": "wetland_restoration_v0_1",
+      "model_signature": "7a8c0a5689b30336c85051b27d777ee34ced8d86b98a00e7f217c92161dd413a",
+      "state_fingerprint": "ebdbf560a56979b99b20a418b64c72c39e52a0680a83935b60d61e3a9fe62e7c"
+    },
+    "excluded_core_variables": [
+      "soil.retention_index",
+      "hydrology.water_context_index",
+      "ecology.restoration_need_index",
+      "ecology.habitat_proximity_index",
+      "human.unblocked_area_index"
+    ]
+  }
+}
