@@ -18,7 +18,7 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 
 - Create sites from a drawn or uploaded Polygon/MultiPolygon; validate, version and preserve boundary history.
 - Submit deterministic assessments with pinned dataset/model configuration, deduplication, worker leases/retries/fencing and immutable saved results.
-- Inspect portfolio sites in map-first or list mode; open evidence-aware site analysis across Overview, Physical, Ecology, Constraints, Evidence and History.
+- Inspect portfolio sites in map-first or list mode; open the Site Analysis Workspace across Overview, Evidence, Models and History. Screening Context is the default Overview and the wetland assessment is a secondary Terrene Reasoning module.
 - View source lineage and exact bounded overlay geometry, compare selected sites, record a current team review status, and export self-contained HTML reports.
 - Project legacy saved assessments into immutable `land_evidence_v1` snapshots without changing the original assessment.
 - Bind a committed snapshot through `wetland_input_binding_v1`, execute the unchanged wetland model, and persist an immutable ModuleRun.
@@ -63,7 +63,9 @@ The 12 retained Oxford verification locations have inspectable physical and hydr
 
 ## Application/UI state
 
-The current home is a map-first portfolio view with a preserved list workflow. Site analysis is evidence-aware, keeps calculated findings separate from team review status, switches map and evidence together for historical assessments, and exposes missing/partial evidence without manufacturing locations or values. The UI remains a small-portfolio application and fetches site/history collections without pagination.
+The current home is a map-first portfolio view with a preserved list workflow. Site Analysis Workspace v2A leads with source-bounded Screening Context, places detailed facts/gaps/provenance under Evidence, places the unchanged wetland assessment under Models, and keeps immutable assessment selection under History. Site-level actions explicitly distinguish creating an assessment, preparing/reusing or exporting Screening Context, exporting the wetland model report and changing the current team review status.
+
+One shared site-workspace controller scopes the selected assessment, Screening Context lifecycle, history selection, map/evidence focus, exports and workspace controls. Switching sites or historical assessments clears stale artifact views and keys Screening Context to the exact assessment/site/boundary identity. Historical map, boundary, Earth evidence, context and model output move together. The desktop review panel is wider; at narrow widths the map and independently scrollable analytical workspace stack deliberately. The UI remains a small-portfolio application and fetches site/history collections without pagination.
 
 Screening Context is an explicit assessment action: POST creates/reuses a snapshot and ModuleRun; GET only discovers or reads stored records. History selection scopes the action to the saved assessment and boundary. Unsupported legacy evidence fails without rewriting it. Export labels current team review status separately from the immutable context. See [Screening Context v1](SCREENING-CONTEXT-V1.md).
 
@@ -85,6 +87,8 @@ Screening Context verification: **176 backend tests passed on SQLite and disposa
 
 The finite Screening Context read-state fix was verified with **177 backend tests on SQLite**, **27 frontend tests**, TypeScript, focused lint, production build and browser QA of stored/absent/unsupported/access/failure/retry/timeout/stale-switch states. PostgreSQL/PostGIS was not rerun for this UI lifecycle fix.
 
+Site Analysis Workspace v2A verification: **28 frontend regression tests passed**, TypeScript passed, focused lint passed on the new/refined workspace modules, and the production build passed with the existing large-chunk advisory. Browser QA covered populated and absent Screening Context, Evidence/Models navigation, model-to-evidence routing, historical selection/reset, both distinct exports, desktop 1440×900 and narrow 390×844 layouts, and finished with no browser warnings or errors. Backend and PostgreSQL suites were not rerun because this iteration changes frontend information architecture and state only.
+
 ## Known limitations
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
@@ -96,7 +100,7 @@ The finite Screening Context read-state fix was verified with **177 backend test
 
 ## Latest meaningful implementation
 
-The latest implementation is [Screening Context v1](SCREENING-CONTEXT-V1.md), completed 10 September 2026. It connects the existing Earth snapshot foundation to a non-scoring reasoning and application path. Acquisition, evidence projection and wetland implementation remain unchanged; retained snapshots and pre-existing wetland runs are preserved.
+Site Analysis Workspace v2A was completed on 10 September 2026. It reorganizes the selected-site experience around Terrene Earth evidence first, Terrene Reasoning modules second and separate team decisions, without changing acquisition, evidence projection, Screening Context rules, wetland bindings/calculations, retained snapshots or pre-existing ModuleRuns.
 
 ## Current recommended engineering question
 

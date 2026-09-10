@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import {
   contextPath, readScreeningContext, requestScreeningContext, screeningAssessmentKey, screeningValue,
 } from '../app/screening-context.ts';
+import { resolveWorkspaceAssessment } from '../app/site-workspace-view-model.ts';
 
 const assessment = { id: 'historical/id', site_id: 'site', version: 1, state: 'completed' };
 function run(version = 1) {
@@ -90,17 +91,29 @@ test('values preserve mapped zero, boolean semantics and independent source meas
   assert.equal(screeningValue({ value: {kind:'number',value:.433473}, unit:'fraction' }), '43.347%');
 });
 
-test('computed panel is keyed to the selected assessment and has no team-decision write', () => {
+test('workspace controller scopes current and historical assessment state', () => {
+  const current = { ...assessment, id: 'current', version: 2, result: {}, geometry: {}, created: 'now', dataset_ids: [] };
+  const historical = { ...current, id: 'historical', version: 1 };
+  const site = { id: 'site', version: 2, assessment: current };
+  assert.equal(resolveWorkspaceAssessment(site, [historical], historical.id).id, historical.id);
+  assert.equal(resolveWorkspaceAssessment(site, [{ ...historical, site_id: 'other' }], historical.id).id, current.id);
+  assert.equal(resolveWorkspaceAssessment(site, [], 'stale-selection').id, current.id);
+});
+
+test('workspace hierarchy keeps Screening Context primary and team decisions separate', () => {
   const page = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
   const panel = readFileSync(new URL('../app/screening-context-panel.tsx', import.meta.url), 'utf8');
-  assert.match(page, /<ScreeningContextPanel\s+key=\{assessment.id\}\s+assessment=\{assessment\}/);
-  assert.match(panel, /separate from your team’s review status/);
-  assert.match(panel, /requestGeneration\.current \+= 1;\s+abort\.abort\(\)/);
-  assert.match(panel, /\[assessmentId, assessmentKey, assessmentSiteId, assessmentVersion, retry\]/);
+  const state = readFileSync(new URL('../app/site-workspace-state.ts', import.meta.url), 'utf8');
+  assert.match(page, /<TabsTrigger value="overview">Overview<\/TabsTrigger>[\s\S]*<TabsTrigger value="evidence">Evidence<\/TabsTrigger>[\s\S]*<TabsTrigger value="models">Models<\/TabsTrigger>[\s\S]*<TabsTrigger value="history">History<\/TabsTrigger>/);
+  assert.match(page, /key=\{assessment.id \+ ':overview'\}[\s\S]*mode="overview"/);
+  assert.match(page, /TERRENE REASONING[\s\S]*Wetland assessment/);
+  assert.match(panel, /This context does not score the site or make a team decision/);
+  assert.match(state, /requestGeneration\.current \+= 1;\s+abort\.abort\(\)/);
+  assert.match(state, /assessmentVersion,\s+contextRetry,/);
   assert.match(panel, /state === 'unsupported'/);
   assert.match(panel, /state === 'unauthorized'/);
   assert.doesNotMatch(panel, /state !== 'loading'/);
   assert.doesNotMatch(panel, /PATCH|\/sites\/|statuses|setSelectedAssessment/);
-  assert.match(panel, /contextPath\(assessment.id\) \+ '\/report'/);
+  assert.match(state, /contextPath\(assessment.id\) \+ '\/report'/);
   assert.match(panel, /source-semantic context/i);
 });

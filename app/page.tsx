@@ -15,6 +15,7 @@ import {
 } from './site-evidence';
 import OverlayFindings from './overlay-findings';
 import ScreeningContextPanel from './screening-context-panel';
+import { useSiteWorkspaceState } from './site-workspace-state';
 import type { OverlayFinding } from './site-evidence';
 import SiteMap from './map';
 import {
@@ -163,25 +164,19 @@ export default function Home() {
     [filter, setFilter] = useState('all'),
     [compare, setCompare] = useState<string[]>([]),
     [history, setHistory] = useState<any[]>([]),
-    [selectedAssessment, setSelectedAssessment] = useState<string | null>(null),
-    [finding, setFinding] = useState<any>(null),
-    [tab, setTab] = useState('overview'),
-    [panelOpen, setPanelOpen] = useState(true),
-    [mapFocus, setMapFocus] = useState<{ key: string; request: number } | null>(
-      null,
-    ),
     [mode, setMode] = useState(''),
     [email, setEmail] = useState(''),
     [password, setPassword] = useState(''),
     [rawGeometry, setRawGeometry] = useState<any>(null),
-    [reportHtml, setReportHtml] = useState(''),
-    [reportUrl, setReportUrl] = useState(''),
     [navigationCompact, setNavigationCompact] = useState(false),
     [mobileNavigation, setMobileNavigation] = useState(false);
-  const current = sites.find((s) => s.id === active),
-    assessment =
-      history.find((a) => a.id === selectedAssessment) || current?.assessment,
-    result = assessment?.result,
+  const current = sites.find((s) => s.id === active);
+  const workspace = useSiteWorkspaceState(current, history);
+  const { assessment, selectedAssessmentId: selectedAssessment, tab, setTab,
+    wetlandSection, setWetlandSection, panelOpen, setPanelOpen, mapFocus,
+    finding, setFinding, showOnMap } = workspace;
+  const result = assessment?.result,
+    viewingHistorical = !!assessment && assessment.id !== current?.assessment?.id,
     stale = current && assessment && current.version !== assessment.version,
     newerData =
       result &&
@@ -344,17 +339,10 @@ export default function Home() {
     }
   }
   function openSite(s: any) {
+    workspace.resetForSite();
     setActive(s.id);
     setHistory([]);
-    setMapFocus(null);
-    setPanelOpen(true);
     setView('site');
-    setSelectedAssessment(null);
-    setFinding(null);
-    setTab('overview');
-  }
-  function showOnMap(key: string) {
-    setMapFocus((previous) => ({ key, request: (previous?.request || 0) + 1 }));
   }
   function startNew() {
     setEditing(false);
@@ -380,11 +368,7 @@ export default function Home() {
       setDrawing(false);
       setActive(s.id);
       setView('site');
-      setSelectedAssessment(null);
-      setMapFocus(null);
-      setFinding(null);
-      setTab('overview');
-      setPanelOpen(true);
+      workspace.resetForSite();
     });
   }
   async function upload(file?: File) {
@@ -412,6 +396,7 @@ export default function Home() {
     }
   }
   async function report() {
+    if (!assessment) return;
     await act(async () => {
       const r = await fetch('/api/assessments/' + assessment.id + '/report', {
         headers: sessionStorage.getItem('crc-token')
@@ -419,12 +404,7 @@ export default function Home() {
           : {},
       });
       if (!r.ok) throw new Error('Report is unavailable');
-      const html = await r.text();
-      if (reportUrl) URL.revokeObjectURL(reportUrl);
-      setReportHtml(html);
-      setReportUrl(
-        URL.createObjectURL(new Blob([html], { type: 'text/html' })),
-      );
+      await workspace.exportWetlandReport(() => r.text());
     });
   }
   const filtered = sites.filter(
@@ -798,7 +778,7 @@ export default function Home() {
               </div>
               <div className="actions">
                 <button disabled={!result || busy} onClick={report}>
-                  <Download size={16} /> Export report
+                  <Download size={16} /> Export wetland model report
                 </button>
                 <button
                   className="primary"
@@ -809,21 +789,20 @@ export default function Home() {
                   onClick={() =>
                     act(async () => {
                       await api('/sites/' + active + '/assessments', 'POST');
-                      setSelectedAssessment(null);
-                      setMapFocus(null);
+                      workspace.resetForSite();
                     })
                   }
                 >
                   <Play size={15} />
                   {['queued', 'running'].includes(current.assessment?.state)
                     ? current.assessment.state + '…'
-                    : 'Run screening'}
+                    : 'Create new assessment'}
                 </button>
               </div>
             </div>
             <div className="analysis-context-bar">
               <span className="compact-team-review">
-                Team decision{' '}
+                Team review status{' '}
                 <Status
                   value={current.status}
                   onChange={(status) =>
@@ -875,20 +854,17 @@ export default function Home() {
             {stale && (
               <div className="alert">
                 Viewing saved boundary v{assessment.version}; current site is v
-                {current.version}. Run screening to assess the current boundary.
+                {current.version}. Create a new assessment to evaluate the current boundary.
               </div>
             )}
-            {selectedAssessment &&
+            {assessment && selectedAssessment &&
               selectedAssessment !== current.assessment?.id && (
                 <div className="assessment-snapshot">
                   Historical assessment ·{' '}
                   {new Date(assessment.created).toLocaleString('en-GB')}
                   <button
                     className="text-btn"
-                    onClick={() => {
-                      setSelectedAssessment(null);
-                      setMapFocus(null);
-                    }}
+                    onClick={workspace.returnToLatest}
                   >
                     Return to latest
                   </button>
@@ -898,8 +874,8 @@ export default function Home() {
               <details className="data-update-note">
                 <summary>Newer reference data available</summary>
                 <p>
-                  Saved findings retain their original sources. Run screening to
-                  use the latest imports.
+                  Saved findings retain their original sources. Create a new
+                  assessment to use the latest imports.
                 </p>
               </details>
             )}
@@ -909,11 +885,11 @@ export default function Home() {
               <div className="analysis-map">
                 <SiteMap
                   key={assessment?.id || current.id}
-                  geometry={stale ? assessment.geometry : current.geometry}
+                  geometry={viewingHistorical ? assessment.geometry : current.geometry}
                   findings={result?.findings}
                   selected={mapFocus?.key}
                   focusRequest={mapFocus?.request}
-                  boundaryLabel={`Boundary v${stale ? assessment.version : current.version}${stale ? ' · historical' : ''}`}
+                  boundaryLabel={`Boundary v${viewingHistorical ? assessment.version : current.version}${viewingHistorical ? ' · historical assessment' : ''}`}
                   onInspect={(f) => {
                     showOnMap(f.key);
                     setFinding(f);
@@ -935,8 +911,8 @@ export default function Home() {
               >
                 <div className="analysis-panel-heading">
                   <span>
-                    <strong>Site analysis</strong>
-                    <small>Wetland model · saved evidence</small>
+                    <strong>Site Analysis Workspace</strong>
+                    <small>Earth evidence · reasoning modules · team review</small>
                   </span>
                   <button
                     className="icon-btn"
@@ -953,32 +929,25 @@ export default function Home() {
                     aria-label="Site analysis sections"
                   >
                     <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="physical">Physical</TabsTrigger>
-                    <TabsTrigger value="ecology">Ecology</TabsTrigger>
-                    <TabsTrigger value="constraints">Constraints</TabsTrigger>
                     <TabsTrigger value="evidence">Evidence</TabsTrigger>
+                    <TabsTrigger value="models">Models</TabsTrigger>
                     <TabsTrigger value="history">History</TabsTrigger>
                   </TabsList>
-                  {[
-                    'overview',
-                    'physical',
-                    'ecology',
-                    'constraints',
-                    'evidence',
-                  ].map((section) => (
-                    <TabsContent value={section} key={section}>
-                      {section === 'overview' && assessment && (
-                        <ScreeningContextPanel
-                          key={assessment.id}
-                          assessment={assessment}
-                          hasResult={!!result}
-                          onEvidence={() => setTab('evidence')}
-                        />
-                      )}
+                  <TabsContent value="overview">
+                    {assessment ? <ScreeningContextPanel key={assessment.id + ':overview'} assessment={assessment} hasResult={!!result}
+                      mode="overview" context={workspace.context} onEvidence={() => setTab('evidence')} /> :
+                      <div className="pad"><h2>No saved assessment</h2><p>Create a new assessment to establish an immutable boundary and evidence record.</p></div>}
+                    <div className="team-review"><p><strong>Team decision</strong> · kept separate from Earth facts and model interpretations.</p>
+                      <details><summary>Site notes</summary><p>{current.notes || 'No notes added. Use Edit boundary / site to add notes.'}</p></details></div>
+                  </TabsContent>
+                  <TabsContent value="evidence">
+                    {assessment && <ScreeningContextPanel key={assessment.id + ':evidence'} assessment={assessment} hasResult={!!result}
+                      mode="evidence" context={workspace.context} onEvidence={() => setTab('evidence')} />}
+                    <details className="module-evidence"><summary>Wetland module input evidence</summary>
                       <NaturePanel
-                        key={(assessment?.id || current.id) + section}
-                        section={section}
-                        onSection={setTab}
+                        key={(assessment?.id || current.id) + ':evidence'}
+                        section="evidence"
+                        onSection={() => setTab('models')}
                         model={result?.wetland_model}
                         earth={result?.environmental_state}
                         assessmentState={assessment?.state}
@@ -990,44 +959,30 @@ export default function Home() {
                           analysisPanel.current?.scrollTo({ top: 0 })
                         }
                       />
-                      {[
-                        'physical',
-                        'ecology',
-                        'constraints',
-                        'evidence',
-                      ].includes(section) && (
-                        <OverlayFindings
-                          findings={(result?.findings || []).filter(
-                            (f: OverlayFinding) =>
-                              section === 'evidence' ||
-                              (section === 'physical'
-                                ? f.key === 'flood'
-                                : f.key !== 'flood'),
-                          )}
-                          onInspect={(f) => {
-                            if (f.geometry) showOnMap(f.key);
-                            setFinding(f);
-                          }}
-                          onMap={showOnMap}
-                        />
-                      )}
-                      {section === 'overview' && (
-                        <div className="team-review">
-                          <p>
-                            Your team’s review decision is independent of model
-                            outputs.
-                          </p>
-                          <details>
-                            <summary>Site notes</summary>
-                            <p>
-                              {current.notes ||
-                                'No notes added. Use Edit boundary / site to add notes.'}
-                            </p>
-                          </details>
-                        </div>
-                      )}
-                    </TabsContent>
-                  ))}
+                      <OverlayFindings findings={result?.findings || []} onInspect={(f) => { if (f.geometry) showOnMap(f.key); setFinding(f); }} onMap={showOnMap} />
+                    </details>
+                  </TabsContent>
+                  <TabsContent value="models">
+                    <div className="model-module-heading"><p className="eyebrow">TERRENE REASONING</p><h2>Wetland assessment</h2>
+                      <p>Versioned reasoning over the selected assessment’s retained evidence. Model interpretations are not Earth facts or team decisions.</p></div>
+                    <Tabs value={wetlandSection} onValueChange={(value) => setWetlandSection(value as typeof wetlandSection)}>
+                      <TabsList className="model-tabs" aria-label="Wetland assessment sections">
+                        <TabsTrigger value="overview">Summary</TabsTrigger><TabsTrigger value="physical">Physical</TabsTrigger>
+                        <TabsTrigger value="ecology">Ecology</TabsTrigger><TabsTrigger value="constraints">Constraints</TabsTrigger>
+                      </TabsList>
+                      {['overview', 'physical', 'ecology', 'constraints'].map((section) => <TabsContent value={section} key={section}>
+                        <NaturePanel key={(assessment?.id || current.id) + section} section={section}
+                          onSection={(next) => { if (next === 'evidence') setTab('evidence'); else setWetlandSection(next as typeof wetlandSection); }}
+                          model={result?.wetland_model} earth={result?.environmental_state} assessmentState={assessment?.state}
+                          hasResult={!!result} error={assessment?.error} findings={result?.findings} onMapEvidence={showOnMap}
+                          onInspect={() => analysisPanel.current?.scrollTo({ top: 0 })} />
+                        {section !== 'overview' && <OverlayFindings findings={(result?.findings || []).filter((f: OverlayFinding) =>
+                          section === 'physical' ? f.key === 'flood' : f.key !== 'flood')} onInspect={(f) => {
+                          if (f.geometry) showOnMap(f.key); setFinding(f);
+                        }} onMap={showOnMap} />}
+                      </TabsContent>)}
+                    </Tabs>
+                  </TabsContent>
                   <TabsContent value="history">
                     <div className="panel-heading">
                       <h2>Assessment history</h2>
@@ -1043,12 +998,7 @@ export default function Home() {
                           className={`history-row${a.id === assessment?.id ? ' is-selected' : ''}`}
                           aria-pressed={a.id === assessment?.id}
                           key={a.id}
-                          onClick={() => {
-                            setSelectedAssessment(a.id);
-                            setTab('overview');
-                            setFinding(null);
-                            setMapFocus(null);
-                          }}
+                          onClick={() => workspace.selectAssessment(a.id)}
                         >
                           <b>
                             Boundary v{a.version} · {a.state}
@@ -1286,29 +1236,25 @@ export default function Home() {
         </DialogContent>
       </Dialog>
       <Dialog
-        open={!!reportHtml}
+        open={!!workspace.reportHtml}
         onOpenChange={(v) => {
-          if (!v) {
-            setReportHtml('');
-            if (reportUrl) URL.revokeObjectURL(reportUrl);
-            setReportUrl('');
-          }
+          if (!v) workspace.closeWetlandReport();
         }}
       >
         <DialogContent className="report-dialog">
           <DialogHeader>
-            <DialogTitle>Screening report</DialogTitle>
+            <DialogTitle>Wetland model report</DialogTitle>
             <DialogDescription>
-              Saved assessment evidence, with the review decision at export.
+              Saved wetland reasoning and supporting assessment evidence, with the team review status labelled separately.
             </DialogDescription>
           </DialogHeader>
           <div className="actions">
             <a
               className="download-link"
-              href={reportUrl}
-              download="CRC-screening-report.html"
+              href={workspace.reportUrl}
+              download="terrene-wetland-model-report.html"
             >
-              Download HTML
+              Download wetland model HTML
             </a>
             <button
               onClick={() => {
@@ -1324,7 +1270,7 @@ export default function Home() {
           <iframe
             id="report-frame"
             title="Printable screening report"
-            srcDoc={reportHtml}
+            srcDoc={workspace.reportHtml}
           />
         </DialogContent>
       </Dialog>

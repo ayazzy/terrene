@@ -1,183 +1,419 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
-import { Download, FileText } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+
+import { useState } from 'react';
+import { Download, FileText, ArrowUpRight } from 'lucide-react';
 import {
-  contextHeaders, contextPath, contextResponse, readScreeningContext, requestScreeningContext,
-  screeningAssessmentKey, screeningValue, ScreeningContextRequestError,
-  type ContextItem, type EvidenceRefs, type ScreeningAssessment, type ScreeningRun,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
+import {
+  screeningValue,
+  type ContextItem,
+  type EvidenceRefs,
+  type ScreeningAssessment,
 } from './screening-context';
+import type { SiteWorkspaceState } from './site-workspace-state';
 
 type Props = {
   assessment: ScreeningAssessment;
   hasResult: boolean;
+  mode: 'overview' | 'evidence';
+  context: SiteWorkspaceState['context'];
   onEvidence: () => void;
 };
-export default function ScreeningContextPanel({ assessment, hasResult, onEvidence }: Props) {
-  const [run, setRun] = useState<ScreeningRun | null>(null);
-  const [state, setState] = useState<'checking' | 'absent' | 'preparing' | 'available' | 'unsupported' | 'unauthorized' | 'failed'>('checking');
-  const [error, setError] = useState('');
-  const [inspected, setInspected] = useState<{ id: string; value: unknown } | null>(null);
-  const [exporting, setExporting] = useState(false);
-  const [exportHtml, setExportHtml] = useState('');
-  const [exportUrl, setExportUrl] = useState('');
-  useEffect(() => () => { if (exportUrl) URL.revokeObjectURL(exportUrl); }, [exportUrl]);
-  const [retry, setRetry] = useState(0);
-  const [retryOperation, setRetryOperation] = useState<'read' | 'prepare'>('read');
-  const requestGeneration = useRef(0);
-  const assessmentKey = screeningAssessmentKey(assessment);
-  const { id: assessmentId, site_id: assessmentSiteId, version: assessmentVersion } = assessment;
-  useEffect(() => {
-    const abort = new AbortController();
-    const generation = ++requestGeneration.current;
-    void readScreeningContext({
-      id: assessmentId, site_id: assessmentSiteId, version: assessmentVersion,
-    }, abort.signal).then(next => {
-      if (abort.signal.aborted || generation !== requestGeneration.current) return;
-      setRun(next.run);
-      setError(next.error);
-      setState(next.state);
-      setRetryOperation('read');
-    }).catch((cause: Error) => {
-      if (abort.signal.aborted || generation !== requestGeneration.current) return;
-      setRun(null);
-      setError(cause.message);
-      setState('failed');
-      setRetryOperation('read');
-    });
-    return () => {
-      requestGeneration.current += 1;
-      abort.abort();
-    };
-  }, [assessmentId, assessmentKey, assessmentSiteId, assessmentVersion, retry]);
-  function applyFailure(cause: unknown, operation: 'read' | 'prepare') {
-    const status = cause instanceof ScreeningContextRequestError ? cause.status : undefined;
-    setRun(null);
-    setError(cause instanceof Error ? cause.message : 'Screening context preparation failed.');
-    setState(status === 409 ? 'unsupported' :
-      status === 401 || status === 403 ? 'unauthorized' : 'failed');
-    setRetryOperation(operation);
-  }
-  async function prepare() {
-    setState('preparing');
-    setError('');
-    try {
-      const value = await requestScreeningContext(assessment, 'POST');
-      setRun(value);
-      setState('available');
-    } catch (cause) {
-      applyFailure(cause, 'prepare');
-    }
-  }
-  async function exportContext() {
-    setExporting(true);
-    setError('');
-    try {
-      const response = await contextResponse(await fetch(contextPath(assessment.id) + '/report', {
-        headers: contextHeaders(), cache: 'no-store',
-      }));
-      const html = await response.text();
-      setExportHtml(html);
-      setExportUrl(URL.createObjectURL(new Blob([html], {type: 'text/html'})));
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Screening context export failed.');
-    } finally {
-      setExporting(false);
-    }
-  }
+
+export default function ScreeningContextPanel({
+  assessment,
+  hasResult,
+  mode,
+  context,
+  onEvidence,
+}: Props) {
+  const [inspected, setInspected] = useState<{
+    id: string;
+    value: unknown;
+  } | null>(null);
+  const { run, state, error } = context;
   const result = run?.result;
-  const catalogue = result ? [
-    ...result.groups.flatMap(g => [...g.facts, ...g.gaps]), ...result.unconnected_capabilities.map(c => ({id: c.legacy_variable, ...c})), ...result.sources,
-    ...result.raw_references, ...result.source_features, ...result.objects, ...result.relationships,
-  ] : [];
+  const catalogue = result
+    ? [
+        ...result.groups.flatMap((group) => [...group.facts, ...group.gaps]),
+        ...result.unconnected_capabilities.map((capability) => ({
+          id: capability.legacy_variable,
+          ...capability,
+        })),
+        ...result.sources,
+        ...result.raw_references,
+        ...result.source_features,
+        ...result.objects,
+        ...result.relationships,
+      ]
+    : [];
+
   function references(refs: Partial<EvidenceRefs>) {
-    const ids = Object.values(refs).flatMap(values => values || []);
-    return <details><summary>Evidence references · {ids.length}</summary><div className="screening-refs" aria-label="Evidence references">{ids.map((id: string) => {
-      const record = catalogue.find(r => r.id === id);
-      const source = result?.sources.find(s => s.id === id);
-      return <button className="text-btn" key={id} onClick={() => setInspected({ id, value: record })}>
-        {source ? `${source.dataset} · ${source.source_version}` : id}
-      </button>;
-    })}</div></details>;
+    const ids = Object.values(refs).flatMap((values) => values || []);
+    return (
+      <details>
+        <summary>Evidence references · {ids.length}</summary>
+        <div className="screening-refs" aria-label="Evidence references">
+          {ids.map((id: string) => {
+            const record = catalogue.find((item) => item.id === id);
+            const source = result?.sources.find((item) => item.id === id);
+            return (
+              <button
+                className="text-btn"
+                key={id}
+                onClick={() => setInspected({ id, value: record })}
+              >
+                {source ? `${source.dataset} · ${source.source_version}` : id}
+              </button>
+            );
+          })}
+        </div>
+      </details>
+    );
   }
+
   function contextItems(label: string, items: ContextItem[]) {
-    return <details className="screening-section"><summary>{label} · {items.length}</summary>
-      {items.length === 0 && <p>No context generated by these versioned rules.</p>}
-      {items.map(item => <article key={item.id}>
-        <h4>{item.label}</h4><p>{item.text}</p>{references(item.references)}
-      </article>)}
-    </details>;
+    return (
+      <details className="screening-section">
+        <summary>
+          {label} · {items.length}
+        </summary>
+        {items.length === 0 && (
+          <p>No context generated by these versioned rules.</p>
+        )}
+        {items.map((item) => (
+          <article key={item.id}>
+            <h4>{item.label}</h4>
+            <p>{item.text}</p>
+            {references(item.references)}
+          </article>
+        ))}
+      </details>
+    );
   }
-  const canPrepare = hasResult && ['completed', 'partial'].includes(assessment.state);
-  return <section className="screening-context" aria-label="Screening context">
-    <div className="screening-heading"><FileText size={18} /><h2>Screening context</h2></div>
-    <p className="nature-muted">Calculated review context, separate from your team’s review status. Pilot rules are not customer-validated requirements.</p>
-    <output>{state === 'checking' ? 'Checking saved context…' : state === 'preparing' ? 'Preparing screening context…' :
-      state === 'available' ? `Available · saved boundary v${assessment.version}` :
-      state === 'absent' ? 'No screening context prepared for this assessment.' :
-      state === 'unsupported' ? 'Screening context is unsupported for this historical assessment.' :
-      state === 'unauthorized' ? 'Screening context access requires authentication or permission.' :
-      'Screening context could not be loaded.'}</output>
-    {error && <p role="alert" className="alert">{error}</p>}
-    {state === 'absent' && canPrepare && <button onClick={() => void prepare()}>Prepare site context</button>}
-    {state === 'preparing' && <button disabled>Preparing…</button>}
-    {(state === 'failed' || state === 'unauthorized') && <button className="text-btn" onClick={() => {
-      setError('');
-      if (retryOperation === 'prepare') void prepare();
-      else { setState('checking'); setRetry(r => r + 1); }
-    }}>Retry</button>}
-    {state === 'absent' && !canPrepare && <p className="nature-muted">A completed or partial assessment with a saved result is required.</p>}
-    {result && run && <>
-      <div className="screening-actions">
-        <button onClick={() => void exportContext()} disabled={exporting}><Download size={14} />{exporting ? 'Exporting…' : 'Export context'}</button>
-        <button className="text-btn" onClick={onEvidence}>Assessment evidence</button>
+
+  const canPrepare =
+    hasResult && ['completed', 'partial'].includes(assessment.state);
+  const status =
+    state === 'checking'
+      ? 'Checking saved Screening Context…'
+      : state === 'preparing'
+        ? 'Preparing Screening Context…'
+        : state === 'available'
+          ? `Available · saved boundary v${assessment.version}`
+          : state === 'absent'
+            ? 'No Screening Context prepared for this assessment.'
+            : state === 'unsupported'
+              ? 'Screening Context is unsupported for this historical assessment.'
+              : state === 'unauthorized'
+                ? 'Screening Context access requires authentication or permission.'
+                : state === 'idle'
+                  ? 'Select a saved assessment to inspect its context.'
+                  : 'Screening Context could not be loaded.';
+
+  return (
+    <section
+      className={`screening-context screening-${mode}`}
+      aria-label={
+        mode === 'overview'
+          ? 'Screening Context overview'
+          : 'Screening Context evidence'
+      }
+    >
+      <div className="screening-heading">
+        <span>
+          <FileText size={18} />
+          <span>
+            <p className="eyebrow">TERRENE EARTH</p>
+            <h2>
+              {mode === 'overview' ? 'Screening Context' : 'Evidence register'}
+            </h2>
+          </span>
+        </span>
+        <output>{status}</output>
       </div>
-      <details className="screening-section"><summary>Snapshot and run identity</summary>
-        <dl><dt>Module</dt><dd>{result.model_version}</dd><dt>Rules</dt><dd>{result.input_binding_version}</dd>
-          <dt>Run</dt><dd>{run.id}</dd><dt>Snapshot</dt><dd>{result.evidence_snapshot_id}</dd>
-          <dt>Evidence hash</dt><dd>{result.evidence_content_hash}</dd><dt>Boundary fingerprint</dt><dd>{result.boundary_geometry_fingerprint}</dd>
-          <dt>Evidence as of</dt><dd>{result.evidence_as_of}</dd></dl>
-      </details>
-      {result.groups.map(group => <details className="screening-section" key={group.id}>
-        <summary>{group.label}<small>{group.facts.length} observations · {group.gaps.length} recorded gaps</small></summary>
-        <h3>Source-bounded facts</h3>
-        {!group.facts.length && <p>No source-backed observations retained in this group; this is not mapped zero.</p>}
-        {group.facts.map(fact => <article key={fact.id}>
-          <h4>{fact.label}</h4><p><strong>{screeningValue(fact)}</strong> · {fact.availability}{fact.known_zero ? ' · known source-bounded zero' : ''}</p>
-          <p className="nature-muted">{fact.limitations}</p>
-          <details><summary>Definition, support and provenance</summary><pre>{JSON.stringify(fact, null, 2)}</pre></details>
-          {references(fact.references)}
-        </article>)}
-        <h3>Evidence gaps</h3>
-        {!group.gaps.length && <p>No explicit gaps recorded in this group; evidence completeness is not established.</p>}
-        {group.gaps.map(gap => <article key={gap.id}>
-          <h4>{gap.definition_id || gap.legacy_variable || gap.reason_code}</h4>
-          <p>{gap.state.replaceAll('_', ' ')} · {gap.reason_code}</p><p>{gap.reason}</p>
-          {references({ gap_ids: [gap.id], source_reference_ids: gap.source_reference_ids, raw_reference_ids: gap.raw_reference_ids })}
-        </article>)}
-      </details>)}
-      <details className="screening-section"><summary>Registered but unconnected capabilities</summary>{result.unconnected_capabilities.map(c => <article key={c.legacy_variable}><h4>{c.legacy_variable}</h4><p>{c.note}</p>{references({ capability_ids: [c.legacy_variable] })}</article>)}</details>
-      {contextItems('Mapped-zero qualifications', result.mapped_zero_qualifications)}
-      {contextItems('Source-semantic context', result.cross_source_contexts)}
-      {contextItems('Unresolved human-review questions', result.review_questions)}
-      <details className="screening-section"><summary>Source and object catalogue</summary>
-        {references({ source_reference_ids: [...result.sources, ...result.objects, ...result.relationships, ...result.source_features].map(r => r.id), raw_reference_ids: result.raw_references.map(r => r.id) })}
-      </details>
-      <details className="screening-section"><summary>Limitations</summary><ul>{result.limitations.map(item => <li key={item}>{item}</li>)}</ul></details>
-    </>}
-    <Dialog open={!!exportHtml} onOpenChange={open => { if (!open) { setExportHtml(''); setExportUrl(''); } }}>
-      <DialogContent className="report-dialog"><DialogHeader>
-        <DialogTitle>Screening context export</DialogTitle>
-        <DialogDescription>Saved calculated context with current team review status labelled separately.</DialogDescription>
-      </DialogHeader><div className="actions"><a className="download-link" href={exportUrl} download="terrene-screening-context.html">Download HTML</a></div>
-      <iframe title="Screening context HTML preview" srcDoc={exportHtml} sandbox="" />
-      </DialogContent>
-    </Dialog>
-    <Sheet open={!!inspected} onOpenChange={open => { if (!open) setInspected(null); }}>
-      <SheetContent className="evidence-sheet screening-inspector"><SheetHeader>
-        <SheetTitle>Screening evidence reference</SheetTitle><SheetDescription>{inspected?.id}</SheetDescription>
-      </SheetHeader><pre>{JSON.stringify(inspected?.value, null, 2)}</pre></SheetContent>
-    </Sheet>
-  </section>;
+      <p className="nature-muted">
+        {mode === 'overview'
+          ? 'Source-bounded facts and explicit gaps for human review. This context does not score the site or make a team decision.'
+          : 'Detailed observations, gaps, source limitations and provenance for the selected immutable assessment.'}
+      </p>
+      {error && (
+        <p role="alert" className="alert">
+          {error}
+        </p>
+      )}
+      <div className="screening-actions">
+        {state === 'absent' && canPrepare && (
+          <button onClick={() => void context.prepare()}>
+            Prepare / reuse Screening Context
+          </button>
+        )}
+        {state === 'preparing' && <button disabled>Preparing context…</button>}
+        {(state === 'failed' || state === 'unauthorized') && (
+          <button className="text-btn" onClick={context.retry}>
+            Retry Screening Context
+          </button>
+        )}
+        {result && run && (
+          <button
+            onClick={() => void context.exportReport()}
+            disabled={context.exporting}
+          >
+            <Download size={14} />
+            {context.exporting
+              ? 'Exporting Screening Context…'
+              : 'Export Screening Context'}
+          </button>
+        )}
+      </div>
+      {state === 'absent' && !canPrepare && (
+        <p className="nature-muted">
+          A completed or partial assessment with a saved result is required.
+        </p>
+      )}
+
+      {result && run && mode === 'overview' && (
+        <>
+          <h3 className="context-overview-title">What is mapped here?</h3>
+          <div className="context-summary-grid">
+            {result.groups.map((group) => (
+              <article key={group.id}>
+                <p className="context-kind">Earth facts</p>
+                <h3>{group.label}</h3>
+                <p>
+                  <strong>{group.facts.length}</strong> mapped observations
+                </p>
+                <p className={group.gaps.length ? 'has-gaps' : ''}>
+                  {group.gaps.length
+                    ? `${group.gaps.length} explicit evidence gaps`
+                    : 'No explicit gaps recorded; completeness is not established'}
+                </p>
+                {group.facts.slice(0, 2).map((fact) => (
+                  <div className="context-fact" key={fact.id}>
+                    <span>{fact.label}</span>
+                    <b>{screeningValue(fact)}</b>
+                    <small>
+                      {fact.availability}
+                      {fact.known_zero ? ' · known source-bounded zero' : ''}
+                    </small>
+                  </div>
+                ))}
+              </article>
+            ))}
+          </div>
+          <section className="context-review-questions">
+            <p className="context-kind">Human review</p>
+            <h3>Questions that remain</h3>
+            {result.review_questions.length ? (
+              <ul>
+                {result.review_questions.slice(0, 5).map((item) => (
+                  <li key={item.id}>{item.text}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>
+                No questions were generated by these versioned rules; this does
+                not establish evidence completeness.
+              </p>
+            )}
+          </section>
+          <button className="evidence-summary-link" onClick={onEvidence}>
+            <span>
+              <strong>Inspect detailed evidence and provenance</strong>
+              <small>
+                Open every observation, gap, limitation and source reference
+              </small>
+            </span>
+            <ArrowUpRight size={16} />
+          </button>
+        </>
+      )}
+
+      {result && run && mode === 'evidence' && (
+        <>
+          <details className="screening-section">
+            <summary>Snapshot and run identity</summary>
+            <dl>
+              <dt>Module</dt>
+              <dd>{result.model_version}</dd>
+              <dt>Rules</dt>
+              <dd>{result.input_binding_version}</dd>
+              <dt>Run</dt>
+              <dd>{run.id}</dd>
+              <dt>Snapshot</dt>
+              <dd>{result.evidence_snapshot_id}</dd>
+              <dt>Evidence hash</dt>
+              <dd>{result.evidence_content_hash}</dd>
+              <dt>Boundary fingerprint</dt>
+              <dd>{result.boundary_geometry_fingerprint}</dd>
+              <dt>Evidence as of</dt>
+              <dd>{result.evidence_as_of}</dd>
+            </dl>
+          </details>
+          {result.groups.map((group) => (
+            <details className="screening-section" key={group.id}>
+              <summary>
+                {group.label}
+                <small>
+                  {group.facts.length} observations · {group.gaps.length}{' '}
+                  recorded gaps
+                </small>
+              </summary>
+              <h3>Source-bounded Earth facts</h3>
+              {!group.facts.length && (
+                <p>
+                  No source-backed observations retained in this group; this is
+                  not mapped zero.
+                </p>
+              )}
+              {group.facts.map((fact) => (
+                <article key={fact.id}>
+                  <h4>{fact.label}</h4>
+                  <p>
+                    <strong>{screeningValue(fact)}</strong> ·{' '}
+                    {fact.availability}
+                    {fact.known_zero ? ' · known source-bounded zero' : ''}
+                  </p>
+                  <p className="nature-muted">{fact.limitations}</p>
+                  <details>
+                    <summary>Definition, support and provenance</summary>
+                    <pre>{JSON.stringify(fact, null, 2)}</pre>
+                  </details>
+                  {references(fact.references)}
+                </article>
+              ))}
+              <h3>Evidence gaps</h3>
+              {!group.gaps.length && (
+                <p>
+                  No explicit gaps recorded in this group; evidence completeness
+                  is not established.
+                </p>
+              )}
+              {group.gaps.map((gap) => (
+                <article key={gap.id}>
+                  <h4>
+                    {gap.definition_id ||
+                      gap.legacy_variable ||
+                      gap.reason_code}
+                  </h4>
+                  <p>
+                    {gap.state.replaceAll('_', ' ')} · {gap.reason_code}
+                  </p>
+                  <p>{gap.reason}</p>
+                  {references({
+                    gap_ids: [gap.id],
+                    source_reference_ids: gap.source_reference_ids,
+                    raw_reference_ids: gap.raw_reference_ids,
+                  })}
+                </article>
+              ))}
+            </details>
+          ))}
+          <details className="screening-section">
+            <summary>Registered but unconnected capabilities</summary>
+            {result.unconnected_capabilities.map((capability) => (
+              <article key={capability.legacy_variable}>
+                <h4>{capability.legacy_variable}</h4>
+                <p>{capability.note}</p>
+                {references({ capability_ids: [capability.legacy_variable] })}
+              </article>
+            ))}
+          </details>
+          {contextItems(
+            'Mapped-zero qualifications',
+            result.mapped_zero_qualifications,
+          )}
+          {contextItems(
+            'Source-semantic context',
+            result.cross_source_contexts,
+          )}
+          {contextItems(
+            'Unresolved human-review questions',
+            result.review_questions,
+          )}
+          <details className="screening-section">
+            <summary>Source and object catalogue</summary>
+            {references({
+              source_reference_ids: [
+                ...result.sources,
+                ...result.objects,
+                ...result.relationships,
+                ...result.source_features,
+              ].map((record) => record.id),
+              raw_reference_ids: result.raw_references.map(
+                (record) => record.id,
+              ),
+            })}
+          </details>
+          <details className="screening-section">
+            <summary>Limitations</summary>
+            <ul>
+              {result.limitations.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </details>
+        </>
+      )}
+
+      <Dialog
+        open={!!context.exportHtml}
+        onOpenChange={(open) => {
+          if (!open) context.closeExport();
+        }}
+      >
+        <DialogContent className="report-dialog">
+          <DialogHeader>
+            <DialogTitle>Screening Context export</DialogTitle>
+            <DialogDescription>
+              Saved calculated context with current team review status labelled
+              separately.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="actions">
+            <a
+              className="download-link"
+              href={context.exportUrl}
+              download="terrene-screening-context.html"
+            >
+              Download Screening Context HTML
+            </a>
+          </div>
+          <iframe
+            title="Screening Context HTML preview"
+            srcDoc={context.exportHtml}
+            sandbox=""
+          />
+        </DialogContent>
+      </Dialog>
+      {mode === 'evidence' && (
+        <Sheet
+          open={!!inspected}
+          onOpenChange={(open) => {
+            if (!open) setInspected(null);
+          }}
+        >
+          <SheetContent className="evidence-sheet screening-inspector">
+            <SheetHeader>
+              <SheetTitle>Screening evidence reference</SheetTitle>
+              <SheetDescription>{inspected?.id}</SheetDescription>
+            </SheetHeader>
+            <pre>{JSON.stringify(inspected?.value, null, 2)}</pre>
+          </SheetContent>
+        </Sheet>
+      )}
+    </section>
+  );
 }
