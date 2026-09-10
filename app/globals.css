@@ -2657,3 +2657,154 @@ summary {
   .model-module-heading { padding: 16px 14px 10px; }
   .model-tabs { justify-content: flex-start; }
 }
+
+/* Workspace v2 map evidence keeps persisted Terrene objects distinct from the basemap. */
+.layer-subgroup h4 {
+  margin: 9px 0 2px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 600;
+}
+.layer-swatch.boundary {
+  background: color-mix(in srgb, var(--action-primary) 18%, transparent);
+  border: 2px solid var(--action-primary);
+}
+.terrene-layer-swatch {
+  border: 1px solid rgb(255 255 255 / 85%);
+  outline: 1px solid rgb(31 42 36 / 45%);
+}
+.layer-state {
+  line-height: 1.35;
+}
+.layer-state.state-mapped_zero,
+.layer-state.state-unavailable,
+.layer-state.state-unsupported {
+  color: var(--text-tertiary);
+}
+.layer-state.state-partial {
+  color: var(--status-warning);
+}
+.terrene-source-note,
+.map-source-qualification {
+  padding-left: 9px;
+  border-left: 2px solid var(--border-strong);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.map-object-selection {
+  border-left: 3px solid var(--action-primary);
+}
+.map-feature-inspector {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--surface-selected);
+  font-size: 13px;
+}
+.map-feature-inspector-heading,
+.map-feature-inspector-body,
+.map-feature-inspector-actions,
+.built-world-layer-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.map-feature-inspector-heading h2 {
+  margin: 2px 0;
+  font-size: 17px;
+  text-transform: capitalize;
+}
+.map-feature-inspector-heading small,
+.map-feature-inspector-body p,
+.built-world-evidence-list p {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.map-feature-inspector-body {
+  margin-top: 12px;
+}
+.map-feature-inspector-body > div {
+  min-width: 0;
+  flex: 1;
+}
+.map-feature-inspector-body p {
+  margin: 4px 0;
+}
+.map-feature-inspector-actions {
+  margin-top: 10px;
+}
+.map-feature-provenance {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--border-subtle);
+}
+.map-feature-provenance dl {
+  font-size: 12px;
+}
+.map-feature-provenance dt {
+  margin-top: 8px;
+  color: var(--text-secondary);
+}
+.map-feature-provenance dd {
+  margin: 2px 0;
+  overflow-wrap: anywhere;
+}
+.context-built-world-summary {
+  margin: 18px 0;
+  padding: 14px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-panel);
+}
+.context-built-world-summary > h3 {
+  margin: 4px 0 10px;
+}
+.built-world-evidence-list > article {
+  padding: 10px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.built-world-layer-heading h4 {
+  margin: 0;
+}
+.built-world-layer-heading button {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.built-world-object-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+.built-world-object-links button {
+  max-width: 100%;
+  padding: 5px 7px;
+  border: 1px solid var(--border-subtle);
+  overflow-wrap: anywhere;
+  text-transform: capitalize;
+}
+.built-world-object-links button[aria-pressed='true'] {
+  border-color: var(--action-primary);
+  background: var(--surface-selected);
+}
+.built-world-measurement {
+  margin: 6px 0;
+}
+@media (max-width: 760px) {
+  .map-feature-inspector {
+    padding: 10px 12px;
+  }
+  .map-feature-inspector-body {
+    display: block;
+  }
+  .map-feature-inspector-body > div + div {
+    margin-top: 10px;
+  }
+  .built-world-layer-heading {
+    gap: 6px;
+  }
+  .built-world-layer-heading button {
+    min-height: 30px;
+  }
+}
