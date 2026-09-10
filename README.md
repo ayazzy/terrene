@@ -1,8 +1,12 @@
-# CRC — Climate Restoration Company
+# Terrene
 
-An England-first environmental screening and modelling application. The existing parcel workflow now includes CRC Earth Schema, source provenance and a deterministic Wetland Restoration Model v0.1. Real missing inputs remain unknown; no BNG units are inferred.
+Terrene is building a computational model of land and human interventions. The current England-first application implements evidence-backed land representation, deterministic wetland reasoning and an evidence-aware site-screening workflow. Real missing inputs remain unknown; no BNG units are inferred.
 
-See [Nature Intelligence](docs/NATURE-INTELLIGENCE.md) for sources, canonical variables, exact calculations and limitations, [OS OpenMap – Local built-world objects](docs/OPENMAP-LOCAL-BUILT-WORLD.md) for the CRC Earth object/relationship iteration, and [12 real parcel results](docs/REAL-VERIFICATION.md) for evidence. EA 1m DTM terrain, OS Open Rivers and ESA WorldCover are connected. Required-input coverage rose from 1/10 to 5/10; real physical/hydrological components are inspectable. Overall rankings remain **insufficient data** because soil drainage, actual wetland extent/condition and complete constraints are still missing. No thresholds were weakened to force a result.
+Start with the [North Star](docs/TERRENE-NORTH-STAR.md), [Current State](docs/CURRENT-STATE.md), [Architecture](docs/ARCHITECTURE.md), [Decision Log](docs/DECISIONS.md) and [Customer Discovery](docs/CUSTOMER-DISCOVERY.md). Repository implementation is authoritative where documentation has drifted; detailed historical implementation reports remain the record of their versions.
+
+See [Nature Intelligence](docs/NATURE-INTELLIGENCE.md) for sources, canonical variables, exact calculations and limitations, [OS OpenMap – Local built-world objects](docs/OPENMAP-LOCAL-BUILT-WORLD.md) for the latest Terrene Earth object/relationship iteration, and [12 real parcel results](docs/REAL-VERIFICATION.md) for evidence. EA 1m DTM terrain, OS Open Rivers and ESA WorldCover are connected. Required-input coverage rose from 1/10 to 5/10; real physical/hydrological components are inspectable. Overall rankings remain **insufficient data** because soil drainage, actual wetland extent/condition and complete constraints are still missing. No thresholds were weakened to force a result.
+
+The project was formerly developed under the working name CRC / Climate Restoration Company. Existing `CRC_*` configuration variables, `crc_*` model and processing identifiers, database names, signatures, hashes and historical reports are intentionally retained where changing them could damage compatibility or reproducibility. New project and product language uses Terrene.
 
 ## Run locally
 
