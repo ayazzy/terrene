@@ -65,3 +65,13 @@ This is a lightweight append-only log of durable product and architecture decisi
 **Rationale:** Durable commercial value must improve expensive decisions and workflows. Source data remains essential, attributable evidence but is not sufficient differentiation by itself.
 
 **References:** [North Star](TERRENE-NORTH-STAR.md), [Customer Discovery](CUSTOMER-DISCOVERY.md).
+
+## 2026-09-10 — Terrene Applications operationalize land decisions
+
+**Decision:** Terrene Applications should operationalize land decisions rather than merely visualize Terrene Earth.
+
+**Rationale:** Terrene's evidence and reasoning become commercially more useful when they participate in a workflow around durable land opportunities: triage, unresolved evidence, collaboration, decisions, next actions and progression. Competitive analysis of LandTech supports the existence of this workflow pattern, but customer discovery must determine Terrene's exact implementation.
+
+Terrene Earth continues to represent reality and evidence; Terrene Reasoning interprets it; Terrene Scenario tests interventions; and Terrene Applications operationalize useful workflows. Workflow state must not turn Terrene Earth into a CRM or become mixed with core environmental facts.
+
+**References:** [Customer Discovery](CUSTOMER-DISCOVERY.md), [North Star](TERRENE-NORTH-STAR.md).

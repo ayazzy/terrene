@@ -17,6 +17,19 @@ This is a working go-to-market hypothesis, not a commitment to make renewables T
 
 These points establish plausibility only. They do not prove budget, urgency, workflow fit, willingness to change tools or willingness to pay.
 
+## Competitive / workflow evidence — not customer validation
+
+Competitive analysis of LandTech indicates that significant product value can come from the operational loop around a durable site or opportunity record, not merely from a map or its data layers. Observed workflow mechanics include search and triage, saved sites, assessment, collaboration, evidence commissioning, reporting, sharing and pipeline progression.
+
+This supports several product hypotheses without validating customer demand:
+
+- Terrene Applications may need to help users move land decisions forward, not merely inspect Terrene Earth.
+- Evidence gaps may become structured actions such as requesting evidence, assigning review, uploading surveys or commissioning specialist work.
+- Live collaborative site state and immutable evidence or decision packages are distinct concepts and must not be conflated.
+- Terrene's differentiation should remain deeper Earth representation, inspectable Reasoning and especially Scenario/intervention analysis—not cloning LandTech's product.
+
+This is evidence that such workflow patterns exist in the market. It is not proof that Terrene's target customers want the same workflow or will pay for it.
+
 ## Unvalidated assumptions
 
 - Early screening is painful and frequent enough to support a paid product.
