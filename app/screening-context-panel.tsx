@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, FileText, ArrowUpRight } from 'lucide-react';
+import { Download, FileText, ArrowUpRight, MapPin } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -23,12 +23,19 @@ import {
   type ScreeningAssessment,
 } from './screening-context';
 import type { SiteWorkspaceState } from './site-workspace-state';
+import {
+  formatMappedMeasurement,
+  mapFeatureName,
+  mapLayerLabel,
+  mapLayerStatus,
+} from './screening-map-features';
 
 type Props = {
   assessment: ScreeningAssessment;
   hasResult: boolean;
   mode: 'overview' | 'evidence';
   context: SiteWorkspaceState['context'];
+  mapEvidence: SiteWorkspaceState['mapEvidence'];
   onEvidence: () => void;
 };
 
@@ -37,6 +44,7 @@ export default function ScreeningContextPanel({
   hasResult,
   mode,
   context,
+  mapEvidence,
   onEvidence,
 }: Props) {
   const [inspected, setInspected] = useState<{
@@ -101,6 +109,123 @@ export default function ScreeningContextPanel({
           </article>
         ))}
       </details>
+    );
+  }
+
+  function mappedLayerEvidence(detail: boolean) {
+    if (mapEvidence.state === 'loading')
+      return <p>Loading persisted built-world map evidence…</p>;
+    if (mapEvidence.state === 'failed')
+      return (
+        <p role="alert">
+          Built-world map evidence could not be loaded. Missing evidence is not
+          treated as zero. {mapEvidence.error}
+        </p>
+      );
+    if (mapEvidence.state === 'unsupported')
+      return (
+        <p>
+          This historical evidence does not support persisted built-world
+          objects. Current objects are not substituted.
+        </p>
+      );
+    if (mapEvidence.state === 'unavailable')
+      return (
+        <p>
+          Built-world map evidence is unavailable for this assessment. Missing
+          evidence is not treated as zero.
+        </p>
+      );
+    if (!mapEvidence.features)
+      return (
+        <p>
+          No supported persisted built-world map contract is available for this
+          selected assessment.
+        </p>
+      );
+    return (
+      <div className="built-world-evidence-list">
+        {mapEvidence.features.layers.map((layer) => {
+          const features = mapEvidence.features!.features.filter(
+            (feature) =>
+              feature.properties.layer_id === layer.id &&
+              (layer.state === 'available' || layer.state === 'partial'),
+          );
+          return (
+            <article key={layer.id}>
+              <div className="built-world-layer-heading">
+                <span>
+                  <h4>{mapLayerLabel(layer.id)}</h4>
+                  <small className={`layer-state state-${layer.state}`}>
+                    {mapLayerStatus(layer)}
+                  </small>
+                </span>
+                {features.length > 0 && (
+                  <button
+                    className="text-btn"
+                    onClick={() => mapEvidence.selectObject(features[0].id)}
+                  >
+                    <MapPin size={13} /> Inspect on map
+                  </button>
+                )}
+              </div>
+              <p>{layer.qualification}</p>
+              {detail && (
+                <>
+                  {layer.measurements.map((measurement) => (
+                    <p
+                      className="built-world-measurement"
+                      key={measurement.observation_id}
+                    >
+                      <strong>
+                        {formatMappedMeasurement(
+                          measurement.value,
+                          measurement.unit,
+                        )}
+                      </strong>{' '}
+                      · {measurement.definition_id.replaceAll('.', ' · ')}
+                      {measurement.availability === 'partial'
+                        ? ' · partial coverage'
+                        : ''}
+                    </p>
+                  ))}
+                  {features.length > 0 && (
+                    <div className="built-world-object-links">
+                      {features.map((feature, index) => (
+                        <button
+                          key={feature.id}
+                          className="text-btn"
+                          aria-pressed={
+                            mapEvidence.selectedObjectId === feature.id
+                          }
+                          onClick={() => mapEvidence.selectObject(feature.id)}
+                        >
+                          {mapFeatureName(feature)} <small>#{index + 1}</small>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {!!layer.sources.length && (
+                    <p className="nature-muted">
+                      Source:{' '}
+                      {layer.sources
+                        .map(
+                          (source) =>
+                            `${source.provider} · ${source.dataset} · ${source.release}`,
+                        )
+                        .join('; ')}
+                    </p>
+                  )}
+                </>
+              )}
+            </article>
+          );
+        })}
+        <p className="map-source-qualification">
+          Generalised mapped geometry supports screening context only. It is not
+          surveyed, cadastral, legal or engineering geometry.
+        </p>
+      </div>
     );
   }
 
@@ -213,6 +338,11 @@ export default function ScreeningContextPanel({
               </article>
             ))}
           </div>
+          <section className="context-built-world-summary">
+            <p className="context-kind">MAP EVIDENCE</p>
+            <h3>Built-world objects</h3>
+            {mappedLayerEvidence(false)}
+          </section>
           <section className="context-review-questions">
             <p className="context-kind">Human review</p>
             <h3>Questions that remain</h3>
@@ -292,6 +422,26 @@ export default function ScreeningContextPanel({
                     <pre>{JSON.stringify(fact, null, 2)}</pre>
                   </details>
                   {references(fact.references)}
+                  {fact.references.object_ids.some((id) =>
+                    mapEvidence.features?.features.some(
+                      (feature) => feature.id === id,
+                    ),
+                  ) && (
+                    <button
+                      className="text-btn"
+                      onClick={() =>
+                        mapEvidence.selectObject(
+                          fact.references.object_ids.find((id) =>
+                            mapEvidence.features?.features.some(
+                              (feature) => feature.id === id,
+                            ),
+                          )!,
+                        )
+                      }
+                    >
+                      <MapPin size={13} /> Show supporting mapped object
+                    </button>
+                  )}
                 </article>
               ))}
               <h3>Evidence gaps</h3>
@@ -321,6 +471,10 @@ export default function ScreeningContextPanel({
               ))}
             </details>
           ))}
+          <details className="screening-section" open>
+            <summary>Built-world map evidence</summary>
+            {mappedLayerEvidence(true)}
+          </details>
           <details className="screening-section">
             <summary>Registered but unconnected capabilities</summary>
             {result.unconnected_capabilities.map((capability) => (
