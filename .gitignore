@@ -10,6 +10,12 @@
 
 # testing
 /coverage
+.coverage
+.coverage.*
+/htmlcov/
+/.mypy_cache/
+/.ruff_cache/
+/.tox/
 
 # next.js
 /.next/
@@ -19,6 +25,9 @@
 # misc
 .DS_Store
 *.pem
+*.key
+*.p12
+*.pfx
 
 # debug
 npm-debug.log*
@@ -28,6 +37,11 @@ yarn-error.log*
 
 # local environment
 .env*
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
 
 # deployment and generated files
 .vercel
