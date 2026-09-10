@@ -1,10 +1,11 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Download, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import {
-  contextHeaders, contextPath, contextResponse, requestScreeningContext, screeningValue,
+  contextHeaders, contextPath, contextResponse, readScreeningContext, requestScreeningContext,
+  screeningAssessmentKey, screeningValue, ScreeningContextRequestError,
   type ContextItem, type EvidenceRefs, type ScreeningAssessment, type ScreeningRun,
 } from './screening-context';
 
@@ -15,7 +16,7 @@ type Props = {
 };
 export default function ScreeningContextPanel({ assessment, hasResult, onEvidence }: Props) {
   const [run, setRun] = useState<ScreeningRun | null>(null);
-  const [state, setState] = useState<'loading' | 'absent' | 'preparing' | 'available' | 'failed'>('loading');
+  const [state, setState] = useState<'checking' | 'absent' | 'preparing' | 'available' | 'unsupported' | 'unauthorized' | 'failed'>('checking');
   const [error, setError] = useState('');
   const [inspected, setInspected] = useState<{ id: string; value: unknown } | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -23,19 +24,41 @@ export default function ScreeningContextPanel({ assessment, hasResult, onEvidenc
   const [exportUrl, setExportUrl] = useState('');
   useEffect(() => () => { if (exportUrl) URL.revokeObjectURL(exportUrl); }, [exportUrl]);
   const [retry, setRetry] = useState(0);
+  const [retryOperation, setRetryOperation] = useState<'read' | 'prepare'>('read');
+  const requestGeneration = useRef(0);
+  const assessmentKey = screeningAssessmentKey(assessment);
+  const { id: assessmentId, site_id: assessmentSiteId, version: assessmentVersion } = assessment;
   useEffect(() => {
     const abort = new AbortController();
-    void requestScreeningContext(assessment, 'GET', abort.signal).then(value => {
-      if (abort.signal.aborted) return;
-      setRun(value);
-      setState(value ? 'available' : 'absent');
+    const generation = ++requestGeneration.current;
+    void readScreeningContext({
+      id: assessmentId, site_id: assessmentSiteId, version: assessmentVersion,
+    }, abort.signal).then(next => {
+      if (abort.signal.aborted || generation !== requestGeneration.current) return;
+      setRun(next.run);
+      setError(next.error);
+      setState(next.state);
+      setRetryOperation('read');
     }).catch((cause: Error) => {
-      if (abort.signal.aborted) return;
+      if (abort.signal.aborted || generation !== requestGeneration.current) return;
+      setRun(null);
       setError(cause.message);
       setState('failed');
+      setRetryOperation('read');
     });
-    return () => abort.abort();
-  }, [assessment, retry]);
+    return () => {
+      requestGeneration.current += 1;
+      abort.abort();
+    };
+  }, [assessmentId, assessmentKey, assessmentSiteId, assessmentVersion, retry]);
+  function applyFailure(cause: unknown, operation: 'read' | 'prepare') {
+    const status = cause instanceof ScreeningContextRequestError ? cause.status : undefined;
+    setRun(null);
+    setError(cause instanceof Error ? cause.message : 'Screening context preparation failed.');
+    setState(status === 409 ? 'unsupported' :
+      status === 401 || status === 403 ? 'unauthorized' : 'failed');
+    setRetryOperation(operation);
+  }
   async function prepare() {
     setState('preparing');
     setError('');
@@ -44,8 +67,7 @@ export default function ScreeningContextPanel({ assessment, hasResult, onEvidenc
       setRun(value);
       setState('available');
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Screening context preparation failed.');
-      setState('failed');
+      applyFailure(cause, 'prepare');
     }
   }
   async function exportContext() {
@@ -91,14 +113,21 @@ export default function ScreeningContextPanel({ assessment, hasResult, onEvidenc
   return <section className="screening-context" aria-label="Screening context">
     <div className="screening-heading"><FileText size={18} /><h2>Screening context</h2></div>
     <p className="nature-muted">Calculated review context, separate from your team’s review status. Pilot rules are not customer-validated requirements.</p>
-    <output>{state === 'loading' ? 'Checking saved context…' : state === 'preparing' ? 'Preparing screening context…' :
-      state === 'available' ? `Available · saved boundary v${assessment.version}` : state === 'failed' ? 'Screening context failed' : 'No screening context prepared for this assessment.'}</output>
+    <output>{state === 'checking' ? 'Checking saved context…' : state === 'preparing' ? 'Preparing screening context…' :
+      state === 'available' ? `Available · saved boundary v${assessment.version}` :
+      state === 'absent' ? 'No screening context prepared for this assessment.' :
+      state === 'unsupported' ? 'Screening context is unsupported for this historical assessment.' :
+      state === 'unauthorized' ? 'Screening context access requires authentication or permission.' :
+      'Screening context could not be loaded.'}</output>
     {error && <p role="alert" className="alert">{error}</p>}
-    {!run && state !== 'loading' && <button disabled={!canPrepare || state === 'preparing'} onClick={() => void prepare()}>
-      {state === 'preparing' ? 'Preparing…' : 'Prepare screening context'}
-    </button>}
-    {state === 'failed' && <button className="text-btn" onClick={() => { setError(''); setState('loading'); setRetry(r => r + 1); }}>Retry saved context</button>}
-    {!canPrepare && !run && <p className="nature-muted">A completed or partial assessment with a saved result is required.</p>}
+    {state === 'absent' && canPrepare && <button onClick={() => void prepare()}>Prepare site context</button>}
+    {state === 'preparing' && <button disabled>Preparing…</button>}
+    {(state === 'failed' || state === 'unauthorized') && <button className="text-btn" onClick={() => {
+      setError('');
+      if (retryOperation === 'prepare') void prepare();
+      else { setState('checking'); setRetry(r => r + 1); }
+    }}>Retry</button>}
+    {state === 'absent' && !canPrepare && <p className="nature-muted">A completed or partial assessment with a saved result is required.</p>}
     {result && run && <>
       <div className="screening-actions">
         <button onClick={() => void exportContext()} disabled={exporting}><Download size={14} />{exporting ? 'Exporting…' : 'Export context'}</button>

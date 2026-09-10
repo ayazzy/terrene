@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { contextPath, requestScreeningContext, screeningValue } from '../app/screening-context.ts';
+import {
+  contextPath, readScreeningContext, requestScreeningContext, screeningAssessmentKey, screeningValue,
+} from '../app/screening-context.ts';
 
 const assessment = { id: 'historical/id', site_id: 'site', version: 1, state: 'completed' };
 function run(version = 1) {
@@ -41,14 +43,44 @@ test('absent is distinct from failed, and a wrong-boundary response fails closed
   await assert.rejects(requestScreeningContext(assessment, 'GET'), /integrity failed/);
 });
 
+test('read states distinguish absent, available, unsupported, access, and retryable failures', async t => {
+  mockRequest(t, async () => Response.json(null));
+  assert.deepEqual(await readScreeningContext(assessment), { state: 'absent', run: null, error: '' });
+  t.mock.method(globalThis, 'fetch', async () => Response.json(run()));
+  assert.equal((await readScreeningContext(assessment)).state, 'available');
+  t.mock.method(globalThis, 'fetch', async () => Response.json({ detail: 'Historical evidence is unsupported.' }, { status: 409 }));
+  assert.equal((await readScreeningContext(assessment)).state, 'unsupported');
+  t.mock.method(globalThis, 'fetch', async () => Response.json({ detail: 'Sign in required.' }, { status: 401 }));
+  assert.equal((await readScreeningContext(assessment)).state, 'unauthorized');
+  t.mock.method(globalThis, 'fetch', async () => Response.json({ detail: 'Service unavailable.' }, { status: 503 }));
+  assert.equal((await readScreeningContext(assessment)).state, 'failed');
+  t.mock.method(globalThis, 'fetch', async () => { throw new TypeError('Network unavailable'); });
+  assert.equal((await readScreeningContext(assessment)).state, 'failed');
+});
+
+test('an unresolved read times out into a finite retryable failure', async t => {
+  mockRequest(t, async () => new Promise(() => {}));
+  const started = Date.now();
+  const result = await readScreeningContext(assessment, undefined, 10);
+  assert.equal(result.state, 'failed');
+  assert.match(result.error, /too long.*retry/i);
+  assert.ok(Date.now() - started < 500);
+});
+
 test('selection changes can abort the previous read', async t => {
   const controller = new AbortController();
   mockRequest(t, async (_path, options) => {
-    assert.equal(options.signal, controller.signal);
+    assert.ok(options.signal instanceof AbortSignal);
     controller.abort();
     options.signal.throwIfAborted();
   });
   await assert.rejects(requestScreeningContext(assessment, 'GET', controller.signal), { name: 'AbortError' });
+});
+
+test('assessment identity is stable across refresh objects and changes across selections', () => {
+  assert.equal(screeningAssessmentKey(assessment), screeningAssessmentKey({ ...assessment }));
+  assert.notEqual(screeningAssessmentKey(assessment), screeningAssessmentKey({ ...assessment, id: 'new' }));
+  assert.notEqual(screeningAssessmentKey(assessment), screeningAssessmentKey({ ...assessment, version: 2 }));
 });
 
 test('values preserve mapped zero, boolean semantics and independent source measurements', () => {
@@ -63,7 +95,11 @@ test('computed panel is keyed to the selected assessment and has no team-decisio
   const panel = readFileSync(new URL('../app/screening-context-panel.tsx', import.meta.url), 'utf8');
   assert.match(page, /<ScreeningContextPanel\s+key=\{assessment.id\}\s+assessment=\{assessment\}/);
   assert.match(panel, /separate from your team’s review status/);
-  assert.match(panel, /abort\.abort\(\)/);
+  assert.match(panel, /requestGeneration\.current \+= 1;\s+abort\.abort\(\)/);
+  assert.match(panel, /\[assessmentId, assessmentKey, assessmentSiteId, assessmentVersion, retry\]/);
+  assert.match(panel, /state === 'unsupported'/);
+  assert.match(panel, /state === 'unauthorized'/);
+  assert.doesNotMatch(panel, /state !== 'loading'/);
   assert.doesNotMatch(panel, /PATCH|\/sites\/|statuses|setSelectedAssessment/);
   assert.match(panel, /contextPath\(assessment.id\) \+ '\/report'/);
   assert.match(panel, /source-semantic context/i);

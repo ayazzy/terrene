@@ -131,6 +131,12 @@ def read_assessment_context(assessment_id: str, *, org: str) -> module_runs.Modu
     assessment = _assessment(assessment_id, org)
     snapshot_id = _origin_snapshot(assessment, org)
     if snapshot_id is None:
+        if (assessment['state'] in ('completed', 'partial')
+                and isinstance(assessment['result'], dict)
+                and not isinstance(assessment['result'].get('environmental_state'), dict)):
+            raise ScreeningUnavailable(
+                'This historical assessment predates supported land evidence. Preserve it and create a new assessment for screening context.'
+            )
         return None
     spec = screening_spec()
     with core.engine.connect() as connection:

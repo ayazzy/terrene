@@ -67,6 +67,8 @@ The current home is a map-first portfolio view with a preserved list workflow. S
 
 Screening Context is an explicit assessment action: POST creates/reuses a snapshot and ModuleRun; GET only discovers or reads stored records. History selection scopes the action to the saved assessment and boundary. Unsupported legacy evidence fails without rewriting it. Export labels current team review status separately from the immutable context. See [Screening Context v1](SCREENING-CONTEXT-V1.md).
 
+The Screening Context read lifecycle is finite: stored, absent, unsupported, authentication/authorization and server/network outcomes are distinct; unresolved reads recover to Retry after 15 seconds. Routine workspace refreshes do not restart an unchanged assessment read, and cancelled or stale assessment responses cannot replace the selected assessment's context.
+
 ## Verification baseline
 
 Housekeeping verification on 10 September 2026:
@@ -80,6 +82,8 @@ Housekeeping verification on 10 September 2026:
 The latest OpenMap Local implementation report also records **160 passed** on disposable PostgreSQL 17/PostGIS 3.5 and real-data verification across 12 Oxford locations. That PostgreSQL suite was not rerun during housekeeping.
 
 Screening Context verification: **176 backend tests passed on SQLite and disposable PostgreSQL/PostGIS**, **24 frontend tests passed**, TypeScript and production build passed. New frontend modules pass focused lint; the changed page retains its existing 20 diagnostics. The report records retained-source replay, browser QA and the pre-existing newer-fixture wetland provenance discrepancy.
+
+The finite Screening Context read-state fix was verified with **177 backend tests on SQLite**, **27 frontend tests**, TypeScript, focused lint, production build and browser QA of stored/absent/unsupported/access/failure/retry/timeout/stale-switch states. PostgreSQL/PostGIS was not rerun for this UI lifecycle fix.
 
 ## Known limitations
 

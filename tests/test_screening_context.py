@@ -91,6 +91,20 @@ def test_unusable_assessments_cannot_prepare(client, module_database, state, res
     assert table_count(module_database, core.module_runs) == 0
 
 
+def test_unsupported_historical_discovery_is_explicit_and_read_only(client, module_database):
+    saved(module_database)
+    with module_database.begin() as connection:
+        connection.execute(update(core.assessments).values(result={'old': True}))
+    response = client.get('/api/assessments/assessment/screening-context')
+    assert response.status_code == 409
+    assert 'predates supported land evidence' in response.json()['detail']
+    assert table_count(module_database, core.land_evidence_snapshots) == 0
+    assert table_count(module_database, core.land_evidence_snapshot_origins) == 0
+    assert table_count(module_database, core.module_runs) == 0
+    with module_database.connect() as connection:
+        assert connection.execute(select(core.assessments.c.result)).scalar_one() == {'old': True}
+
+
 def test_partial_terminal_assessment_with_saved_evidence_is_usable(client, module_database):
     saved(module_database)
     with module_database.begin() as c:
