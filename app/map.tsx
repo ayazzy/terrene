@@ -3,12 +3,19 @@ import { useEffect, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Layers, LocateFixed, ArrowUpRight } from 'lucide-react';
+import type { Geometry, Polygon, LineString, Position } from 'geojson';
+import type { OverlayFinding } from './site-evidence';
+import { layerGroup, layerColor } from './site-evidence';
 type Props = {
-  geometry: any;
-  findings?: any[];
+  geometry: Geometry | null;
+  findings?: OverlayFinding[];
   selected?: string;
   draw?: boolean;
-  onDraw?: (g: any) => void;
+  focusRequest?: number;
+  boundaryLabel?: string;
+  onInspect?: (finding: OverlayFinding) => void;
+  onDraw?: (g: Polygon) => void;
 };
 export default function SiteMap({
   geometry,
@@ -16,17 +23,34 @@ export default function SiteMap({
   selected,
   draw = false,
   onDraw,
+  focusRequest,
+  boundaryLabel = 'Site boundary',
+  onInspect,
 }: Props) {
   const el = useRef<HTMLDivElement>(null),
-    map = useRef<maplibregl.Map | null>(null),
-    points = useRef<number[][]>([]);
-  const [ready, setReady] = useState(false),
+    map = useRef<maplibregl.Map | null>(null);
+  const [projection, setProjection] = useState<maplibregl.Map | null>(null),
+    [points, setPoints] = useState<number[][]>([]),
     [revision, setRevision] = useState(0),
     [base, setBase] = useState(true),
-    [layers, setLayers] = useState(true),
+    [hiddenLayers, setHiddenLayers] = useState<
+      Record<string, number | undefined>
+    >({}),
+    [layersOpen, setLayersOpen] = useState(false),
+    [coordinates, setCoordinates] = useState(''),
     [error, setError] = useState('');
   const drawRef = useRef(draw);
-  drawRef.current = draw;
+  const overlay = useRef<SVGSVGElement>(null);
+  const inspectRef = useRef({ findings, onInspect });
+  useEffect(() => {
+    inspectRef.current = { findings, onInspect };
+  }, [findings, onInspect]);
+  const ready = !!projection;
+  const isVisible = (key: string) =>
+    !(key in hiddenLayers) ||
+    (selected === key && hiddenLayers[key] !== focusRequest);
+  const activeSelection =
+    selected && isVisible(selected) ? selected : undefined;
   const repaint = () => setRevision((v) => v + 1);
   useEffect(() => {
     if (!el.current) return;
@@ -64,7 +88,16 @@ export default function SiteMap({
     });
     map.current = m;
     m.addControl(new maplibregl.NavigationControl(), 'top-right');
-    m.on('load', () => setReady(true));
+    m.addControl(
+      new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }),
+      'bottom-right',
+    );
+    m.on('mousemove', (e) =>
+      setCoordinates(
+        `${Math.abs(e.lngLat.lat).toFixed(5)}° ${e.lngLat.lat >= 0 ? 'N' : 'S'} · ${Math.abs(e.lngLat.lng).toFixed(5)}° ${e.lngLat.lng >= 0 ? 'E' : 'W'}`,
+      ),
+    );
+    m.on('load', () => setProjection(m));
     m.on('move', repaint);
     m.on('resize', repaint);
     m.on('error', () =>
@@ -74,8 +107,24 @@ export default function SiteMap({
     );
     m.on('click', (e) => {
       if (drawRef.current) {
-        points.current.push([e.lngLat.lng, e.lngLat.lat]);
-        repaint();
+        setPoints((vertices) => [...vertices, [e.lngLat.lng, e.lngLat.lat]]);
+      } else {
+        // Hit-test the projected evidence on click without intercepting map drag/zoom.
+        const hit = [
+          ...(overlay.current?.querySelectorAll<SVGPathElement>(
+            'path[data-layer]:not([data-layer="site"])',
+          ) || []),
+        ]
+          .reverse()
+          .find(
+            (element) =>
+              element.isPointInFill(new DOMPoint(e.point.x, e.point.y)) ||
+              element.isPointInStroke(new DOMPoint(e.point.x, e.point.y)),
+          );
+        const finding = inspectRef.current.findings.find(
+          (f) => f.key === hit?.dataset.layer,
+        );
+        if (finding) inspectRef.current.onInspect?.(finding);
       }
     });
     const observer = new ResizeObserver(() => m.resize());
@@ -87,103 +136,110 @@ export default function SiteMap({
     };
   }, []);
   useEffect(() => {
-    points.current = [];
-    repaint();
+    drawRef.current = draw;
     if (map.current)
       map.current.getCanvas().style.cursor = draw ? 'crosshair' : '';
   }, [draw]);
-  function fit(g: any) {
+  function fit(g: Geometry | null) {
     const m = map.current;
     if (!m || !g) return;
     const bounds = new maplibregl.LngLatBounds();
-    const walk = (v: any) => {
+    const walk = (v: Position | Position[] | Position[][] | Position[][][]) => {
       if (typeof v[0] === 'number') bounds.extend(v as [number, number]);
-      else v.forEach(walk);
+      else (v as (Position | Position[] | Position[][])[]).forEach(walk);
     };
-    if (g.coordinates) walk(g.coordinates);
+    if ('coordinates' in g) walk(g.coordinates);
     if (!bounds.isEmpty())
       m.fitBounds(bounds, { padding: 65, maxZoom: 16, duration: 400 });
   }
   useEffect(() => {
     if (ready) fit(geometry);
-  }, [geometry, ready]);
+  }, [geometry, ready, projection]);
   useEffect(() => {
     if (ready) {
-      const f = findings.find((f) => f.key === selected);
-      if (f?.geometry) fit(f.geometry);
+      const f = inspectRef.current.findings.find((f) => f.key === selected);
+      if (f?.geometry) {
+        fit(f.geometry);
+      }
     }
-  }, [selected, ready]);
+  }, [selected, focusRequest, ready, projection]);
   useEffect(() => {
-    if (ready)
-      map.current?.setLayoutProperty(
+    if (ready && map.current?.isStyleLoaded())
+      map.current.setLayoutProperty(
         'base',
         'visibility',
         base ? 'visible' : 'none',
       );
-  }, [base, ready]);
+  }, [base, ready, projection]);
   // Exact bounded server geometries rendered in screen coordinates from MapLibre's
   // projection. SVG avoids blob-worker dependence and keeps overlays inspectable.
-  function path(g: any): string {
-    if (!g || !map.current || !ready) return '';
+  function path(g: Geometry | null): string {
+    if (!g || !projection || !ready) return '';
     const ring = (coords: number[][], close = true) =>
       coords
         .map((p, i) => {
-          const q = map.current!.project(p as [number, number]);
+          const q = projection!.project(p as [number, number]);
           return (i ? 'L' : 'M') + q.x.toFixed(2) + ',' + q.y.toFixed(2);
         })
         .join(' ') + (close ? ' Z' : '');
     if (g.type === 'Polygon')
-      return g.coordinates.map((r: any) => ring(r)).join(' ');
+      return g.coordinates.map((r) => ring(r)).join(' ');
     if (g.type === 'MultiPolygon')
-      return g.coordinates
-        .flatMap((p: any) => p.map((r: any) => ring(r)))
-        .join(' ');
+      return g.coordinates.flatMap((p) => p.map((r) => ring(r))).join(' ');
     if (g.type === 'LineString') return ring(g.coordinates, false);
+    if (g.type === 'MultiLineString')
+      return g.coordinates.map((r: number[][]) => ring(r, false)).join(' ');
     if (g.type === 'GeometryCollection')
       return g.geometries.map(path).join(' ');
     return '';
   }
-  const draft =
-    points.current.length > 1
-      ? { type: 'LineString', coordinates: points.current }
-      : null;
+  const draft: LineString | null =
+    points.length > 1 ? { type: 'LineString', coordinates: points } : null;
   return (
     <div className="map-wrap">
       <div ref={el} className="map-canvas" />
       <svg
+        ref={overlay}
         className="geography-overlay"
         aria-label="Site boundary and measured overlaps"
         data-revision={revision}
       >
+        {findings
+          .filter((f) => f.geometry && isVisible(f.key))
+          .map((f) => (
+            <path
+              key={f.key}
+              data-layer={f.key}
+              data-selected={activeSelection === f.key}
+              d={path(f.geometry)}
+              fill={layerColor(f.key)}
+              fillOpacity={
+                activeSelection
+                  ? activeSelection === f.key
+                    ? 0.36
+                    : 0.08
+                  : 0.2
+              }
+              stroke={layerColor(f.key)}
+              strokeWidth={activeSelection === f.key ? 3 : 1.5}
+              fillRule="evenodd"
+            >
+              <title>
+                {f.dataset} · {f.percent ?? 0}% overlap
+              </title>
+            </path>
+          ))}
         {geometry && (
           <path
             data-layer="site"
             d={path(geometry)}
-            fill="#18785b"
-            fillOpacity=".12"
-            stroke="#12634a"
+            fill="var(--wetland)"
+            fillOpacity=".05"
+            stroke="var(--action-primary)"
             strokeWidth="3"
             fillRule="evenodd"
           />
         )}
-        {layers &&
-          findings
-            .filter((f) => f.geometry)
-            .map((f) => (
-              <path
-                key={f.key}
-                data-layer={f.key}
-                data-selected={selected === f.key}
-                d={path(f.geometry)}
-                fill={selected === f.key ? '#df951d' : '#d59538'}
-                fillOpacity={
-                  selected ? (selected === f.key ? 0.68 : 0.12) : 0.38
-                }
-                stroke="#a36918"
-                strokeWidth={selected === f.key ? 3 : 1.5}
-                fillRule="evenodd"
-              />
-            ))}
         {draft && (
           <path
             d={path(draft)}
@@ -195,8 +251,8 @@ export default function SiteMap({
         )}
         {draw &&
           ready &&
-          points.current.map((p, i) => {
-            const q = map.current!.project(p as [number, number]);
+          points.map((p, i) => {
+            const q = projection!.project(p as [number, number]);
             return (
               <circle
                 key={i}
@@ -211,45 +267,141 @@ export default function SiteMap({
           })}
       </svg>
       {error && <div className="map-error">{error}</div>}
-      <div className="map-label">
-        OXFORDSHIRE <span>England pilot</span>
+      <div className="map-toolbar">
+        <button
+          aria-expanded={layersOpen}
+          aria-controls="environmental-layers"
+          onClick={() => setLayersOpen((value) => !value)}
+        >
+          <Layers size={16} /> Layers{' '}
+          <span className="layer-count">
+            {findings.filter((f) => f.geometry && isVisible(f.key)).length}
+          </span>
+        </button>
+        <button
+          aria-label="Fit site boundary"
+          title="Fit site boundary"
+          disabled={!geometry}
+          onClick={() => fit(geometry)}
+        >
+          <LocateFixed size={17} />
+        </button>
       </div>
-      <div className="legend">
-        <b>Map layers</b>
-        <label>
-          <Checkbox checked={base} onCheckedChange={(v) => setBase(!!v)} />{' '}
-          Basemap
-        </label>
-        <label>
-          <Checkbox checked={layers} onCheckedChange={(v) => setLayers(!!v)} />{' '}
-          Evidence overlaps
-        </label>
-        <div>
-          <i className="swatch boundary" /> Site boundary
-        </div>
-        <div>
-          <i className="swatch overlap" /> Mapped overlap
-        </div>
+      {layersOpen && (
+        <section
+          id="environmental-layers"
+          className="layer-control"
+          aria-label="Environmental layers"
+        >
+          <div className="layer-control-title">
+            <strong>Environmental layers</strong>
+            <button className="text-btn" onClick={() => setLayersOpen(false)}>
+              Close
+            </button>
+          </div>
+          <p>Saved intersections · inside this boundary</p>
+          <label className="base-layer" htmlFor="map-basemap">
+            <Checkbox
+              id="map-basemap"
+              checked={base}
+              onCheckedChange={(v) => setBase(!!v)}
+            />{' '}
+            OpenStreetMap basemap
+          </label>
+          {[...new Set(findings.map((f) => layerGroup(f.key)))].map((group) => (
+            <div className="layer-group" key={group}>
+              <h3>{group}</h3>
+              {findings
+                .filter((f) => layerGroup(f.key) === group)
+                .map((f) => (
+                  <div className="layer-row" key={f.key}>
+                    <label htmlFor={`layer-${f.key}`}>
+                      <Checkbox
+                        id={`layer-${f.key}`}
+                        aria-label={`Show ${f.dataset}`}
+                        disabled={!f.geometry}
+                        checked={!!f.geometry && isVisible(f.key)}
+                        onCheckedChange={(value) =>
+                          setHiddenLayers((keys) => {
+                            const next = { ...keys };
+                            if (value) delete next[f.key];
+                            else next[f.key] = focusRequest;
+                            return next;
+                          })
+                        }
+                      />
+                      <i
+                        className="layer-swatch"
+                        style={{ background: layerColor(f.key) }}
+                      />
+                      <span>
+                        {f.dataset}
+                        <small>
+                          {f.measured === null
+                            ? 'Evidence unavailable'
+                            : !f.geometry
+                              ? 'No mapped overlap'
+                              : `${f.percent ?? 0}% overlap`}
+                        </small>
+                      </span>
+                    </label>
+                    <button
+                      className="icon-btn"
+                      aria-label={`Inspect ${f.dataset} evidence`}
+                      onClick={() => onInspect?.(f)}
+                    >
+                      <ArrowUpRight size={14} />
+                    </button>
+                  </div>
+                ))}
+            </div>
+          ))}
+          {!findings.length && (
+            <p>Run screening to obtain saved reference-layer observations.</p>
+          )}
+          <p className="layer-footnote">
+            Terrain, watercourse and land-cover measurements are inspectable in
+            analysis. No displayable layers are retained for those inputs.
+          </p>
+        </section>
+      )}
+      <div className="map-boundary-label">
+        <i className="swatch boundary" />
+        {boundaryLabel}
+        <small>{coordinates || 'WGS84 · EPSG:4326'}</small>
       </div>
+      {selected &&
+        findings.find(
+          (f) => f.key === selected && f.geometry && isVisible(f.key),
+        ) && (
+          <div className="map-selection">
+            <i
+              className="layer-swatch"
+              style={{ background: layerColor(selected) }}
+            />
+            <span>
+              Highlighted: {findings.find((f) => f.key === selected)?.dataset}
+            </span>
+          </div>
+        )}
       {draw && (
         <div className="draw-bar">
-          <span>Click to place vertices · {points.current.length} points</span>
+          <span>Click to place vertices · {points.length} points</span>
           <button
-            disabled={!points.current.length}
+            disabled={!points.length}
             onClick={() => {
-              points.current.pop();
-              repaint();
+              setPoints((vertices) => vertices.slice(0, -1));
             }}
           >
             Undo
           </button>
           <button
-            disabled={points.current.length < 3}
+            disabled={points.length < 3}
             className="primary"
             onClick={() =>
               onDraw?.({
                 type: 'Polygon',
-                coordinates: [[...points.current, points.current[0]]],
+                coordinates: [[...points, points[0]]],
               })
             }
           >

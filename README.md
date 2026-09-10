@@ -2,7 +2,7 @@
 
 An England-first environmental screening and modelling application. The existing parcel workflow now includes CRC Earth Schema, source provenance and a deterministic Wetland Restoration Model v0.1. Real missing inputs remain unknown; no BNG units are inferred.
 
-See [Nature Intelligence](docs/NATURE-INTELLIGENCE.md) for sources, canonical variables, exact calculations and limitations, and [12 real parcel results](docs/REAL-VERIFICATION.md) for evidence. EA 1m DTM terrain, OS Open Rivers and ESA WorldCover are connected. Required-input coverage rose from 1/10 to 5/10; real physical/hydrological components are inspectable. Overall rankings remain **insufficient data** because soil drainage, actual wetland extent/condition and complete constraints are still missing. No thresholds were weakened to force a result.
+See [Nature Intelligence](docs/NATURE-INTELLIGENCE.md) for sources, canonical variables, exact calculations and limitations, [OS OpenMap – Local built-world objects](docs/OPENMAP-LOCAL-BUILT-WORLD.md) for the CRC Earth object/relationship iteration, and [12 real parcel results](docs/REAL-VERIFICATION.md) for evidence. EA 1m DTM terrain, OS Open Rivers and ESA WorldCover are connected. Required-input coverage rose from 1/10 to 5/10; real physical/hydrological components are inspectable. Overall rankings remain **insufficient data** because soil drainage, actual wetland extent/condition and complete constraints are still missing. No thresholds were weakened to force a result.
 
 ## Run locally
 
@@ -35,9 +35,11 @@ The current checked-out environment already has two persisted verification sites
 
 ## Main workflow
 
+Sites now opens as a dark geographic portfolio overview, framed around the saved boundaries. Select a site to open its analysis, or switch to **List** for the existing search, filtering, review and comparison tools. **New site** opens the existing drawing/upload workflow from either view. See [map-first home implementation and QA](docs/UI-STAGE-3-MAP-HOME.md).
+
 1. New site → enter name/notes → draw and finish a boundary, or upload a single GeoJSON Polygon/MultiPolygon.
 2. Save → Run screening. The persisted job progresses queued → running → completed or partial. The page polls active jobs. This job status describes source-layer coverage; wetland-model data sufficiency is reported separately.
-3. Open Wetland model for component scores, missing inputs, calculation rules and traceable evidence. Download the full model/state JSON for audit. Open Findings and click a finding to inspect its exact source, version, measurement, method and limitations, and highlight the clipped geometry. Map controls toggle basemap/evidence layers.
+3. Open a site into the map workspace. Overview separates physical potential, restoration need, feasibility, evidence completeness and unvalidated model confidence. Physical, Ecology and Constraints expose reasons; Evidence contains missing inputs, observations, source lineage and JSON export. History switches both analysis and the saved boundary. The Layers control independently toggles saved intersections; evidence links highlight their exact footprint. See [Stage 2 UI implementation and verification](docs/UI-STAGE-2.md).
 4. Save Unreviewed, Investigate, Hold or Archived as a **team decision**. This never changes calculated findings.
 5. Select two or three sites in the workspace → Compare selected.
 6. Export report opens a preview of a self-contained HTML report. Use Download HTML or Print / Save as PDF. Every finding includes evidence and limitations. Historical reports are explicitly marked.
@@ -50,8 +52,10 @@ For a first real reference workflow, upload `docs/port-meadow-reference.geojson`
 - React + TypeScript, Vite through the environment-mandated **Vinext Sites scaffold**, Tailwind and the generated shadcn/Base UI components. This is the documented deviation from plain Vite React. There is no additional frontend service.
 - MapLibre interactive raster basemap with configurable `NEXT_PUBLIC_BASEMAP_URL`; bounded vector evidence uses exact MapLibre-projected SVG paths, including holes and MultiPolygons. This avoids a browser blob-worker rendering issue observed in verification. It is geographic data rendering, not a static mock map.
 - One FastAPI API and one Python worker, sharing `backend/core.py` and SQLAlchemy models. Shapely/pyproj implement the narrow geometry pipeline; GeoPandas was unnecessary for these bounded GeoJSON features.
-- Supabase-compatible Postgres/PostGIS: queryable geometry columns, GiST indexes, server-side candidate queries. `python -m backend.migrate` is idempotent schema migrations 1–2 (v2 adds a nullable pinned model specification) and applies RLS hardening.
+- Supabase-compatible Postgres/PostGIS: queryable geometry columns, GiST indexes, server-side candidate queries. `python -m backend.migrate` applies the five idempotent additive migrations (including pinned model specifications, immutable evidence snapshots/ModuleRuns and retained source-feature attributes) and RLS hardening.
 - The assessments table also acts as the jobs table. A unique submission fingerprint covers organization, site, boundary version, pinned dataset versions and model-configuration signature. Workers use `FOR UPDATE SKIP LOCKED`, 120-second leases, fencing tokens, maximum three attempts and exponential retry delays. Expired final attempts terminate as failed. SQLite uses conditional atomic updates for local testing.
+- `land_evidence_v1` snapshots are an additive, independently identified projection of saved assessments. Their validated manifests live in private content-addressed object storage; relational tables index parcel/boundary membership, observations, gaps/capabilities, source/raw references and lineage. Wetland still reads the unchanged assessment in this stage. See [snapshot persistence](docs/LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md).
+- Registry v3 also carries a narrow typed union of OpenMap Local Building, FunctionalSite, RailwayTrack and RailwayStation objects plus deterministic parcel relationships. Derived building/site unions and rail length/distance observations preserve object lineage; WorldCover and PHI remain separate. The wetland binding and ModuleRuns do not consume these objects.
 - Uploads, versioned source snapshots and report exports live in object storage. Local development uses `data/objects`; hosted mode requires an R2 bucket and S3 credentials. Database records contain structured evidence/geometries, not binary archives.
 - Immutable dataset versions are shared once across sites. Only server-selected/clipped reference geography is sent to the UI. Workspace sites/history are currently fetched without pagination, so this v0 is for small portfolios.
 

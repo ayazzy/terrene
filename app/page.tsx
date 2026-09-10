@@ -1,7 +1,21 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import NaturePanel from './nature-panel';
+import {
+  readResource,
+  criticalReadFailure,
+  isAccessFailure,
+  type ReadFailure,
+} from './refresh-state';
+import NaturePanel, { type Observation } from './nature-panel';
+import {
+  linkedFindings,
+  variableLabel,
+  observationValue,
+} from './site-evidence';
+import OverlayFindings from './overlay-findings';
+import type { OverlayFinding } from './site-evidence';
+import SiteMap from './map';
 import {
   EvidenceBadge,
   WorkspaceLoading,
@@ -13,7 +27,6 @@ import {
   ArrowUpRight,
   ArrowLeft,
   MapPin,
-  Layers,
   Download,
   Play,
   Upload,
@@ -28,6 +41,8 @@ import {
   PanelLeftOpen,
   Menu,
   Database,
+  Map as MapIcon,
+  List,
 } from 'lucide-react';
 import {
   Dialog,
@@ -60,9 +75,9 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
-const SiteMap = dynamic(() => import('./map'), {
+const PortfolioMap = dynamic(() => import('./portfolio-map'), {
   ssr: false,
-  loading: () => <div className="map-wrap loading">Loading map…</div>,
+  loading: () => <div className="portfolio-map portfolio-loading">Loading saved-site map…</div>,
 });
 const statuses = ['Unreviewed', 'Investigate', 'Hold', 'Archived'];
 async function api(path: string, method = 'GET', body?: any): Promise<any> {
@@ -77,9 +92,14 @@ async function api(path: string, method = 'GET', body?: any): Promise<any> {
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!r.ok) {
-    const e: any = await r.json();
-    throw new Error(
-      typeof e.detail === 'string' ? e.detail : JSON.stringify(e.detail),
+    const e: any = await r
+      .json()
+      .catch(() => ({ detail: `Request failed (${r.status})` }));
+    throw Object.assign(
+      new Error(
+        typeof e.detail === 'string' ? e.detail : JSON.stringify(e.detail),
+      ),
+      { status: r.status },
     );
   }
   return r.json();
@@ -109,11 +129,27 @@ function Status({
   );
 }
 export default function Home() {
+  const analysisPanel = useRef<HTMLDivElement>(null);
   const [sites, setSites] = useState<any[]>([]),
     [datasets, setDatasets] = useState<any[]>([]),
     [active, setActive] = useState<string | null>(null),
     [view, setView] = useState('workspace'),
+    [sitesView, setSitesView] = useState('map'),
+    [selectedMapSite, setSelectedMapSite] = useState<string | null>(null),
     [error, setError] = useState(''),
+    [readErrors, setReadErrors] = useState<{
+      sites?: ReadFailure | null;
+      datasets?: ReadFailure | null;
+      health?: ReadFailure | null;
+    }>({}),
+    [hasLoadedSites, setHasLoadedSites] = useState(false),
+    [refreshing, setRefreshing] = useState(false),
+    [historyRead, setHistoryRead] = useState<{
+      siteId: string | null;
+      failure: ReadFailure | null;
+      loaded: boolean;
+    }>({ siteId: null, failure: null, loaded: false }),
+    [historyRetry, setHistoryRetry] = useState(0),
     [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
     [newSite, setNewSite] = useState(false),
@@ -128,7 +164,11 @@ export default function Home() {
     [history, setHistory] = useState<any[]>([]),
     [selectedAssessment, setSelectedAssessment] = useState<string | null>(null),
     [finding, setFinding] = useState<any>(null),
-    [tab, setTab] = useState('nature'),
+    [tab, setTab] = useState('overview'),
+    [panelOpen, setPanelOpen] = useState(true),
+    [mapFocus, setMapFocus] = useState<{ key: string; request: number } | null>(
+      null,
+    ),
     [mode, setMode] = useState(''),
     [email, setEmail] = useState(''),
     [password, setPassword] = useState(''),
@@ -143,33 +183,115 @@ export default function Home() {
     result = assessment?.result,
     stale = current && assessment && current.version !== assessment.version,
     newerData =
-      result && datasets.some((d) => !assessment.dataset_ids?.includes(d.id));
+      result &&
+      !readErrors.datasets &&
+      datasets.some((d) => !assessment.dataset_ids?.includes(d.id));
+  const historyFailure =
+    historyRead.siteId === active ? historyRead.failure : null;
+  const criticalRead = criticalReadFailure(
+    { ...readErrors, history: historyFailure },
+    hasLoadedSites,
+  );
+  const criticalError =
+    error ||
+    (criticalRead
+      ? isAccessFailure(criticalRead)
+        ? `Sign-in or access required: ${criticalRead.message}`
+        : `Saved sites unavailable: ${criticalRead.message}`
+      : '');
+  const refreshFailures = [
+    {
+      label: 'Latest site details and assessment status',
+      failure: readErrors.sites,
+    },
+    { label: 'Reference dataset updates', failure: readErrors.datasets },
+    { label: 'Live service status', failure: readErrors.health },
+    { label: 'Assessment history', failure: historyFailure },
+  ].filter((item) => item.failure);
+  const showRefreshNotice = refreshFailures.length > 0 && !criticalRead;
+  useEffect(() => {
+    analysisPanel.current?.scrollTo({ top: 0 });
+  }, [tab, assessment?.id]);
   const reload = useCallback(async () => {
-    try {
-      const [s, d, h] = await Promise.all([
-        api('/sites'),
-        api('/datasets'),
-        api('/health'),
-      ]);
-      setSites(s);
-      setDatasets(d);
-      setMode(h.mode);
-      setError('');
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
+    setRefreshing(true);
+    const [siteRead, datasetRead, healthRead] = await Promise.all([
+      readResource(() => api('/sites')),
+      readResource(() => api('/datasets')),
+      readResource(() => api('/health')),
+    ]);
+    if (!siteRead.failure && 'data' in siteRead) {
+      setSites(siteRead.data);
+      setHasLoadedSites(true);
     }
+    if (!datasetRead.failure && 'data' in datasetRead)
+      setDatasets(datasetRead.data);
+    if (!healthRead.failure && 'data' in healthRead)
+      setMode(healthRead.data.mode);
+    setReadErrors({
+      sites: siteRead.failure,
+      datasets: datasetRead.failure,
+      health: healthRead.failure,
+    });
+    setLoading(false);
+    setRefreshing(false);
   }, []);
   useEffect(() => {
-    reload();
+    void reload();
   }, [reload]);
   useEffect(() => {
     if (!active) return;
-    api('/sites/' + active + '/assessments')
-      .then(setHistory)
-      .catch((e) => setError(e.message));
-  }, [active, sites]);
+    let cancelled = false;
+    void readResource(() => api('/sites/' + active + '/assessments')).then(
+      (read) => {
+        if (cancelled) return;
+        if (!read.failure && 'data' in read) setHistory(read.data);
+        setHistoryRead({
+          siteId: active,
+          failure: read.failure,
+          loaded: !read.failure,
+        });
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [active, sites, historyRetry]);
+  function retryReads() {
+    setHistoryRetry((value) => value + 1);
+    void reload();
+  }
+  const refreshNotice = showRefreshNotice && (
+    <section className="refresh-notice" aria-label="Live refresh availability">
+      <div className="refresh-notice-heading">
+        <p role="status">
+          <strong>Live refresh unavailable</strong>
+          <span>
+            {result
+              ? 'Saved assessment evidence remains available.'
+              : 'Showing the site data already loaded.'}
+          </span>
+        </p>
+        <button className="text-btn" disabled={refreshing} onClick={retryReads}>
+          <RefreshCw size={13} />
+          {refreshing ? 'Retrying…' : 'Retry'}
+        </button>
+      </div>
+      <details>
+        <summary>Unavailable data · {refreshFailures.length}</summary>
+        <ul>
+          {refreshFailures.map(({ label, failure }) => (
+            <li key={label}>
+              <strong>{label}</strong>
+              <span>{failure?.message}</span>
+            </li>
+          ))}
+        </ul>
+        <p>
+          Values already loaded are retained. Live changes could not be checked.
+        </p>
+      </details>
+    </section>
+  );
   useEffect(() => {
     if (!sites.some((s) => ['queued', 'running'].includes(s.assessment?.state)))
       return;
@@ -222,10 +344,16 @@ export default function Home() {
   }
   function openSite(s: any) {
     setActive(s.id);
+    setHistory([]);
+    setMapFocus(null);
+    setPanelOpen(true);
     setView('site');
     setSelectedAssessment(null);
     setFinding(null);
-    setTab('nature');
+    setTab('overview');
+  }
+  function showOnMap(key: string) {
+    setMapFocus((previous) => ({ key, request: (previous?.request || 0) + 1 }));
   }
   function startNew() {
     setEditing(false);
@@ -252,6 +380,10 @@ export default function Home() {
       setActive(s.id);
       setView('site');
       setSelectedAssessment(null);
+      setMapFocus(null);
+      setFinding(null);
+      setTab('overview');
+      setPanelOpen(true);
     });
   }
   async function upload(file?: File) {
@@ -303,7 +435,7 @@ export default function Home() {
     <main
       className={`crc-shell${navigationCompact ? ' nav-compact' : ''}${mobileNavigation ? ' nav-mobile-open' : ''}`}
     >
-      <aside aria-label="Primary navigation">
+      <aside id="primary-navigation" aria-label="Primary navigation">
         <div className="brand">
           <span className="brand-mark" aria-hidden="true">
             <Orbit />
@@ -312,11 +444,13 @@ export default function Home() {
           <button
             className="sidebar-toggle"
             aria-label={
-              navigationCompact ? 'Expand navigation' : 'Collapse navigation'
+              navigationCompact ? 'Expand sidebar' : 'Collapse sidebar'
             }
             title={
-              navigationCompact ? 'Expand navigation' : 'Collapse navigation'
+              navigationCompact ? 'Expand sidebar' : 'Collapse sidebar'
             }
+            aria-controls="primary-navigation"
+            aria-expanded={!navigationCompact}
             onClick={() => setNavigationCompact((value) => !value)}
           >
             {navigationCompact ? <PanelLeftOpen /> : <PanelLeftClose />}
@@ -366,11 +500,11 @@ export default function Home() {
           </span>
           <div className="sidebar-status-row">
             <span>Evidence services</span>
-            <strong>Operational</strong>
+            <strong>{readErrors.health ? 'Unavailable' : 'Operational'}</strong>
           </div>
           <div className="sidebar-status-row">
             <span>Workspace</span>
-            <strong>{mode === 'development' ? 'Local' : 'Organisation'}</strong>
+            <strong>{mode ? (mode === 'development' ? 'Local' : 'Organisation') : 'Unknown'}</strong>
           </div>
         </div>
         <footer>
@@ -381,7 +515,7 @@ export default function Home() {
           </div>
         </footer>
       </aside>
-      <section className="main">
+      <section className={`main${view === 'site' ? ' analysis-main' : ''}${view === 'workspace' && sitesView === 'map' ? ' portfolio-main' : ''}`}>
         <header>
           <button
             className="mobile-menu"
@@ -402,30 +536,43 @@ export default function Home() {
           </span>
           <span className="pilot">
             <span className="environment-status">
-              <span className="live-dot" /> Live evidence
+              <span className={`live-dot${refreshFailures.length ? ' is-unavailable' : ''}`} />{' '}
+              {refreshFailures.length ? 'Refresh unavailable' : 'Live evidence'}
             </span>
             <b>OX</b>
           </span>
         </header>
-        {error && (
+        {criticalError && (
           <div role="alert" className="alert error">
-            {error}
-            <button onClick={reload}>
-              <RefreshCw size={14} /> Retry
-            </button>
+            {criticalError}
+            {criticalRead && (
+              <button disabled={refreshing} onClick={retryReads}>
+                <RefreshCw size={14} /> Retry
+              </button>
+            )}
           </div>
         )}
+        {view !== 'site' && refreshNotice}
         {view === 'workspace' && (
-          <>
+          <Tabs className="sites-views" value={sitesView} onValueChange={(value) => setSitesView(String(value))}>
+            <div className="sites-view-bar">
+              <TabsList aria-label="Sites view">
+                <TabsTrigger value="map"><MapIcon size={16} /> Map</TabsTrigger>
+                <TabsTrigger value="list"><List size={16} /> List</TabsTrigger>
+              </TabsList>
+              <button className="primary" onClick={startNew}><Plus size={18} /> New site</button>
+            </div>
+            <TabsContent value="map" className="sites-map-panel">
+              <PortfolioMap sites={sites} selected={selectedMapSite} onSelect={setSelectedMapSite} onOpen={openSite}
+                loading={loading} unavailable={!hasLoadedSites && !!readErrors.sites} />
+            </TabsContent>
+            <TabsContent value="list">
             <div className="heading">
               <div>
                 <p className="eyebrow">LAND OPPORTUNITIES</p>
                 <h1>Your workspace</h1>
                 <p>Identify what deserves a closer look.</p>
               </div>
-              <button className="primary" onClick={startNew}>
-                <Plus size={18} /> New site
-              </button>
             </div>
             <div className="workspace-content">
               <div className="workspace-summary">
@@ -489,6 +636,12 @@ export default function Home() {
               </div>
               {loading ? (
                 <WorkspaceLoading />
+              ) : !hasLoadedSites && readErrors.sites ? (
+                <WorkspaceState
+                  kind="error"
+                  title="Saved sites could not be loaded"
+                  description="Retry the request above to load your workspace."
+                />
               ) : !filtered.length ? (
                 <WorkspaceState
                   kind="empty"
@@ -622,19 +775,24 @@ export default function Home() {
                 geographic observations and provisional wetland model outputs.
               </p>
             </div>
-          </>
+            </TabsContent>
+          </Tabs>
         )}
         {view === 'site' && current && (
-          <>
+          <section
+            className="site-workspace"
+            aria-label="Site analysis workspace"
+          >
             <div className="heading site-heading">
-              <div>
+              <div className="site-context">
                 <button className="back" onClick={() => setView('workspace')}>
                   <ArrowLeft size={14} /> All sites
                 </button>
                 <h1>{current.name}</h1>
                 <p>
-                  <MapPin size={14} /> England · Boundary v{current.version}{' '}
-                  {result && !stale && ' · ' + fmt(result.area_ha) + ' ha'}
+                  <MapPin size={14} /> England · Boundary v
+                  {stale ? assessment.version : current.version}
+                  {result && ' · ' + fmt(result.area_ha) + ' ha'}
                 </p>
               </div>
               <div className="actions">
@@ -651,6 +809,7 @@ export default function Home() {
                     act(async () => {
                       await api('/sites/' + active + '/assessments', 'POST');
                       setSelectedAssessment(null);
+                      setMapFocus(null);
                     })
                   }
                 >
@@ -661,9 +820,9 @@ export default function Home() {
                 </button>
               </div>
             </div>
-            <div className="reviewbar">
-              <span>
-                Review decision{' '}
+            <div className="analysis-context-bar">
+              <span className="compact-team-review">
+                Team decision{' '}
                 <Status
                   value={current.status}
                   onChange={(status) =>
@@ -677,166 +836,209 @@ export default function Home() {
                 />
               </span>
               <span>
-                Boundary v{current.version}
-                <button
-                  className="text-btn"
-                  onClick={() => {
-                    setEditing(true);
-                    setName(current.name);
-                    setNotes(current.notes);
-                    setGeometry(null);
-                    setRawGeometry(null);
-                    setNewSite(true);
-                  }}
+                <EvidenceBadge
+                  state={
+                    assessment?.state === 'completed'
+                      ? 'available'
+                      : assessment?.state === 'failed'
+                        ? 'warning'
+                        : assessment
+                          ? 'partial'
+                          : 'missing'
+                  }
                 >
-                  <PenLine size={14} /> Edit site
-                </button>
+                  {assessment
+                    ? `Assessment ${assessment.state}`
+                    : 'Not assessed'}
+                </EvidenceBadge>
+                <span className="context-date">
+                  {assessment
+                    ? `Assessed ${new Date(assessment.created).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}`
+                    : 'No assessment saved'}
+                </span>
               </span>
+              <button
+                className="text-btn"
+                onClick={() => {
+                  setEditing(true);
+                  setName(current.name);
+                  setNotes(current.notes);
+                  setGeometry(null);
+                  setRawGeometry(null);
+                  setNewSite(true);
+                }}
+              >
+                <PenLine size={14} /> Edit boundary / site
+              </button>
             </div>
             {stale && (
               <div className="alert">
-                Historical results · boundary v{assessment.version}. Run a new
-                screening for boundary v{current.version}.
+                Viewing saved boundary v{assessment.version}; current site is v
+                {current.version}. Run screening to assess the current boundary.
               </div>
             )}
+            {selectedAssessment &&
+              selectedAssessment !== current.assessment?.id && (
+                <div className="assessment-snapshot">
+                  Historical assessment ·{' '}
+                  {new Date(assessment.created).toLocaleString('en-GB')}
+                  <button
+                    className="text-btn"
+                    onClick={() => {
+                      setSelectedAssessment(null);
+                      setMapFocus(null);
+                    }}
+                  >
+                    Return to latest
+                  </button>
+                </div>
+              )}
             {newerData && (
-              <div className="alert">
-                Newer reference data is available. These saved findings retain
-                their original sources; run screening to use the latest imports.
-              </div>
+              <details className="data-update-note">
+                <summary>Newer reference data available</summary>
+                <p>
+                  Saved findings retain their original sources. Run screening to
+                  use the latest imports.
+                </p>
+              </details>
             )}
-            <div className="investigation">
-              <SiteMap
-                geometry={stale ? assessment.geometry : current.geometry}
-                findings={result?.findings}
-                selected={finding?.key}
-              />
-              <div className="findings-panel">
+            <div
+              className={`investigation${panelOpen ? '' : ' panel-collapsed'}`}
+            >
+              <div className="analysis-map">
+                <SiteMap
+                  key={assessment?.id || current.id}
+                  geometry={stale ? assessment.geometry : current.geometry}
+                  findings={result?.findings}
+                  selected={mapFocus?.key}
+                  focusRequest={mapFocus?.request}
+                  boundaryLabel={`Boundary v${stale ? assessment.version : current.version}${stale ? ' · historical' : ''}`}
+                  onInspect={(f) => {
+                    showOnMap(f.key);
+                    setFinding(f);
+                  }}
+                />
+                {!panelOpen && (
+                  <button
+                    className="reopen-analysis"
+                    onClick={() => setPanelOpen(true)}
+                  >
+                    <PanelLeftOpen size={16} /> Open analysis
+                  </button>
+                )}
+              </div>
+              <div
+                className="findings-panel"
+                ref={analysisPanel}
+                hidden={!panelOpen}
+              >
+                <div className="analysis-panel-heading">
+                  <span>
+                    <strong>Site analysis</strong>
+                    <small>Wetland model · saved evidence</small>
+                  </span>
+                  <button
+                    className="icon-btn"
+                    aria-label="Collapse analysis panel"
+                    onClick={() => setPanelOpen(false)}
+                  >
+                    <PanelLeftClose size={17} />
+                  </button>
+                </div>
+                {refreshNotice}
                 <Tabs value={tab} onValueChange={setTab}>
-                  <TabsList className="panel-tabs">
-                    <TabsTrigger value="nature">Wetland model</TabsTrigger>
-                    <TabsTrigger value="findings">Findings</TabsTrigger>
+                  <TabsList
+                    className="panel-tabs analysis-tabs"
+                    aria-label="Site analysis sections"
+                  >
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="physical">Physical</TabsTrigger>
+                    <TabsTrigger value="ecology">Ecology</TabsTrigger>
+                    <TabsTrigger value="constraints">Constraints</TabsTrigger>
+                    <TabsTrigger value="evidence">Evidence</TabsTrigger>
                     <TabsTrigger value="history">History</TabsTrigger>
-                    <TabsTrigger value="notes">Site notes</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="nature">
-                    <NaturePanel
-                      key={assessment?.id || current.id}
-                      model={result?.wetland_model}
-                      earth={result?.environmental_state}
-                      assessmentState={assessment?.state}
-                      hasResult={!!result}
-                      error={assessment?.error}
-                    />
-                  </TabsContent>
-                  <TabsContent value="findings">
-                    <div className="panel-heading">
-                      <p className="eyebrow">SCREENING EVIDENCE</p>
-                      <h2>
-                        {result
-                          ? 'What the data tells us'
-                          : 'Ready for a closer look'}
-                      </h2>
-                      <p>
-                        {result
-                          ? result.completeness +
-                            ' of ' +
-                            result.dataset_count +
-                            ' layers covered · ' +
-                            assessment.state
-                          : 'Run screening to measure overlaps against imported reference layers.'}
-                      </p>
-                    </div>
-                    {assessment?.error && (
-                      <div className="alert error">{assessment.error}</div>
-                    )}
-                    {!result && (
-                      <div className="panel-empty">
-                        <Layers size={28} />
-                        <p>
-                          {assessment?.state === 'failed'
-                            ? 'Assessment failed after bounded retries. Review the API logs and rerun imports before submitting again.'
-                            : assessment
-                              ? `Assessment ${assessment.state}. Results will appear here.`
-                              : 'Your boundary is saved. No assessment has been run.'}
-                        </p>
-                      </div>
-                    )}
-                    {result && (
-                      <>
-                        <div className="measurement">
-                          <span>Site area</span>
-                          <b>
-                            {fmt(result.area_ha)} <small>ha</small>
-                          </b>
-                          <small>
-                            Measured in British National Grid · EPSG:27700
-                          </small>
-                        </div>
-                        {result.findings.map((f: any) => (
-                          <button
-                            key={f.key}
-                            className={'finding ' + f.category}
-                            onClick={() => setFinding(f)}
-                          >
-                            <span className="finding-top">
-                              <span>
-                                {f.category === 'missing'
-                                  ? 'MISSING DATA'
-                                  : f.category === 'constraint'
-                                    ? 'MAPPED OVERLAP'
-                                    : 'OBSERVATION'}
-                              </span>
-                              <ArrowUpRight size={15} />
-                            </span>
-                            <strong>{f.dataset}</strong>
-                            <span className="finding-value">
-                              {f.measured === null
-                                ? 'Unknown'
-                                : fmt(f.measured) + ' ha overlap'}
-                              {f.percent !== undefined && (
-                                <small> · {f.percent}% of site</small>
-                              )}
-                            </span>
-                            <span className="finding-note">
-                              {f.measured === null
-                                ? 'Coverage or source unavailable. Investigate the gap.'
-                                : f.measured > 0
-                                  ? f.key === 'flood'
-                                    ? 'Review flood context with a flood-risk specialist.'
-                                    : 'Review implications with an ecologist.'
-                                  : f.key === 'flood'
-                                    ? 'No mapped overlap. Other flood risk may exist.'
-                                    : 'No overlap in this layer. Other constraints may exist.'}
-                            </span>
-                          </button>
-                        ))}
-                        <div className="next-steps">
-                          <h3>Further investigation</h3>
-                          {result.next_steps.map((n: string, i: number) => (
-                            <p key={n}>
-                              <span>{i + 1}</span>
-                              {n}
+                  {[
+                    'overview',
+                    'physical',
+                    'ecology',
+                    'constraints',
+                    'evidence',
+                  ].map((section) => (
+                    <TabsContent value={section} key={section}>
+                      <NaturePanel
+                        key={(assessment?.id || current.id) + section}
+                        section={section}
+                        onSection={setTab}
+                        model={result?.wetland_model}
+                        earth={result?.environmental_state}
+                        assessmentState={assessment?.state}
+                        hasResult={!!result}
+                        error={assessment?.error}
+                        findings={result?.findings}
+                        onMapEvidence={showOnMap}
+                        onInspect={() =>
+                          analysisPanel.current?.scrollTo({ top: 0 })
+                        }
+                      />
+                      {[
+                        'physical',
+                        'ecology',
+                        'constraints',
+                        'evidence',
+                      ].includes(section) && (
+                        <OverlayFindings
+                          findings={(result?.findings || []).filter(
+                            (f: OverlayFinding) =>
+                              section === 'evidence' ||
+                              (section === 'physical'
+                                ? f.key === 'flood'
+                                : f.key !== 'flood'),
+                          )}
+                          onInspect={(f) => {
+                            if (f.geometry) showOnMap(f.key);
+                            setFinding(f);
+                          }}
+                          onMap={showOnMap}
+                        />
+                      )}
+                      {section === 'overview' && (
+                        <div className="team-review">
+                          <p>
+                            Your team’s review decision is independent of model
+                            outputs.
+                          </p>
+                          <details>
+                            <summary>Site notes</summary>
+                            <p>
+                              {current.notes ||
+                                'No notes added. Use Edit boundary / site to add notes.'}
                             </p>
-                          ))}
+                          </details>
                         </div>
-                      </>
-                    )}
-                  </TabsContent>
+                      )}
+                    </TabsContent>
+                  ))}
                   <TabsContent value="history">
                     <div className="panel-heading">
                       <h2>Assessment history</h2>
-                      <p>Every run retains its boundary and source versions.</p>
+                      <p>
+                        Each run retains its exact boundary, observations and
+                        source versions. Selecting a run updates both map and
+                        analysis.
+                      </p>
                     </div>
                     {history.length ? (
                       history.map((a) => (
                         <button
-                          className="history-row"
+                          className={`history-row${a.id === assessment?.id ? ' is-selected' : ''}`}
+                          aria-pressed={a.id === assessment?.id}
                           key={a.id}
                           onClick={() => {
                             setSelectedAssessment(a.id);
-                            setTab('nature');
+                            setTab('overview');
                             setFinding(null);
+                            setMapFocus(null);
                           }}
                         >
                           <b>
@@ -844,35 +1046,24 @@ export default function Home() {
                           </b>
                           <small>
                             {new Date(a.created).toLocaleString('en-GB')}
+                            {a.id === assessment?.id ? ' · Viewing' : ''}
                           </small>
                         </button>
                       ))
                     ) : (
-                      <p className="pad">No assessments yet.</p>
+                      <p className="pad">
+                        {historyFailure
+                          ? 'Assessment history could not be loaded. Retry live refresh above.'
+                          : historyRead.siteId !== active || !historyRead.loaded
+                            ? 'Loading assessment history…'
+                            : 'No assessments yet.'}
+                      </p>
                     )}
-                  </TabsContent>
-                  <TabsContent value="notes">
-                    <div className="panel-heading">
-                      <h2>Site notes</h2>
-                      <p>{current.notes || 'No notes added.'}</p>
-                      <button
-                        onClick={() => {
-                          setEditing(true);
-                          setName(current.name);
-                          setNotes(current.notes);
-                          setGeometry(null);
-                          setRawGeometry(null);
-                          setNewSite(true);
-                        }}
-                      >
-                        Edit notes
-                      </button>
-                    </div>
                   </TabsContent>
                 </Tabs>
               </div>
             </div>
-          </>
+          </section>
         )}
         {view === 'data' && (
           <>
@@ -945,7 +1136,7 @@ export default function Home() {
                 <h1>Compare sites</h1>
                 <p>Explicit findings, coverage and your team’s decisions.</p>
               </div>
-              <button onClick={() => setView('workspace')}>Choose sites</button>
+              <button onClick={() => { setSitesView('list'); setView('workspace'); }}>Choose sites</button>
             </div>
             <div className="workspace-content">
               {compare.length < 2 ? (
@@ -954,7 +1145,7 @@ export default function Home() {
                   title="Select two or three sites"
                   description="Use the checkboxes in Sites to choose the land opportunities you want to compare."
                   action={
-                    <button onClick={() => setView('workspace')}>
+                    <button onClick={() => { setSitesView('list'); setView('workspace'); }}>
                       Back to sites
                     </button>
                   }
@@ -1147,7 +1338,14 @@ export default function Home() {
             </button>
           </div>
           <SiteMap
-            geometry={geometry}
+            geometry={geometry || (editing ? current?.geometry : null)}
+            boundaryLabel={
+              geometry
+                ? 'Staged boundary'
+                : editing
+                  ? `Reference boundary v${current?.version}`
+                  : 'Draft boundary'
+            }
             draw
             onDraw={(g) => {
               setRawGeometry(null);
@@ -1202,10 +1400,48 @@ export default function Home() {
               <a href={finding.source_url} target="_blank" rel="noreferrer">
                 View authoritative source ↗
               </a>
+              {result?.environmental_state && (
+                <>
+                  <h3>Derived observations using this source</h3>
+                  <ul className="source-dependencies">
+                    {(
+                      Object.values(
+                        result.environmental_state.derived,
+                      ) as Observation[]
+                    )
+                      .filter((o) => linkedFindings(o, [finding]).length > 0)
+                      .map((o) => (
+                        <li key={o.id}>
+                          {variableLabel(o.variable)}
+                          <small>{observationValue(o)}</small>
+                        </li>
+                      ))}
+                  </ul>
+                  <button
+                    onClick={() => {
+                      setTab('evidence');
+                      setPanelOpen(true);
+                      setFinding(null);
+                    }}
+                  >
+                    Open evidence register <ArrowUpRight size={14} />
+                  </button>
+                </>
+              )}
               <h3>Limitations & uncertainty</h3>
               <p>{finding.limitations}</p>
               <p>{result?.limitations}</p>
               <small>{finding.attribution}</small>
+              {finding.geometry && (
+                <button
+                  onClick={() => {
+                    showOnMap(finding.key);
+                    setFinding(null);
+                  }}
+                >
+                  <MapPin size={14} /> Inspect footprint on map
+                </button>
+              )}
               <p className="fineprint">
                 {finding.geometry
                   ? 'The overlap geometry is highlighted on the map.'
@@ -1215,9 +1451,9 @@ export default function Home() {
           )}
         </SheetContent>
       </Sheet>
-      {(error.includes('Sign in') ||
-        error.includes('session') ||
-        error.includes('Sign-in')) && (
+      {(criticalError.includes('Sign in') ||
+        criticalError.includes('session') ||
+        criticalError.includes('Sign-in')) && (
         <div className="auth-box">
           <h2>Sign in to your organization</h2>
           <label>
