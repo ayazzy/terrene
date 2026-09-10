@@ -1,6 +1,6 @@
 import os,json,html,hashlib
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, HTTPException, Header
+from fastapi import FastAPI, Depends, HTTPException, Header, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
@@ -163,6 +163,9 @@ from backend.screening_context_store import (
     read_assessment_context,
 )
 from backend.screening_context_report import screening_context_report
+from backend.screening_context_map import (
+    ScreeningMapFeatureCollection, build_screening_map_features,
+)
 
 
 def screening_operation(operation):
@@ -192,6 +195,17 @@ def read_context(id: str, org=Depends(organization)):
 @app.get('/api/screening-context-runs/{id}', response_model=ModuleRunRecord)
 def read_context_run(id: str, org=Depends(organization)):
     return screening_operation(lambda: get_screening_run(id, org=org))
+
+
+@app.get(
+    '/api/screening-context-runs/{id}/map-features',
+    response_model=ScreeningMapFeatureCollection,
+)
+def read_context_map_features(id: str, response: Response, org=Depends(organization)):
+    response.headers['Cache-Control'] = 'no-store'
+    return screening_operation(lambda: build_screening_map_features(
+        get_screening_run(id, org=org)
+    ))
 
 
 @app.get('/api/assessments/{id}/screening-context/report', response_class=HTMLResponse)

@@ -23,6 +23,7 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 - Project legacy saved assessments into immutable `land_evidence_v1` snapshots without changing the original assessment.
 - Bind a committed snapshot through `wetland_input_binding_v1`, execute the unchanged wetland model, and persist an immutable ModuleRun.
 - Intentionally prepare or reuse Screening Context v1 for a selected saved assessment, inspect its non-scoring facts/gaps/provenance in Overview, and download a self-contained HTML review artifact.
+- Read the built-world objects attached to an immutable Screening Context run through an authenticated, organization-scoped WGS84 GeoJSON presentation contract without changing their authoritative EPSG:27700 evidence.
 
 Implementation reports: [snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [snapshot-driven wetland runs](WETLAND-SNAPSHOT-MODULE-RUN.md), [evidence-aware site analysis](UI-STAGE-2.md), and [map-first home](UI-STAGE-3-MAP-HOME.md).
 
@@ -67,6 +68,8 @@ The current home is a map-first portfolio view with a preserved list workflow. S
 
 Screening Context is an explicit assessment action: POST creates/reuses a snapshot and ModuleRun; GET only discovers or reads stored records. History selection scopes the action to the saved assessment and boundary. Unsupported legacy evidence fails without rewriting it. Export labels current team review status separately from the immutable context. See [Screening Context v1](SCREENING-CONTEXT-V1.md).
 
+`GET /api/screening-context-runs/{run_id}/map-features` integrity-checks the selected run and committed Evidence Snapshot, then deterministically presents only its persisted Building, FunctionalSite, RailwayTrack and RailwayStation objects as EPSG:4326 GeoJSON. Layer metadata distinguishes available objects, qualified mapped zero, unavailable, partial and unsupported evidence. The response retains safe source, classification, fingerprint, relationship and measurement linkage while omitting raw storage locations and source payloads; it creates no persistence and never substitutes current objects into a historical run.
+
 The Screening Context read lifecycle is finite: stored, absent, unsupported, authentication/authorization and server/network outcomes are distinct; unresolved reads recover to Retry after 15 seconds. Routine workspace refreshes do not restart an unchanged assessment read, and cancelled or stale assessment responses cannot replace the selected assessment's context.
 
 ## Verification baseline
@@ -85,6 +88,8 @@ Screening Context verification: **176 backend tests passed on SQLite and disposa
 
 The finite Screening Context read-state fix was verified with **177 backend tests on SQLite**, **27 frontend tests**, TypeScript, focused lint, production build and browser QA of stored/absent/unsupported/access/failure/retry/timeout/stale-switch states. PostgreSQL/PostGIS was not rerun for this UI lifecycle fix.
 
+Screening Context map-feature verification: **183 backend tests passed on SQLite** and the focused **23-test Screening Context suite passed on PostgreSQL/PostGIS**. Retained real-data checks cover Westgate, Oxford station, Port Meadow and Redbridge; they verify deterministic WGS84 geometry, organization isolation, historical selection, integrity failures, no-write behavior, availability semantics and unchanged persisted measurements.
+
 ## Known limitations
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
@@ -96,7 +101,7 @@ The finite Screening Context read-state fix was verified with **177 backend test
 
 ## Latest meaningful implementation
 
-The latest implementation is [Screening Context v1](SCREENING-CONTEXT-V1.md), completed 10 September 2026. It connects the existing Earth snapshot foundation to a non-scoring reasoning and application path. Acquisition, evidence projection and wetland implementation remain unchanged; retained snapshots and pre-existing wetland runs are preserved.
+The Screening Context map-feature read contract was completed on 10 September 2026. It adds an authenticated, deterministic WGS84 presentation of the selected immutable run's persisted built-world evidence without changing acquisition, evidence projection, Screening Context rules, authoritative EPSG:27700 geometry, retained snapshots or pre-existing ModuleRuns.
 
 ## Current recommended engineering question
 
