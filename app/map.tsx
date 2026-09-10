@@ -357,7 +357,7 @@ export default function SiteMap({
             </div>
           ))}
           {!findings.length && (
-            <p>Run screening to obtain saved reference-layer observations.</p>
+            <p>Create a new assessment to obtain saved reference-layer observations.</p>
           )}
           <p className="layer-footnote">
             Terrain, watercourse and land-cover measurements are inspectable in

@@ -8,6 +8,17 @@ export type OverlayFinding = {
   geometry: Geometry | null;
   measured: number | null;
   percent?: number;
+  boundary_version?: number;
+  interpretation?: string;
+  coverage?: string;
+  import_bbox?: number[];
+  import_method?: string;
+  method?: string;
+  rule_version?: string;
+  retrieved?: string;
+  source_url?: string;
+  limitations?: string;
+  attribution?: string;
 };
 
 export const humanize = (value: string) =>
