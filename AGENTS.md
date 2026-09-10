@@ -4,16 +4,20 @@ These instructions apply to the entire repository.
 
 ## Authority and orientation
 
+- Read this file and `docs/CURRENT-STATE.md` at the start of every task. `CURRENT-STATE.md` is the default orientation document.
 - Inspect the implementation before assuming documentation is current. Code is authoritative when implementation and documentation disagree.
-- Read `docs/CURRENT-STATE.md` for orientation, then inspect the relevant code, tests and implementation reports. `CURRENT-STATE.md` is navigation, not a substitute for repository inspection.
-- Durable documentation hierarchy: `TERRENE-NORTH-STAR.md` for strategy; `ARCHITECTURE.md` for durable architecture; `DECISIONS.md` for append-only decisions; `CUSTOMER-DISCOVERY.md` for hypotheses and evidence; `CURRENT-STATE.md` for implemented state. Historical reports remain valid records of their implementation versions.
+- After orientation, inspect only the code, tests and documentation materially relevant to the bounded objective. Do not perform a broad repository audit by default.
+- Load other durable documents, historical reports or broad repository areas only when the task genuinely requires them. The durable documentation hierarchy is: `TERRENE-NORTH-STAR.md` for strategy; `ARCHITECTURE.md` for durable architecture; `DECISIONS.md` for append-only decisions; `CUSTOMER-DISCOVERY.md` for hypotheses and evidence; `CURRENT-STATE.md` for implemented state. Historical reports remain valid records of their implementation versions.
 
 ## Task discipline
 
-- One Codex session executes one coherent, bounded objective. Stop after reporting completion; never begin the recommended next task automatically.
+- One Codex session executes one coherent, bounded objective with one primary technical outcome. Stop after reporting completion; never begin the recommended next task automatically.
+- If a proposed task contains outcomes that can be implemented or tested independently, split them into sequential iterations unless atomic implementation is technically necessary. A combination such as backend contract + major UI redesign + state refactor + bug fix + responsive redesign is a warning that the task is too large.
+- When substantial frontend work needs a new backend or data contract, prefer establishing and verifying the contract first, then consuming it in a later UI task. A genuinely tiny contract-and-UI change need not be split.
 - Do not perform opportunistic refactors, unrelated lint/test fixes or a second feature. Question scope expansion before implementing it.
 - Before substantial implementation, ask whether the work materially improves Terrene's ability to (A) represent reality, (B) reason about reality, (C) test changes to reality or (D) operationalize intelligence for a validated workflow. If none applies, question why it should exist.
 - Avoid new dependencies unless materially justified.
+- Task prompts should contain task-specific context and requirements, not repeat standing repository rules already defined here.
 
 ## Branches and commits
 
@@ -33,7 +37,7 @@ These instructions apply to the entire repository.
 
 ## Verification and completion
 
-- Run verification proportionate to the change: focused tests → relevant regression suite → type checking/compilation → lint on changed or relevant code → production build → browser QA for UI changes → real-data verification for evidence/model changes.
+- Match verification to the risk and affected surface. Start with focused tests, then add relevant regression, type checking/compilation, lint on changed or relevant code, production build, browser QA for UI changes or real-data verification for evidence/model changes as warranted. Do not automatically run expensive unrelated suites when focused and relevant regression verification is sufficient.
 - Never claim a check that was not run. State credentials or service blockers explicitly.
 - Before completion, inspect the final diff for scope creep, run `git diff --check`, verify intended changes are committed, and confirm no secrets, local databases, raw/private/licensed data or generated junk are staged.
 - Update durable documentation only when warranted: Current State for material implementation changes; Architecture for durable architecture changes; Decisions for meaningful product/architecture decisions; Customer Discovery for actual market evidence or major hypothesis changes; North Star only for strategic thesis changes.
