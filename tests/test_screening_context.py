@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from shapely.geometry import shape
 from sqlalchemy import insert, select, update
 
 from backend import api, core, module_runs
@@ -21,6 +22,7 @@ from backend.screening_context_store import (
     get_screening_run, prepare_screening_context, read_assessment_context,
     run_screening_from_snapshot,
 )
+from backend.screening_context_map import build_screening_map_features
 from test_wetland_module_runs import (
     module_database, insert_assessment, model_spec_from, table_count, legacy_observation,
 )
@@ -55,6 +57,10 @@ def gaps(run):
     return [g for group in run.result['groups'] for g in group['gaps']]
 
 
+def map_layers(payload):
+    return {layer['id']: layer for layer in payload['layers']}
+
+
 def test_explicit_action_and_read_only_discovery_reuse_exact_run(client, module_database):
     original = saved(module_database)
     url = '/api/assessments/assessment/screening-context'
@@ -68,6 +74,7 @@ def test_explicit_action_and_read_only_discovery_reuse_exact_run(client, module_
     assert second.json() == first.json() == client.get(url).json()
     run = first.json()
     assert client.get('/api/screening-context-runs/' + run['id']).json() == run
+    assert client.get('/api/screening-context-runs/' + run['id'] + '/map-features').status_code == 200
     assert table_count(module_database, core.module_runs) == 1
     snapshot = store.create_snapshot_from_legacy_assessment('assessment', org='org-a')
     assert snapshot.id == run['evidence_snapshot_id']
@@ -119,7 +126,8 @@ def test_wrong_organization_and_missing_records_are_not_found(client, module_dat
     for method, path in [('post', '/api/assessments/assessment/screening-context'),
                          ('get', '/api/assessments/assessment/screening-context'),
                          ('get', '/api/assessments/assessment/screening-context/report'),
-                         ('get', '/api/screening-context-runs/' + run['id'])]:
+                         ('get', '/api/screening-context-runs/' + run['id']),
+                         ('get', '/api/screening-context-runs/' + run['id'] + '/map-features')]:
         assert getattr(client, method)(path).status_code == 404
     api.app.dependency_overrides.clear()
     monkeypatch.setenv('CRC_ENV', 'production')
@@ -160,7 +168,7 @@ def test_changed_evidence_boundary_rules_module_and_config_have_distinct_identit
     assert get_screening_run(first.id, org='org-a') == first
 
 
-def test_historical_snapshot_origin_and_wetland_runs_remain_exact(module_database):
+def test_historical_snapshot_origin_and_wetland_runs_remain_exact(client, module_database):
     old = saved(module_database, suffix='pre-built', assessment_id='old')
     snapshot = store.create_snapshot_from_legacy_assessment('old', org='org-a')
     manifest = core.load_object(snapshot.manifest_key)
@@ -177,6 +185,17 @@ def test_historical_snapshot_origin_and_wetland_runs_remain_exact(module_databas
     assert wetland.result == run_wetland(bind_wetland_input(project_land_evidence(old), old['geometry']), model_spec_from(old))
     assert read_assessment_context('old', org='org-a') == historical
     assert any('predates built-world' in x for x in historical.result['limitations'])
+    historical_map = client.get(
+        f'/api/screening-context-runs/{historical.id}/map-features'
+    ).json()
+    current_map = client.get(
+        f'/api/screening-context-runs/{current.id}/map-features'
+    ).json()
+    assert historical_map['evidence_snapshot_id'] == snapshot.id
+    assert historical_map['features'] == []
+    assert {layer['state'] for layer in historical_map['layers']} == {'unsupported'}
+    assert current_map['evidence_snapshot_id'] == current.evidence_snapshot_id
+    assert current_map['features']
 
 
 def test_known_zero_partial_search_and_source_semantics_are_preserved(module_database):
@@ -199,6 +218,25 @@ def test_known_zero_partial_search_and_source_semantics_are_preserved(module_dat
     assert 'inventory' in phi['limitations'].lower()
     assert phi['references']['source_feature_reference_ids']
     assert all('blocker' not in q['text'] for q in run.result['review_questions'])
+
+
+def test_unavailable_built_world_source_is_not_presented_as_zero(client, module_database):
+    payload_value = payload('oxford-station')
+    finding = next(finding for finding in payload_value['findings'] if finding.get('built_world'))
+    finding.update(
+        coverage='unknown', built_world=None, measured=None, fraction=None,
+        percent=None, geometry=None, source_failure_type='acquisition_failure',
+        source_error='Provider request failed',
+    )
+    insert_assessment(module_database, payload_value, assessment_id='assessment')
+    run = client.post('/api/assessments/assessment/screening-context').json()
+    result = client.get(
+        f'/api/screening-context-runs/{run["id"]}/map-features'
+    ).json()
+    assert result['features'] == []
+    assert {layer['state'] for layer in result['layers']} == {'unavailable'}
+    assert all(layer['coverage_fraction'] is None for layer in result['layers'])
+    assert all('zero' in layer['qualification'] for layer in result['layers'])
 
 
 def test_all_retained_oxford_cases_are_offline_deterministic_traceable_and_non_scoring(module_database, monkeypatch):
@@ -249,6 +287,7 @@ def test_corruption_fails_and_never_overwrites_or_leaks_internal_locations(clien
     with module_database.begin() as c:
         c.execute(update(core.module_runs).values(result={**run['result'], 'signature': 'corrupt'}))
     assert client.get(url).status_code == 500
+    assert client.get(f'/api/screening-context-runs/{run["id"]}/map-features').status_code == 500
     assert client.post(url).status_code == 500
     with module_database.connect() as c:
         assert c.execute(select(core.module_runs.c.result)).scalar_one()['signature'] == 'corrupt'
@@ -257,6 +296,120 @@ def test_corruption_fails_and_never_overwrites_or_leaks_internal_locations(clien
     response = client.get(url)
     assert response.status_code == 500
     assert snapshot.manifest_key not in response.text
+
+
+def test_map_features_are_deterministic_wgs84_sanitized_and_read_only(
+        client, module_database, monkeypatch):
+    saved(module_database, 'oxford-station')
+    run = client.post('/api/assessments/assessment/screening-context').json()
+    snapshot = store.get_land_evidence_snapshot(run['evidence_snapshot_id'], org='org-a')
+    manifest_before = core.load_object(snapshot.manifest_key)
+    tables = (
+        core.sites, core.assessments, core.land_evidence_snapshots,
+        core.land_evidence_snapshot_members, core.land_evidence_snapshot_links,
+        core.land_evidence_snapshot_origins, core.module_runs,
+    )
+    counts_before = {table.name: table_count(module_database, table) for table in tables}
+
+    def deny_write(*args, **kwargs):
+        raise AssertionError('Map GET attempted persistence')
+
+    monkeypatch.setattr(core, 'store_object', deny_write)
+    monkeypatch.setattr(core, 'store_object_immutable', deny_write)
+    url = f'/api/screening-context-runs/{run["id"]}/map-features'
+    first = client.get(url)
+    second = client.get(url)
+    assert first.status_code == 200, first.text
+    assert first.json() == second.json()
+    assert first.headers['cache-control'] == 'no-store'
+    result = first.json()
+    assert result['type'] == 'FeatureCollection'
+    assert result['contract_version'] == 'screening_context_map_features_v1'
+    assert result['presentation_crs'] == 'EPSG:4326'
+    assert result['authoritative_geometry_crs'] == 'EPSG:27700'
+    assert [feature['id'] for feature in result['features']] == [
+        feature['id'] for feature in build_screening_map_features(
+            get_screening_run(run['id'], org='org-a')
+        ).model_dump(mode='json')['features']
+    ]
+    for feature in result['features']:
+        geometry = shape(feature['geometry'])
+        west, south, east, north = geometry.bounds
+        assert -180 <= west <= east <= 180
+        assert -90 <= south <= north <= 90
+        properties = feature['properties']
+        assert properties['geometry_fingerprint']
+        assert properties['authoritative_geometry_crs'] == 'EPSG:27700'
+        assert properties['source']['provider'] == 'Ordnance Survey'
+
+    forbidden = {
+        'source_geometry', 'raw_reference_ids', 'storage_reference',
+        'manifest_key', 'assets', 'source_feature_id',
+    }
+
+    def keys(value):
+        if isinstance(value, dict):
+            return set(value) | set().union(*(keys(item) for item in value.values()))
+        if isinstance(value, list):
+            return set().union(*(keys(item) for item in value))
+        return set()
+
+    assert not (keys(result) & forbidden)
+    assert {table.name: table_count(module_database, table) for table in tables} == counts_before
+    assert core.load_object(snapshot.manifest_key) == manifest_before
+
+
+@pytest.mark.parametrize('name,expected_counts', [
+    ('westgate', {'buildings': 13, 'functional_sites': 0, 'railway_tracks': 1, 'railway_stations': 1}),
+    ('oxford-station', {'buildings': 5, 'functional_sites': 2, 'railway_tracks': 7, 'railway_stations': 1}),
+    ('port-meadow', {'buildings': 0, 'functional_sites': 0, 'railway_tracks': 1, 'railway_stations': 1}),
+    ('redbridge', {'buildings': 0, 'functional_sites': 0, 'railway_tracks': 0, 'railway_stations': 0}),
+])
+def test_real_map_feature_acceptance(client, module_database, name, expected_counts):
+    original = saved(module_database, name)
+    run = client.post('/api/assessments/assessment/screening-context').json()
+    response = client.get(f'/api/screening-context-runs/{run["id"]}/map-features')
+    assert response.status_code == 200, response.text
+    result = response.json()
+    layers = map_layers(result)
+    assert {layer_id: layer['feature_count'] for layer_id, layer in layers.items()} == expected_counts
+    assert result['boundary_geometry_fingerprint'] == fingerprint(original['geometry'])
+
+    projection = store.load_land_evidence_snapshot(run['evidence_snapshot_id'], org='org-a')
+    assert {feature['properties']['geometry_fingerprint'] for feature in result['features']} == {
+        obj.source_geometry_fingerprint for obj in projection.objects
+    }
+    if name == 'westgate':
+        buildings = [feature for feature in result['features']
+                     if feature['properties']['object_type'] == 'building']
+        assert all(feature['properties']['relationships'] for feature in buildings)
+    elif name == 'oxford-station':
+        persisted = next(
+            observation for observation in projection.observations
+            if observation.definition_id == 'transport.railway_track.mapped_length_within'
+        )
+        presented = next(
+            measurement for measurement in layers['railway_tracks']['measurements']
+            if measurement['definition_id'] == 'transport.railway_track.mapped_length_within'
+        )
+        assert presented['value'] == persisted.value.value
+        assert presented['numerator'] == persisted.measurement.numerator
+        assert presented['value'] == pytest.approx(279.31, abs=.01)
+    elif name == 'port-meadow':
+        assert layers['buildings']['state'] == 'mapped_zero'
+        assert layers['functional_sites']['state'] == 'mapped_zero'
+        assert layers['railway_tracks']['state'] == 'available'
+        assert layers['railway_stations']['state'] == 'available'
+    else:
+        assert layers['buildings']['state'] == 'mapped_zero'
+        assert layers['functional_sites']['state'] == 'mapped_zero'
+        assert layers['railway_tracks']['state'] == 'partial'
+        assert layers['railway_stations']['state'] == 'partial'
+        assert 'partial_search_coverage' in layers['railway_tracks']['gap_reason_codes']
+        assert not any(
+            measurement['definition_id'].endswith('distance_min')
+            for layer in result['layers'] for measurement in layer['measurements']
+        )
 
 
 def test_result_contract_rejects_forged_refs_extra_scoring_and_partial_minimum(module_database):

@@ -23,6 +23,7 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 - Project legacy saved assessments into immutable `land_evidence_v1` snapshots without changing the original assessment.
 - Bind a committed snapshot through `wetland_input_binding_v1`, execute the unchanged wetland model, and persist an immutable ModuleRun.
 - Intentionally prepare or reuse Screening Context v1 for a selected saved assessment, inspect its non-scoring facts/gaps/provenance in Overview, and download a self-contained HTML review artifact.
+- Read the built-world objects attached to an immutable Screening Context run through an authenticated, organization-scoped WGS84 GeoJSON presentation contract without changing their authoritative EPSG:27700 evidence.
 
 Implementation reports: [snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [snapshot-driven wetland runs](WETLAND-SNAPSHOT-MODULE-RUN.md), [evidence-aware site analysis](UI-STAGE-2.md), and [map-first home](UI-STAGE-3-MAP-HOME.md).
 
@@ -69,6 +70,8 @@ One shared site-workspace controller scopes the selected assessment, Screening C
 
 Screening Context is an explicit assessment action: POST creates/reuses a snapshot and ModuleRun; GET only discovers or reads stored records. History selection scopes the action to the saved assessment and boundary. Unsupported legacy evidence fails without rewriting it. Export labels current team review status separately from the immutable context. See [Screening Context v1](SCREENING-CONTEXT-V1.md).
 
+`GET /api/screening-context-runs/{run_id}/map-features` integrity-checks the selected run and committed Evidence Snapshot, then deterministically presents only its persisted Building, FunctionalSite, RailwayTrack and RailwayStation objects as EPSG:4326 GeoJSON. Layer metadata distinguishes available objects, qualified mapped zero, unavailable, partial and unsupported evidence. The response retains safe source, classification, fingerprint, relationship and measurement linkage while omitting raw storage locations and source payloads; it creates no persistence and never substitutes current objects into a historical run.
+
 The Screening Context read lifecycle is finite: stored, absent, unsupported, authentication/authorization and server/network outcomes are distinct; unresolved reads recover to Retry after 15 seconds. Routine workspace refreshes do not restart an unchanged assessment read, and cancelled or stale assessment responses cannot replace the selected assessment's context.
 
 ## Verification baseline
@@ -89,6 +92,8 @@ The finite Screening Context read-state fix was verified with **177 backend test
 
 Site Analysis Workspace v2A verification: **28 frontend regression tests passed**, TypeScript passed, focused lint passed on the new/refined workspace modules, and the production build passed with the existing large-chunk advisory. Browser QA covered populated and absent Screening Context, Evidence/Models navigation, model-to-evidence routing, historical selection/reset, both distinct exports, desktop 1440×900 and narrow 390×844 layouts, and finished with no browser warnings or errors. Backend and PostgreSQL suites were not rerun because this iteration changes frontend information architecture and state only.
 
+Screening Context map-feature verification: **183 backend tests passed on SQLite** and the focused **23-test Screening Context suite passed on PostgreSQL/PostGIS**. Retained real-data checks cover Westgate, Oxford station, Port Meadow and Redbridge; they verify deterministic WGS84 geometry, organization isolation, historical selection, integrity failures, no-write behavior, availability semantics and unchanged persisted measurements.
+
 ## Known limitations
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
@@ -100,7 +105,7 @@ Site Analysis Workspace v2A verification: **28 frontend regression tests passed*
 
 ## Latest meaningful implementation
 
-Site Analysis Workspace v2A was completed on 10 September 2026. It reorganizes the selected-site experience around Terrene Earth evidence first, Terrene Reasoning modules second and separate team decisions, without changing acquisition, evidence projection, Screening Context rules, wetland bindings/calculations, retained snapshots or pre-existing ModuleRuns.
+The Screening Context map-feature read contract was completed after Site Analysis Workspace v2A on 10 September 2026. It adds an authenticated, deterministic WGS84 presentation of the selected immutable run's persisted built-world evidence for the workspace without changing acquisition, evidence projection, Screening Context rules, wetland bindings/calculations, authoritative EPSG:27700 geometry, retained snapshots or pre-existing ModuleRuns.
 
 ## Current recommended engineering question
 
