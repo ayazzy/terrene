@@ -136,7 +136,7 @@ test('workspace integration shares selection and never auto-focuses an off-site 
   assert.match(map, /if \(!ready \|\| !mapObjectFocusRequest\) return/);
   assert.match(map, /onClearMapObject\?\.\(\)/);
   assert.match(page, /<MapFeatureInspector/);
+  assert.match(page, /tab, assessment\?\.id, mapEvidence\.selectedObjectId/);
   assert.match(inspector, /Advanced provenance/);
   assert.match(inspector, /not surveyed,[\s\S]*cadastral,[\s\S]*legal or engineering/);
 });
-
