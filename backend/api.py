@@ -153,3 +153,57 @@ def download_boundary(id:str,version:int,org=Depends(organization)):
         if not p.is_file():raise HTTPException(404,'Boundary upload not found')
         content=p.read_bytes()
     return Response(content,media_type='application/geo+json',headers={'Content-Disposition':f'attachment; filename="boundary-v{version}.geojson"'})
+
+# Explicit, additive review-context action. Ordinary reads never publish evidence.
+from backend.land_evidence import LandEvidenceValidationError
+from backend.land_evidence_store import LandEvidenceSnapshotError, LandEvidenceSnapshotNotFound
+from backend.module_runs import ModuleRunError, ModuleRunNotFound, ModuleRunRecord
+from backend.screening_context_store import (
+    ScreeningUnavailable, get_screening_run, prepare_screening_context,
+    read_assessment_context,
+)
+from backend.screening_context_report import screening_context_report
+
+
+def screening_operation(operation):
+    try:
+        return operation()
+    except (ModuleRunNotFound, LandEvidenceSnapshotNotFound):
+        raise HTTPException(404, 'Record not found')
+    except ScreeningUnavailable as error:
+        raise HTTPException(409, str(error))
+    except (LandEvidenceValidationError, ValueError):
+        raise HTTPException(409, 'Saved evidence is unsupported or invalid for Screening Context v1. Historical records have been preserved.')
+    except (ModuleRunError, LandEvidenceSnapshotError, ImmutableObjectConflict):
+        # Never send an internal object key, storage error or credential to clients.
+        raise HTTPException(500, 'Screening context integrity check failed. Stored evidence or run content is missing or contradictory; history has not been overwritten.')
+
+
+@app.post('/api/assessments/{id}/screening-context', response_model=ModuleRunRecord)
+def prepare_context(id: str, org=Depends(organization)):
+    return screening_operation(lambda: prepare_screening_context(id, org=org))
+
+
+@app.get('/api/assessments/{id}/screening-context', response_model=ModuleRunRecord | None)
+def read_context(id: str, org=Depends(organization)):
+    return screening_operation(lambda: read_assessment_context(id, org=org))
+
+
+@app.get('/api/screening-context-runs/{id}', response_model=ModuleRunRecord)
+def read_context_run(id: str, org=Depends(organization)):
+    return screening_operation(lambda: get_screening_run(id, org=org))
+
+
+@app.get('/api/assessments/{id}/screening-context/report', response_class=HTMLResponse)
+def context_report(id: str, org=Depends(organization)):
+    run = screening_operation(lambda: read_assessment_context(id, org=org))
+    if run is None:
+        raise HTTPException(409, 'Prepare screening context before exporting it.')
+    with engine.connect() as connection:
+        assessment_row = owned(connection, assessments, id, org)
+        site = owned(connection, sites, assessment_row['site_id'], org)
+    return HTMLResponse(screening_context_report(
+        run, assessment_id=id, site_name=assessment_row['site_name'],
+        review_status=site['status'], current_version=site['version'],
+    ), headers={'Content-Disposition': 'attachment; filename="terrene-screening-context.html"',
+                'Cache-Control': 'no-store'})

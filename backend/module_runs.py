@@ -1,4 +1,4 @@
-"""Minimal immutable execution records for the existing wetland module."""
+"""Minimal immutable execution records for versioned reasoning modules."""
 from __future__ import annotations
 
 from copy import deepcopy
@@ -106,6 +106,9 @@ def _verify(row: dict[str, Any]) -> ModuleRunRecord:
         raise ModuleRunConflict('Stored ModuleRun content hash mismatch')
     if row['model_spec'].get('signature') != row['model_signature']:
         raise ModuleRunConflict('Stored ModuleRun model signature mismatch')
+    if row['module_id'] == 'site_screening_context':
+        from backend.screening_context_store import validate_screening_row
+        validate_screening_row(row)
     if row['result'].get('signature') != row['model_signature']:
         raise ModuleRunConflict('Stored ModuleRun result signature mismatch')
     if row['result'].get('model_version') != row['module_version']:
