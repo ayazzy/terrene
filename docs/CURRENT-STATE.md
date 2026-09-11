@@ -64,13 +64,17 @@ The 12 retained Oxford verification locations have inspectable physical and hydr
 
 ## Application/UI state
 
-The current home is a map-first portfolio view with a preserved list workflow. Site Analysis Workspace v2A leads with source-bounded Screening Context, places detailed facts/gaps/provenance under Evidence, places the unchanged wetland assessment under Models, and keeps immutable assessment selection under History. Site-level actions explicitly distinguish creating an assessment, preparing/reusing or exporting Screening Context, exporting the wetland model report and changing the current team review status.
+The current home is a map-first portfolio view with a preserved list workflow. The Site Analysis Workspace leads with a compact professional site brief: a deterministic presentation policy selects a high-level site picture, approximately six high-signal retained facts, consequential known gaps and existing human diligence questions without creating a score or unsupported narrative. Exact facts/gaps/provenance remain under Evidence, the unchanged wetland assessment is one module under Models, and immutable assessment selection remains under History. See [Site Analysis Workspace site brief](SITE-ANALYSIS-WORKSPACE-SITE-BRIEF.md).
+
+Site identity, boundary, area, assessment state/date, team review status and secondary actions share one compact band. Wetland export is contained within its Models module. Unprepared Screening Context and no-assessment states retain useful site/boundary context and one explicit action; ordinary reads still create no immutable records.
 
 One shared site-workspace controller scopes the selected assessment, Screening Context lifecycle, history selection, map/evidence focus, exports and workspace controls. Switching sites or historical assessments clears stale artifact views and keys Screening Context to the exact assessment/site/boundary identity. Historical map, boundary, Earth evidence, context and model output move together. The desktop review panel is wider; at narrow widths the map and independently scrollable analytical workspace stack deliberately. The UI remains a small-portfolio application and fetches site/history collections without pagination.
 
 Screening Context is an explicit assessment action: POST creates/reuses a snapshot and ModuleRun; GET only discovers or reads stored records. History selection scopes the action to the saved assessment and boundary. Unsupported legacy evidence fails without rewriting it. Export labels current team review status separately from the immutable context. See [Screening Context v1](SCREENING-CONTEXT-V1.md).
 
 `GET /api/screening-context-runs/{run_id}/map-features` integrity-checks the selected run and committed Evidence Snapshot, then deterministically presents only its persisted Building, FunctionalSite, RailwayTrack and RailwayStation objects as EPSG:4326 GeoJSON. Layer metadata distinguishes available objects, qualified mapped zero, unavailable, partial and unsupported evidence. The response retains safe source, classification, fingerprint, relationship and measurement linkage while omitting raw storage locations and source payloads; it creates no persistence and never substitutes current objects into a historical run.
+
+The workspace consumes that contract read-only. Spatially supported high-signal Overview rows highlight the corresponding evidence; built-world objects are inspectable through the same spatial inspector used for other map evidence. Facts without retained geometry route to technical Evidence instead.
 
 The Screening Context read lifecycle is finite: stored, absent, unsupported, authentication/authorization and server/network outcomes are distinct; unresolved reads recover to Retry after 15 seconds. Routine workspace refreshes do not restart an unchanged assessment read, and cancelled or stale assessment responses cannot replace the selected assessment's context.
 
@@ -92,6 +96,8 @@ The finite Screening Context read-state fix was verified with **177 backend test
 
 Site Analysis Workspace v2A verification: **28 frontend regression tests passed**, TypeScript passed, focused lint passed on the new/refined workspace modules, and the production build passed with the existing large-chunk advisory. Browser QA covered populated and absent Screening Context, Evidence/Models navigation, model-to-evidence routing, historical selection/reset, both distinct exports, desktop 1440×900 and narrow 390×844 layouts, and finished with no browser warnings or errors. Backend and PostgreSQL suites were not rerun because this iteration changes frontend information architecture and state only.
 
+Site-brief verification on 11 September 2026: the frontend regression suite, TypeScript, focused lint and production build passed. Browser QA covered Westgate, Port Meadow, Redbridge and an Oxford station boundary at 1280 px, Port Meadow at 1024 px and 390 px, useful unprepared states, mapped-zero language, Overview map routing and the corrected wetland module layout. The local connected datasets did not include retained OpenMap Local/PHI versions, so Oxford station railway-object rendering was covered by deterministic frontend policy tests and the existing backend real-data map-feature suite rather than that browser run.
+
 Screening Context map-feature verification: **183 backend tests passed on SQLite** and the focused **23-test Screening Context suite passed on PostgreSQL/PostGIS**. Retained real-data checks cover Westgate, Oxford station, Port Meadow and Redbridge; they verify deterministic WGS84 geometry, organization isolation, historical selection, integrity failures, no-write behavior, availability semantics and unchanged persisted measurements.
 
 ## Known limitations
@@ -105,7 +111,7 @@ Screening Context map-feature verification: **183 backend tests passed on SQLite
 
 ## Latest meaningful implementation
 
-The Screening Context map-feature read contract was completed after Site Analysis Workspace v2A on 10 September 2026. It adds an authenticated, deterministic WGS84 presentation of the selected immutable run's persisted built-world evidence for the workspace without changing acquisition, evidence projection, Screening Context rules, wetland bindings/calculations, authoritative EPSG:27700 geometry, retained snapshots or pre-existing ModuleRuns.
+The Site Analysis Workspace site brief was completed on 11 September 2026. It makes the first screen useful for professional land review through compact chrome, deterministic high-signal presentation, concise unknowns/questions, direct retained-geometry inspection and a usable nested Models layout. It changes no acquisition, evidence projection, Screening Context rules, wetland bindings/calculations, authoritative geometry, retained snapshots or pre-existing ModuleRuns.
 
 ## Current recommended engineering question
 

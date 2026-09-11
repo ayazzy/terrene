@@ -1,7 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, FileText, ArrowUpRight } from 'lucide-react';
+import {
+  Download,
+  FileText,
+  ArrowUpRight,
+  MapPin,
+  CircleHelp,
+} from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +29,15 @@ import {
   type ScreeningAssessment,
 } from './screening-context';
 import type { SiteWorkspaceState } from './site-workspace-state';
+import {
+  gapLabel,
+  prioritizeFacts,
+  prioritizeGaps,
+  prioritizeQuestions,
+  siteBriefLabel,
+  siteBriefValue,
+  sitePictureFacts,
+} from './site-brief';
 
 type Props = {
   assessment: ScreeningAssessment;
@@ -30,6 +45,12 @@ type Props = {
   mode: 'overview' | 'evidence';
   context: SiteWorkspaceState['context'];
   onEvidence: () => void;
+  onMap?: (key: string) => void;
+  mapTargets?: string[];
+  site: {
+    name: string;
+    areaHa?: number;
+  };
 };
 
 export default function ScreeningContextPanel({
@@ -38,6 +59,9 @@ export default function ScreeningContextPanel({
   mode,
   context,
   onEvidence,
+  onMap,
+  mapTargets = [],
+  site,
 }: Props) {
   const [inspected, setInspected] = useState<{
     id: string;
@@ -45,6 +69,10 @@ export default function ScreeningContextPanel({
   } | null>(null);
   const { run, state, error } = context;
   const result = run?.result;
+  const keyFacts = result ? prioritizeFacts(result) : [];
+  const pictureFacts = result ? sitePictureFacts(result) : [];
+  const importantGaps = result ? prioritizeGaps(result) : [];
+  const reviewQuestions = result ? prioritizeQuestions(result) : [];
   const catalogue = result
     ? [
         ...result.groups.flatMap((group) => [...group.facts, ...group.gaps]),
@@ -137,16 +165,14 @@ export default function ScreeningContextPanel({
           <FileText size={18} />
           <span>
             <p className="eyebrow">TERRENE EARTH</p>
-            <h2>
-              {mode === 'overview' ? 'Screening Context' : 'Evidence register'}
-            </h2>
+            <h2>{mode === 'overview' ? 'Site brief' : 'Evidence register'}</h2>
           </span>
         </span>
         <output>{status}</output>
       </div>
       <p className="nature-muted">
         {mode === 'overview'
-          ? 'Source-bounded facts and explicit gaps for human review. This context does not score the site or make a team decision.'
+          ? 'A concise, source-bounded view for human diligence. This context does not score the site or make a team decision.'
           : 'Detailed observations, gaps, source limitations and provenance for the selected immutable assessment.'}
       </p>
       {error && (
@@ -166,7 +192,7 @@ export default function ScreeningContextPanel({
             Retry Screening Context
           </button>
         )}
-        {result && run && (
+        {result && run && mode === 'evidence' && (
           <button
             onClick={() => void context.exportReport()}
             disabled={context.exporting}
@@ -184,44 +210,146 @@ export default function ScreeningContextPanel({
         </p>
       )}
 
+      {mode === 'overview' && !result && (
+        <>
+          <section
+            className="site-picture is-basic"
+            aria-labelledby="site-picture-basic"
+          >
+            <p className="context-kind">Site picture</p>
+            <h3 id="site-picture-basic">{site.name}</h3>
+            <dl className="site-picture-basics">
+              <div>
+                <dt>Area</dt>
+                <dd>
+                  {site.areaHa == null
+                    ? 'Available after assessment'
+                    : `${site.areaHa.toLocaleString('en-GB', { maximumFractionDigits: 2 })} ha`}
+                </dd>
+              </div>
+              <div>
+                <dt>Boundary</dt>
+                <dd>Version {assessment.version}</dd>
+              </div>
+              <div>
+                <dt>Assessment</dt>
+                <dd>{assessment.state.replaceAll('_', ' ')}</dd>
+              </div>
+            </dl>
+          </section>
+          <section className="context-preparation-note">
+            <h3>Prepare the site brief</h3>
+            <p>
+              Screening Context adds prioritized mapped evidence, explicit
+              unknowns and review questions from this saved assessment.
+              Preparing it creates an immutable, reusable run.
+            </p>
+          </section>
+        </>
+      )}
+
       {result && run && mode === 'overview' && (
         <>
-          <h3 className="context-overview-title">What is mapped here?</h3>
-          <div className="context-summary-grid">
-            {result.groups.map((group) => (
-              <article key={group.id}>
-                <p className="context-kind">Earth facts</p>
-                <h3>{group.label}</h3>
-                <p>
-                  <strong>{group.facts.length}</strong> mapped observations
-                </p>
-                <p className={group.gaps.length ? 'has-gaps' : ''}>
-                  {group.gaps.length
-                    ? `${group.gaps.length} explicit evidence gaps`
-                    : 'No explicit gaps recorded; completeness is not established'}
-                </p>
-                {group.facts.slice(0, 2).map((fact) => (
-                  <div className="context-fact" key={fact.id}>
-                    <span>{fact.label}</span>
-                    <b>{screeningValue(fact)}</b>
-                    <small>
-                      {fact.availability}
-                      {fact.known_zero ? ' · known source-bounded zero' : ''}
-                    </small>
-                  </div>
+          <section
+            className="site-picture"
+            aria-labelledby="site-picture-heading"
+          >
+            <p className="context-kind">Site picture</p>
+            <h3 id="site-picture-heading">Mapped context at a glance</h3>
+            <div className="site-picture-facts">
+              {pictureFacts.map((fact) => (
+                <div key={fact.id}>
+                  <span>{fact.category}</span>
+                  <strong>{siteBriefValue(fact)}</strong>
+                  <small>{siteBriefLabel(fact, context.map)}</small>
+                </div>
+              ))}
+            </div>
+          </section>
+          <section
+            className="brief-section"
+            aria-labelledby="key-evidence-heading"
+          >
+            <p className="context-kind">What matters first</p>
+            <h3 id="key-evidence-heading">Key evidence</h3>
+            <div className="brief-rows">
+              {keyFacts.map((fact) => {
+                const showOnMap =
+                  !!fact.mapKey && mapTargets.includes(fact.mapKey);
+                return (
+                  <button
+                    key={fact.id}
+                    aria-label={`${showOnMap ? 'Show on map' : 'View evidence'}: ${siteBriefLabel(fact, context.map)}`}
+                    onClick={() =>
+                      showOnMap ? onMap?.(fact.mapKey!) : onEvidence()
+                    }
+                  >
+                    <span className="brief-row-copy">
+                      <span className="brief-row-label">
+                        <small>{fact.category}</small>
+                        {siteBriefLabel(fact, context.map)}
+                      </span>
+                      <small>
+                        {fact.availability}
+                        {fact.known_zero ? ' · known source-bounded zero' : ''}
+                      </small>
+                    </span>
+                    <span className="brief-row-value">
+                      <strong>{siteBriefValue(fact)}</strong>
+                      <small>
+                        {showOnMap ? (
+                          <>
+                            <MapPin size={12} /> Show on map
+                          </>
+                        ) : (
+                          'View evidence'
+                        )}
+                      </small>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+          <section
+            className="brief-section important-unknowns"
+            aria-labelledby="important-unknowns-heading"
+          >
+            <p className="context-kind">Evidence to resolve</p>
+            <h3 id="important-unknowns-heading">Important unknowns</h3>
+            {importantGaps.length ? (
+              <div className="unknown-rows">
+                {importantGaps.map((gap) => (
+                  <button key={gap.id} onClick={onEvidence}>
+                    <span>
+                      <strong>{gapLabel(gap)}</strong>
+                      <small>{gap.reason}</small>
+                    </span>
+                    <ArrowUpRight size={14} />
+                  </button>
                 ))}
-              </article>
-            ))}
-          </div>
-          <section className="context-review-questions">
-            <p className="context-kind">Human review</p>
-            <h3>Questions that remain</h3>
-            {result.review_questions.length ? (
-              <ul>
-                {result.review_questions.slice(0, 5).map((item) => (
+              </div>
+            ) : (
+              <p className="nature-muted">
+                No explicit priority gaps are recorded. This does not establish
+                evidence completeness.
+              </p>
+            )}
+          </section>
+          <section
+            className="brief-section review-questions"
+            aria-labelledby="review-questions-heading"
+          >
+            <p className="context-kind">
+              <CircleHelp size={12} /> Human diligence
+            </p>
+            <h3 id="review-questions-heading">Review questions</h3>
+            {reviewQuestions.length ? (
+              <ol>
+                {reviewQuestions.map((item) => (
                   <li key={item.id}>{item.text}</li>
                 ))}
-              </ul>
+              </ol>
             ) : (
               <p>
                 No questions were generated by these versioned rules; this does

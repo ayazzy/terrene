@@ -7,6 +7,8 @@ import { Layers, LocateFixed, ArrowUpRight } from 'lucide-react';
 import type { Geometry, Polygon, LineString, Position } from 'geojson';
 import type { OverlayFinding } from './site-evidence';
 import { layerGroup, layerColor } from './site-evidence';
+import type { ScreeningMapFeatures } from './screening-context';
+import type { MapInspection } from './site-workspace-state';
 type Props = {
   geometry: Geometry | null;
   findings?: OverlayFinding[];
@@ -14,7 +16,8 @@ type Props = {
   draw?: boolean;
   focusRequest?: number;
   boundaryLabel?: string;
-  onInspect?: (finding: OverlayFinding) => void;
+  screeningMap?: ScreeningMapFeatures | null;
+  onInspect?: (finding: MapInspection) => void;
   onDraw?: (g: Polygon) => void;
 };
 export default function SiteMap({
@@ -25,6 +28,7 @@ export default function SiteMap({
   onDraw,
   focusRequest,
   boundaryLabel = 'Site boundary',
+  screeningMap,
   onInspect,
 }: Props) {
   const el = useRef<HTMLDivElement>(null),
@@ -41,10 +45,10 @@ export default function SiteMap({
     [error, setError] = useState('');
   const drawRef = useRef(draw);
   const overlay = useRef<SVGSVGElement>(null);
-  const inspectRef = useRef({ findings, onInspect });
+  const inspectRef = useRef({ findings, screeningMap, onInspect });
   useEffect(() => {
-    inspectRef.current = { findings, onInspect };
-  }, [findings, onInspect]);
+    inspectRef.current = { findings, screeningMap, onInspect };
+  }, [findings, screeningMap, onInspect]);
   const ready = !!projection;
   const isVisible = (key: string) =>
     !(key in hiddenLayers) ||
@@ -110,21 +114,26 @@ export default function SiteMap({
         setPoints((vertices) => [...vertices, [e.lngLat.lng, e.lngLat.lat]]);
       } else {
         // Hit-test the projected evidence on click without intercepting map drag/zoom.
-        const hit = [
-          ...(overlay.current?.querySelectorAll<SVGPathElement>(
-            'path[data-layer]:not([data-layer="site"])',
+        const hits = [
+          ...(overlay.current?.querySelectorAll<SVGGeometryElement>(
+            '[data-layer]:not([data-layer="site"])',
           ) || []),
         ]
           .reverse()
-          .find(
+          .filter(
             (element) =>
               element.isPointInFill(new DOMPoint(e.point.x, e.point.y)) ||
               element.isPointInStroke(new DOMPoint(e.point.x, e.point.y)),
           );
+        const hit = hits.find((element) => element.dataset.feature) || hits[0];
+        const feature = inspectRef.current.screeningMap?.features.find(
+          (item) => item.id === hit?.dataset.feature,
+        );
         const finding = inspectRef.current.findings.find(
           (f) => f.key === hit?.dataset.layer,
         );
-        if (finding) inspectRef.current.onInspect?.(finding);
+        const item = feature || finding;
+        if (item) inspectRef.current.onInspect?.(item);
       }
     });
     const observer = new ResizeObserver(() => m.resize());
@@ -158,9 +167,17 @@ export default function SiteMap({
   useEffect(() => {
     if (ready) {
       const f = inspectRef.current.findings.find((f) => f.key === selected);
-      if (f?.geometry) {
-        fit(f.geometry);
-      }
+      const layerId = selected?.startsWith('context:') ? selected.slice(8) : '';
+      const features =
+        inspectRef.current.screeningMap?.features.filter(
+          (item) => item.properties.layer_id === layerId,
+        ) || [];
+      if (f?.geometry) fit(f.geometry);
+      else if (features.length)
+        fit({
+          type: 'GeometryCollection',
+          geometries: features.map((item) => item.geometry),
+        });
     }
   }, [selected, focusRequest, ready, projection]);
   useEffect(() => {
@@ -193,6 +210,10 @@ export default function SiteMap({
       return g.geometries.map(path).join(' ');
     return '';
   }
+  function point(g: Geometry) {
+    if (g.type !== 'Point' || !projection || !ready) return null;
+    return projection.project(g.coordinates as [number, number]);
+  }
   const draft: LineString | null =
     points.length > 1 ? { type: 'LineString', coordinates: points } : null;
   return (
@@ -204,6 +225,50 @@ export default function SiteMap({
         aria-label="Site boundary and measured overlaps"
         data-revision={revision}
       >
+        {screeningMap?.features
+          .filter((feature) =>
+            isVisible(`context:${feature.properties.layer_id}`),
+          )
+          .map((feature) => {
+            const key = `context:${feature.properties.layer_id}`;
+            const selectedLayer = activeSelection === key;
+            const position = point(feature.geometry);
+            const title =
+              feature.properties.name ||
+              feature.properties.classification ||
+              feature.properties.object_type.replaceAll('_', ' ');
+            return position ? (
+              <circle
+                key={feature.id}
+                data-layer={key}
+                data-feature={feature.id}
+                data-selected={selectedLayer}
+                cx={position.x}
+                cy={position.y}
+                r={selectedLayer ? 7 : 5}
+                fill={layerColor(key)}
+                stroke="white"
+                strokeWidth="2"
+              >
+                <title>{title}</title>
+              </circle>
+            ) : (
+              <path
+                key={feature.id}
+                data-layer={key}
+                data-feature={feature.id}
+                data-selected={selectedLayer}
+                d={path(feature.geometry)}
+                fill={layerColor(key)}
+                fillOpacity={selectedLayer ? 0.42 : 0.22}
+                stroke={layerColor(key)}
+                strokeWidth={selectedLayer ? 3 : 1.5}
+                fillRule="evenodd"
+              >
+                <title>{title}</title>
+              </path>
+            );
+          })}
         {findings
           .filter((f) => f.geometry && isVisible(f.key))
           .map((f) => (
@@ -275,7 +340,11 @@ export default function SiteMap({
         >
           <Layers size={16} /> Layers{' '}
           <span className="layer-count">
-            {findings.filter((f) => f.geometry && isVisible(f.key)).length}
+            {findings.filter((f) => f.geometry && isVisible(f.key)).length +
+              (screeningMap?.layers.filter(
+                (layer) =>
+                  layer.feature_count && isVisible(`context:${layer.id}`),
+              ).length || 0)}
           </span>
         </button>
         <button
@@ -356,8 +425,51 @@ export default function SiteMap({
                 ))}
             </div>
           ))}
+          {!!screeningMap?.layers.length && (
+            <div className="layer-group">
+              <h3>Built world & transport</h3>
+              {screeningMap.layers.map((layer) => {
+                const key = `context:${layer.id}`;
+                return (
+                  <div className="layer-row" key={layer.id}>
+                    <label htmlFor={`layer-${key}`}>
+                      <Checkbox
+                        id={`layer-${key}`}
+                        aria-label={`Show ${layer.id.replaceAll('_', ' ')}`}
+                        disabled={!layer.feature_count}
+                        checked={!!layer.feature_count && isVisible(key)}
+                        onCheckedChange={(value) =>
+                          setHiddenLayers((keys) => {
+                            const next = { ...keys };
+                            if (value) delete next[key];
+                            else next[key] = focusRequest;
+                            return next;
+                          })
+                        }
+                      />
+                      <i
+                        className="layer-swatch"
+                        style={{ background: layerColor(key) }}
+                      />
+                      <span>
+                        {layer.id.replaceAll('_', ' ')}
+                        <small>
+                          {layer.feature_count || 'No'} mapped object
+                          {layer.feature_count === 1 ? '' : 's'} ·{' '}
+                          {layer.state.replaceAll('_', ' ')}
+                        </small>
+                      </span>
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           {!findings.length && (
-            <p>Create a new assessment to obtain saved reference-layer observations.</p>
+            <p>
+              Create a new assessment to obtain saved reference-layer
+              observations.
+            </p>
           )}
           <p className="layer-footnote">
             Terrain, watercourse and land-cover measurements are inspectable in
@@ -371,16 +483,23 @@ export default function SiteMap({
         <small>{coordinates || 'WGS84 · EPSG:4326'}</small>
       </div>
       {selected &&
-        findings.find(
+        (findings.find(
           (f) => f.key === selected && f.geometry && isVisible(f.key),
-        ) && (
+        ) ||
+          screeningMap?.features.some(
+            (feature) =>
+              `context:${feature.properties.layer_id}` === selected &&
+              isVisible(selected),
+          )) && (
           <div className="map-selection">
             <i
               className="layer-swatch"
               style={{ background: layerColor(selected) }}
             />
             <span>
-              Highlighted: {findings.find((f) => f.key === selected)?.dataset}
+              Highlighted:{' '}
+              {findings.find((f) => f.key === selected)?.dataset ||
+                selected.replace('context:', '').replaceAll('_', ' ')}
             </span>
           </div>
         )}

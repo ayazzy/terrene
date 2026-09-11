@@ -43,8 +43,10 @@ import {
   PanelLeftOpen,
   Menu,
   Database,
+  FileText,
   Map as MapIcon,
   List,
+  MoreHorizontal,
 } from 'lucide-react';
 import {
   Dialog,
@@ -79,7 +81,11 @@ import {
 } from '@/components/ui/sheet';
 const PortfolioMap = dynamic(() => import('./portfolio-map'), {
   ssr: false,
-  loading: () => <div className="portfolio-map portfolio-loading">Loading saved-site map…</div>,
+  loading: () => (
+    <div className="portfolio-map portfolio-loading">
+      Loading saved-site map…
+    </div>
+  ),
 });
 const statuses = ['Unreviewed', 'Investigate', 'Hold', 'Archived'];
 async function api(path: string, method = 'GET', body?: any): Promise<any> {
@@ -172,16 +178,30 @@ export default function Home() {
     [mobileNavigation, setMobileNavigation] = useState(false);
   const current = sites.find((s) => s.id === active);
   const workspace = useSiteWorkspaceState(current, history);
-  const { assessment, selectedAssessmentId: selectedAssessment, tab, setTab,
-    wetlandSection, setWetlandSection, panelOpen, setPanelOpen, mapFocus,
-    finding, setFinding, showOnMap } = workspace;
+  const {
+    assessment,
+    selectedAssessmentId: selectedAssessment,
+    tab,
+    setTab,
+    wetlandSection,
+    setWetlandSection,
+    panelOpen,
+    setPanelOpen,
+    mapFocus,
+    finding,
+    setFinding,
+    showOnMap,
+  } = workspace;
   const result = assessment?.result,
-    viewingHistorical = !!assessment && assessment.id !== current?.assessment?.id,
+    viewingHistorical =
+      !!assessment && assessment.id !== current?.assessment?.id,
     stale = current && assessment && current.version !== assessment.version,
     newerData =
       result &&
       !readErrors.datasets &&
       datasets.some((d) => !assessment.dataset_ids?.includes(d.id));
+  const screeningFinding = finding && 'properties' in finding ? finding : null;
+  const overlayFinding = finding && !('properties' in finding) ? finding : null;
   const historyFailure =
     historyRead.siteId === active ? historyRead.failure : null;
   const criticalRead = criticalReadFailure(
@@ -303,7 +323,7 @@ export default function Home() {
         {
           name: 'list_crc_sites',
           description:
-            'Read saved CRC sites and review decisions in the current organization.',
+            'Read saved Terrene sites and review decisions in the current organization.',
           inputSchema: {
             type: 'object',
             properties: {},
@@ -407,6 +427,12 @@ export default function Home() {
       await workspace.exportWetlandReport(() => r.text());
     });
   }
+  async function createAssessment() {
+    await act(async () => {
+      await api('/sites/' + active + '/assessments', 'POST');
+      workspace.resetForSite();
+    });
+  }
   const filtered = sites.filter(
     (s) =>
       s.name.toLowerCase().includes(query.toLowerCase()) &&
@@ -421,15 +447,13 @@ export default function Home() {
           <span className="brand-mark" aria-hidden="true">
             <Orbit />
           </span>
-          <span className="brand-wordmark">CRC</span>
+          <span className="brand-wordmark">Terrene</span>
           <button
             className="sidebar-toggle"
             aria-label={
               navigationCompact ? 'Expand sidebar' : 'Collapse sidebar'
             }
-            title={
-              navigationCompact ? 'Expand sidebar' : 'Collapse sidebar'
-            }
+            title={navigationCompact ? 'Expand sidebar' : 'Collapse sidebar'}
             aria-controls="primary-navigation"
             aria-expanded={!navigationCompact}
             onClick={() => setNavigationCompact((value) => !value)}
@@ -485,18 +509,26 @@ export default function Home() {
           </div>
           <div className="sidebar-status-row">
             <span>Workspace</span>
-            <strong>{mode ? (mode === 'development' ? 'Local' : 'Organisation') : 'Unknown'}</strong>
+            <strong>
+              {mode
+                ? mode === 'development'
+                  ? 'Local'
+                  : 'Organisation'
+                : 'Unknown'}
+            </strong>
           </div>
         </div>
         <footer>
           <div className="workspace-avatar">OX</div>
           <div className="workspace-identity">
             <strong>Oxfordshire pilot</strong>
-            <span>England · CRC workspace</span>
+            <span>England · Terrene workspace</span>
           </div>
         </footer>
       </aside>
-      <section className={`main${view === 'site' ? ' analysis-main' : ''}${view === 'workspace' && sitesView === 'map' ? ' portfolio-main' : ''}`}>
+      <section
+        className={`main${view === 'site' ? ' analysis-main' : ''}${view === 'workspace' && sitesView === 'map' ? ' portfolio-main' : ''}`}
+      >
         <header>
           <button
             className="mobile-menu"
@@ -506,7 +538,7 @@ export default function Home() {
             <Menu />
           </button>
           <span className="breadcrumb">
-            CRC <span>/</span>{' '}
+            Terrene <span>/</span>{' '}
             {view === 'site'
               ? current?.name
               : view === 'data'
@@ -517,7 +549,9 @@ export default function Home() {
           </span>
           <span className="pilot">
             <span className="environment-status">
-              <span className={`live-dot${refreshFailures.length ? ' is-unavailable' : ''}`} />{' '}
+              <span
+                className={`live-dot${refreshFailures.length ? ' is-unavailable' : ''}`}
+              />{' '}
               {refreshFailures.length ? 'Refresh unavailable' : 'Live evidence'}
             </span>
             <b>OX</b>
@@ -535,227 +569,248 @@ export default function Home() {
         )}
         {view !== 'site' && refreshNotice}
         {view === 'workspace' && (
-          <Tabs className="sites-views" value={sitesView} onValueChange={(value) => setSitesView(String(value))}>
+          <Tabs
+            className="sites-views"
+            value={sitesView}
+            onValueChange={(value) => setSitesView(String(value))}
+          >
             <div className="sites-view-bar">
               <TabsList aria-label="Sites view">
-                <TabsTrigger value="map"><MapIcon size={16} /> Map</TabsTrigger>
-                <TabsTrigger value="list"><List size={16} /> List</TabsTrigger>
+                <TabsTrigger value="map">
+                  <MapIcon size={16} /> Map
+                </TabsTrigger>
+                <TabsTrigger value="list">
+                  <List size={16} /> List
+                </TabsTrigger>
               </TabsList>
-              <button className="primary" onClick={startNew}><Plus size={18} /> New site</button>
+              <button className="primary" onClick={startNew}>
+                <Plus size={18} /> New site
+              </button>
             </div>
             <TabsContent value="map" className="sites-map-panel">
-              <PortfolioMap sites={sites} selected={selectedMapSite} onSelect={setSelectedMapSite} onOpen={openSite}
-                loading={loading} unavailable={!hasLoadedSites && !!readErrors.sites} />
+              <PortfolioMap
+                sites={sites}
+                selected={selectedMapSite}
+                onSelect={setSelectedMapSite}
+                onOpen={openSite}
+                loading={loading}
+                unavailable={!hasLoadedSites && !!readErrors.sites}
+              />
             </TabsContent>
             <TabsContent value="list">
-            <div className="heading">
-              <div>
-                <p className="eyebrow">LAND OPPORTUNITIES</p>
-                <h1>Your workspace</h1>
-                <p>Identify what deserves a closer look.</p>
+              <div className="heading">
+                <div>
+                  <p className="eyebrow">LAND OPPORTUNITIES</p>
+                  <h1>Your workspace</h1>
+                  <p>Identify what deserves a closer look.</p>
+                </div>
               </div>
-            </div>
-            <div className="workspace-content">
-              <div className="workspace-summary">
-                <div>
-                  <b>{sites.length.toString().padStart(2, '0')}</b>
-                  <span>Saved sites</span>
+              <div className="workspace-content">
+                <div className="workspace-summary">
+                  <div>
+                    <b>{sites.length.toString().padStart(2, '0')}</b>
+                    <span>Saved sites</span>
+                  </div>
+                  <div>
+                    <b>
+                      {sites
+                        .filter((s) => s.status === 'Investigate')
+                        .length.toString()
+                        .padStart(2, '0')}
+                    </b>
+                    <span>To investigate</span>
+                  </div>
+                  <div>
+                    <b>
+                      {datasets.filter((d) => d.state === 'available').length} /{' '}
+                      {datasets.length}
+                    </b>
+                    <span>Reference layers available</span>
+                  </div>
+                  <p>
+                    <Info size={18} /> Screening guides further assessment.
+                    <br />
+                    Wetland model v0.1 shows potential, evidence and
+                    uncertainty.
+                  </p>
                 </div>
-                <div>
-                  <b>
-                    {sites
-                      .filter((s) => s.status === 'Investigate')
-                      .length.toString()
-                      .padStart(2, '0')}
-                  </b>
-                  <span>To investigate</span>
+                <div className="toolbar">
+                  <div className="search">
+                    <Search size={17} />
+                    <input
+                      aria-label="Search sites"
+                      placeholder="Search sites…"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                    />
+                  </div>
+                  <Select
+                    value={filter}
+                    onValueChange={(v) => v && setFilter(v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue>
+                        {filter === 'all' ? 'All review statuses' : filter}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All review statuses</SelectItem>
+                      {statuses.map((s) => (
+                        <SelectItem value={s} key={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <button
+                    disabled={compare.length < 2}
+                    onClick={() => setView('compare')}
+                  >
+                    Compare selected ({compare.length}/3)
+                  </button>
                 </div>
-                <div>
-                  <b>
-                    {datasets.filter((d) => d.state === 'available').length} /{' '}
-                    {datasets.length}
-                  </b>
-                  <span>Reference layers available</span>
-                </div>
-                <p>
-                  <Info size={18} /> Screening guides further assessment.
-                  <br />
-                  Wetland model v0.1 shows potential, evidence and uncertainty.
+                {loading ? (
+                  <WorkspaceLoading />
+                ) : !hasLoadedSites && readErrors.sites ? (
+                  <WorkspaceState
+                    kind="error"
+                    title="Saved sites could not be loaded"
+                    description="Retry the request above to load your workspace."
+                  />
+                ) : !filtered.length ? (
+                  <WorkspaceState
+                    kind="empty"
+                    title={
+                      sites.length
+                        ? 'No sites match these filters'
+                        : 'No land sites saved'
+                    }
+                    description="Draw a boundary or upload GeoJSON to create a site for evidence screening."
+                    action={
+                      <button onClick={startNew}>
+                        Create a site <ArrowUpRight size={16} />
+                      </button>
+                    }
+                  />
+                ) : (
+                  <div className="site-table">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="check-cell" />
+                          <TableHead>Site / boundary</TableHead>
+                          <TableHead>Area</TableHead>
+                          <TableHead>Screening</TableHead>
+                          <TableHead>Data coverage</TableHead>
+                          <TableHead>Review decision</TableHead>
+                          <TableHead />
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filtered.map((s) => (
+                          <TableRow key={s.id}>
+                            <TableCell>
+                              <Checkbox
+                                aria-label={'Compare ' + s.name}
+                                checked={compare.includes(s.id)}
+                                disabled={
+                                  !compare.includes(s.id) && compare.length >= 3
+                                }
+                                onCheckedChange={(v) =>
+                                  setCompare(
+                                    v
+                                      ? [...compare, s.id]
+                                      : compare.filter((id) => id !== s.id),
+                                  )
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <button
+                                className="site-link"
+                                onClick={() => openSite(s)}
+                              >
+                                <span className="site-icon">
+                                  <MapPin size={18} />
+                                </span>
+                                <span>
+                                  <strong>{s.name}</strong>
+                                  <small>Boundary v{s.version} · England</small>
+                                </span>
+                              </button>
+                            </TableCell>
+                            <TableCell>
+                              {s.assessment?.result &&
+                              s.assessment.version === s.version
+                                ? fmt(s.assessment.result.area_ha) + ' ha'
+                                : '—'}
+                            </TableCell>
+                            <TableCell>
+                              <EvidenceBadge
+                                state={
+                                  s.assessment?.version !== s.version
+                                    ? 'partial'
+                                    : s.assessment?.state === 'completed'
+                                      ? 'available'
+                                      : s.assessment?.state === 'partial'
+                                        ? 'partial'
+                                        : s.assessment?.state === 'failed'
+                                          ? 'warning'
+                                          : s.assessment
+                                            ? 'modelled'
+                                            : 'missing'
+                                }
+                              >
+                                {s.assessment
+                                  ? s.assessment.version !== s.version
+                                    ? 'Previous boundary'
+                                    : s.assessment.state
+                                  : 'Not screened'}
+                              </EvidenceBadge>
+                            </TableCell>
+                            <TableCell>
+                              {s.assessment?.result &&
+                              s.assessment.version === s.version
+                                ? s.assessment.result.completeness +
+                                  ' / ' +
+                                  s.assessment.result.dataset_count +
+                                  ' layers'
+                                : 'Unknown'}
+                            </TableCell>
+                            <TableCell>
+                              <Status
+                                value={s.status}
+                                onChange={(status) =>
+                                  act(() =>
+                                    api('/sites/' + s.id, 'PATCH', {
+                                      status,
+                                      expected_version: s.version,
+                                    }),
+                                  )
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <button
+                                aria-label={'Open ' + s.name}
+                                className="icon-btn"
+                                onClick={() => openSite(s)}
+                              >
+                                <ArrowUpRight size={18} />
+                              </button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+                <p className="fineprint">
+                  Review decisions belong to your team. Screening results
+                  describe geographic observations and provisional wetland model
+                  outputs.
                 </p>
               </div>
-              <div className="toolbar">
-                <div className="search">
-                  <Search size={17} />
-                  <input
-                    aria-label="Search sites"
-                    placeholder="Search sites…"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                  />
-                </div>
-                <Select value={filter} onValueChange={(v) => v && setFilter(v)}>
-                  <SelectTrigger>
-                    <SelectValue>
-                      {filter === 'all' ? 'All review statuses' : filter}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All review statuses</SelectItem>
-                    {statuses.map((s) => (
-                      <SelectItem value={s} key={s}>
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <button
-                  disabled={compare.length < 2}
-                  onClick={() => setView('compare')}
-                >
-                  Compare selected ({compare.length}/3)
-                </button>
-              </div>
-              {loading ? (
-                <WorkspaceLoading />
-              ) : !hasLoadedSites && readErrors.sites ? (
-                <WorkspaceState
-                  kind="error"
-                  title="Saved sites could not be loaded"
-                  description="Retry the request above to load your workspace."
-                />
-              ) : !filtered.length ? (
-                <WorkspaceState
-                  kind="empty"
-                  title={
-                    sites.length
-                      ? 'No sites match these filters'
-                      : 'No land sites saved'
-                  }
-                  description="Draw a boundary or upload GeoJSON to create a site for evidence screening."
-                  action={
-                    <button onClick={startNew}>
-                      Create a site <ArrowUpRight size={16} />
-                    </button>
-                  }
-                />
-              ) : (
-                <div className="site-table">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="check-cell" />
-                        <TableHead>Site / boundary</TableHead>
-                        <TableHead>Area</TableHead>
-                        <TableHead>Screening</TableHead>
-                        <TableHead>Data coverage</TableHead>
-                        <TableHead>Review decision</TableHead>
-                        <TableHead />
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filtered.map((s) => (
-                        <TableRow key={s.id}>
-                          <TableCell>
-                            <Checkbox
-                              aria-label={'Compare ' + s.name}
-                              checked={compare.includes(s.id)}
-                              disabled={
-                                !compare.includes(s.id) && compare.length >= 3
-                              }
-                              onCheckedChange={(v) =>
-                                setCompare(
-                                  v
-                                    ? [...compare, s.id]
-                                    : compare.filter((id) => id !== s.id),
-                                )
-                              }
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <button
-                              className="site-link"
-                              onClick={() => openSite(s)}
-                            >
-                              <span className="site-icon">
-                                <MapPin size={18} />
-                              </span>
-                              <span>
-                                <strong>{s.name}</strong>
-                                <small>Boundary v{s.version} · England</small>
-                              </span>
-                            </button>
-                          </TableCell>
-                          <TableCell>
-                            {s.assessment?.result &&
-                            s.assessment.version === s.version
-                              ? fmt(s.assessment.result.area_ha) + ' ha'
-                              : '—'}
-                          </TableCell>
-                          <TableCell>
-                            <EvidenceBadge
-                              state={
-                                s.assessment?.version !== s.version
-                                  ? 'partial'
-                                  : s.assessment?.state === 'completed'
-                                    ? 'available'
-                                    : s.assessment?.state === 'partial'
-                                      ? 'partial'
-                                      : s.assessment?.state === 'failed'
-                                        ? 'warning'
-                                        : s.assessment
-                                          ? 'modelled'
-                                          : 'missing'
-                              }
-                            >
-                              {s.assessment
-                                ? s.assessment.version !== s.version
-                                  ? 'Previous boundary'
-                                  : s.assessment.state
-                                : 'Not screened'}
-                            </EvidenceBadge>
-                          </TableCell>
-                          <TableCell>
-                            {s.assessment?.result &&
-                            s.assessment.version === s.version
-                              ? s.assessment.result.completeness +
-                                ' / ' +
-                                s.assessment.result.dataset_count +
-                                ' layers'
-                              : 'Unknown'}
-                          </TableCell>
-                          <TableCell>
-                            <Status
-                              value={s.status}
-                              onChange={(status) =>
-                                act(() =>
-                                  api('/sites/' + s.id, 'PATCH', {
-                                    status,
-                                    expected_version: s.version,
-                                  }),
-                                )
-                              }
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <button
-                              aria-label={'Open ' + s.name}
-                              className="icon-btn"
-                              onClick={() => openSite(s)}
-                            >
-                              <ArrowUpRight size={18} />
-                            </button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-              <p className="fineprint">
-                Review decisions belong to your team. Screening results describe
-                geographic observations and provisional wetland model outputs.
-              </p>
-            </div>
             </TabsContent>
           </Tabs>
         )}
@@ -770,94 +825,98 @@ export default function Home() {
                   <ArrowLeft size={14} /> All sites
                 </button>
                 <h1>{current.name}</h1>
-                <p>
-                  <MapPin size={14} /> England · Boundary v
-                  {stale ? assessment.version : current.version}
-                  {result && ' · ' + fmt(result.area_ha) + ' ha'}
-                </p>
+                <div className="site-meta-line">
+                  <span>
+                    <MapPin size={13} /> England
+                  </span>
+                  <span>
+                    Boundary v{stale ? assessment.version : current.version}
+                  </span>
+                  {result && <span>{fmt(result.area_ha)} ha</span>}
+                  <EvidenceBadge
+                    state={
+                      assessment?.state === 'completed'
+                        ? 'available'
+                        : assessment?.state === 'failed'
+                          ? 'warning'
+                          : assessment
+                            ? 'partial'
+                            : 'missing'
+                    }
+                  >
+                    {assessment
+                      ? `Assessment ${assessment.state}`
+                      : 'Not assessed'}
+                  </EvidenceBadge>
+                  {assessment && (
+                    <span className="context-date">
+                      {new Date(assessment.created).toLocaleString('en-GB', {
+                        dateStyle: 'medium',
+                      })}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="actions">
-                <button disabled={!result || busy} onClick={report}>
-                  <Download size={16} /> Export wetland model report
-                </button>
+              <div className="site-heading-controls">
+                <span className="compact-team-review">
+                  <small>Team review</small>
+                  <Status
+                    value={current.status}
+                    onChange={(status) =>
+                      act(() =>
+                        api('/sites/' + active, 'PATCH', {
+                          status,
+                          expected_version: current.version,
+                        }),
+                      )
+                    }
+                  />
+                </span>
                 <button
-                  className="primary"
+                  className="assessment-action"
                   disabled={
                     busy ||
                     ['queued', 'running'].includes(current.assessment?.state)
                   }
-                  onClick={() =>
-                    act(async () => {
-                      await api('/sites/' + active + '/assessments', 'POST');
-                      workspace.resetForSite();
-                    })
-                  }
+                  onClick={() => void createAssessment()}
                 >
                   <Play size={15} />
                   {['queued', 'running'].includes(current.assessment?.state)
                     ? current.assessment.state + '…'
-                    : 'Create new assessment'}
+                    : 'New assessment'}
                 </button>
+                <details className="site-actions-menu">
+                  <summary>
+                    <MoreHorizontal size={16} />
+                    <span className="sr-only">Site actions</span>
+                  </summary>
+                  <div>
+                    <button
+                      className="text-btn"
+                      onClick={() => {
+                        setEditing(true);
+                        setName(current.name);
+                        setNotes(current.notes);
+                        setGeometry(null);
+                        setRawGeometry(null);
+                        setNewSite(true);
+                      }}
+                    >
+                      <PenLine size={14} /> Edit boundary / site
+                    </button>
+                  </div>
+                </details>
               </div>
-            </div>
-            <div className="analysis-context-bar">
-              <span className="compact-team-review">
-                Team review status{' '}
-                <Status
-                  value={current.status}
-                  onChange={(status) =>
-                    act(() =>
-                      api('/sites/' + active, 'PATCH', {
-                        status,
-                        expected_version: current.version,
-                      }),
-                    )
-                  }
-                />
-              </span>
-              <span>
-                <EvidenceBadge
-                  state={
-                    assessment?.state === 'completed'
-                      ? 'available'
-                      : assessment?.state === 'failed'
-                        ? 'warning'
-                        : assessment
-                          ? 'partial'
-                          : 'missing'
-                  }
-                >
-                  {assessment
-                    ? `Assessment ${assessment.state}`
-                    : 'Not assessed'}
-                </EvidenceBadge>
-                <span className="context-date">
-                  {assessment
-                    ? `Assessed ${new Date(assessment.created).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}`
-                    : 'No assessment saved'}
-                </span>
-              </span>
-              <button
-                className="text-btn"
-                onClick={() => {
-                  setEditing(true);
-                  setName(current.name);
-                  setNotes(current.notes);
-                  setGeometry(null);
-                  setRawGeometry(null);
-                  setNewSite(true);
-                }}
-              >
-                <PenLine size={14} /> Edit boundary / site
-              </button>
             </div>
             {stale && (
               <div className="alert">
                 Viewing saved boundary v{assessment.version}; current site is v
-                {current.version}. Create a new assessment to evaluate the current boundary.
+                {current.version}. Create a new assessment to evaluate the
+                current boundary.
               </div>
             )}
-            {assessment && selectedAssessment &&
+            {assessment &&
+              selectedAssessment &&
               selectedAssessment !== current.assessment?.id && (
                 <div className="assessment-snapshot">
                   Historical assessment ·{' '}
@@ -885,13 +944,20 @@ export default function Home() {
               <div className="analysis-map">
                 <SiteMap
                   key={assessment?.id || current.id}
-                  geometry={viewingHistorical ? assessment.geometry : current.geometry}
+                  geometry={
+                    viewingHistorical ? assessment.geometry : current.geometry
+                  }
                   findings={result?.findings}
+                  screeningMap={workspace.context.map}
                   selected={mapFocus?.key}
                   focusRequest={mapFocus?.request}
                   boundaryLabel={`Boundary v${viewingHistorical ? assessment.version : current.version}${viewingHistorical ? ' · historical assessment' : ''}`}
                   onInspect={(f) => {
-                    showOnMap(f.key);
+                    showOnMap(
+                      'properties' in f
+                        ? `context:${f.properties.layer_id}`
+                        : f.key,
+                    );
                     setFinding(f);
                   }}
                 />
@@ -912,7 +978,9 @@ export default function Home() {
                 <div className="analysis-panel-heading">
                   <span>
                     <strong>Site Analysis Workspace</strong>
-                    <small>Earth evidence · reasoning modules · team review</small>
+                    <small>
+                      Earth evidence · reasoning modules · team review
+                    </small>
                   </span>
                   <button
                     className="icon-btn"
@@ -934,16 +1002,109 @@ export default function Home() {
                     <TabsTrigger value="history">History</TabsTrigger>
                   </TabsList>
                   <TabsContent value="overview">
-                    {assessment ? <ScreeningContextPanel key={assessment.id + ':overview'} assessment={assessment} hasResult={!!result}
-                      mode="overview" context={workspace.context} onEvidence={() => setTab('evidence')} /> :
-                      <div className="pad"><h2>No saved assessment</h2><p>Create a new assessment to establish an immutable boundary and evidence record.</p></div>}
-                    <div className="team-review"><p><strong>Team decision</strong> · kept separate from Earth facts and model interpretations.</p>
-                      <details><summary>Site notes</summary><p>{current.notes || 'No notes added. Use Edit boundary / site to add notes.'}</p></details></div>
+                    {assessment ? (
+                      <ScreeningContextPanel
+                        key={assessment.id + ':overview'}
+                        assessment={assessment}
+                        hasResult={!!result}
+                        mode="overview"
+                        context={workspace.context}
+                        onEvidence={() => setTab('evidence')}
+                        onMap={(key) => {
+                          setPanelOpen(true);
+                          showOnMap(key);
+                        }}
+                        mapTargets={[
+                          ...(result?.findings || [])
+                            .filter((item: OverlayFinding) => !!item.geometry)
+                            .map((item: OverlayFinding) => item.key),
+                          ...(workspace.context.map?.layers || [])
+                            .filter((layer) => layer.feature_count > 0)
+                            .map((layer) => `context:${layer.id}`),
+                        ]}
+                      site={{
+                        name: current.name,
+                        areaHa: result?.area_ha,
+                      }}
+                      />
+                    ) : (
+                      <section className="screening-context screening-overview useful-empty">
+                        <div className="screening-heading">
+                          <span>
+                            <FileText size={18} />
+                            <span>
+                              <p className="eyebrow">TERRENE EARTH</p>
+                              <h2>Site brief</h2>
+                            </span>
+                          </span>
+                          <output>No saved assessment</output>
+                        </div>
+                        <section className="site-picture is-basic">
+                          <p className="context-kind">Site picture</p>
+                          <h3>{current.name}</h3>
+                          <dl className="site-picture-basics">
+                            <div>
+                              <dt>Location</dt>
+                              <dd>England</dd>
+                            </div>
+                            <div>
+                              <dt>Boundary</dt>
+                              <dd>Version {current.version}</dd>
+                            </div>
+                            <div>
+                              <dt>Assessment</dt>
+                              <dd>Not yet created</dd>
+                            </div>
+                          </dl>
+                        </section>
+                        <section className="context-preparation-note">
+                          <h3>Establish saved evidence</h3>
+                          <p>
+                            Create an assessment to retain the current boundary
+                            and available source evidence. Screening Context can
+                            then prepare the concise brief without changing the
+                            original assessment.
+                          </p>
+                          <button
+                            onClick={() => void createAssessment()}
+                            disabled={busy}
+                          >
+                            <Play size={14} /> Create assessment
+                          </button>
+                        </section>
+                      </section>
+                    )}
+                    <div className="team-review">
+                      <p>
+                        <strong>Team decision</strong> · kept separate from
+                        Earth facts and model interpretations.
+                      </p>
+                      <details>
+                        <summary>Site notes</summary>
+                        <p>
+                          {current.notes ||
+                            'No notes added. Use Edit boundary / site to add notes.'}
+                        </p>
+                      </details>
+                    </div>
                   </TabsContent>
                   <TabsContent value="evidence">
-                    {assessment && <ScreeningContextPanel key={assessment.id + ':evidence'} assessment={assessment} hasResult={!!result}
-                      mode="evidence" context={workspace.context} onEvidence={() => setTab('evidence')} />}
-                    <details className="module-evidence"><summary>Wetland module input evidence</summary>
+                    {assessment && (
+                      <ScreeningContextPanel
+                        key={assessment.id + ':evidence'}
+                        assessment={assessment}
+                        hasResult={!!result}
+                        mode="evidence"
+                        context={workspace.context}
+                        onEvidence={() => setTab('evidence')}
+                      site={{
+                        name: current.name,
+                        areaHa: result?.area_ha,
+                      }}
+                      />
+                    )}
+                    <details className="module-evidence">
+                      <summary>Wetland module input evidence</summary>
                       <NaturePanel
                         key={(assessment?.id || current.id) + ':evidence'}
                         section="evidence"
@@ -959,28 +1120,91 @@ export default function Home() {
                           analysisPanel.current?.scrollTo({ top: 0 })
                         }
                       />
-                      <OverlayFindings findings={result?.findings || []} onInspect={(f) => { if (f.geometry) showOnMap(f.key); setFinding(f); }} onMap={showOnMap} />
+                      <OverlayFindings
+                        findings={result?.findings || []}
+                        onInspect={(f) => {
+                          if (f.geometry) showOnMap(f.key);
+                          setFinding(f);
+                        }}
+                        onMap={showOnMap}
+                      />
                     </details>
                   </TabsContent>
                   <TabsContent value="models">
-                    <div className="model-module-heading"><p className="eyebrow">TERRENE REASONING</p><h2>Wetland assessment</h2>
-                      <p>Versioned reasoning over the selected assessment’s retained evidence. Model interpretations are not Earth facts or team decisions.</p></div>
-                    <Tabs value={wetlandSection} onValueChange={(value) => setWetlandSection(value as typeof wetlandSection)}>
-                      <TabsList className="model-tabs" aria-label="Wetland assessment sections">
-                        <TabsTrigger value="overview">Summary</TabsTrigger><TabsTrigger value="physical">Physical</TabsTrigger>
-                        <TabsTrigger value="ecology">Ecology</TabsTrigger><TabsTrigger value="constraints">Constraints</TabsTrigger>
+                    <div className="model-module-heading">
+                      <span>
+                        <p className="eyebrow">TERRENE REASONING · MODULE</p>
+                        <h2>Wetland assessment</h2>
+                        <p>
+                          Versioned reasoning over the selected assessment’s
+                          retained evidence. Model interpretations are not Earth
+                          facts or team decisions.
+                        </p>
+                      </span>
+                      <button disabled={!result || busy} onClick={report}>
+                        <Download size={15} /> Export report
+                      </button>
+                    </div>
+                    <Tabs
+                      className="model-module"
+                      value={wetlandSection}
+                      onValueChange={(value) =>
+                        setWetlandSection(value as typeof wetlandSection)
+                      }
+                    >
+                      <TabsList
+                        className="model-tabs"
+                        aria-label="Wetland assessment sections"
+                      >
+                        <TabsTrigger value="overview">Summary</TabsTrigger>
+                        <TabsTrigger value="physical">Physical</TabsTrigger>
+                        <TabsTrigger value="ecology">Ecology</TabsTrigger>
+                        <TabsTrigger value="constraints">
+                          Constraints
+                        </TabsTrigger>
                       </TabsList>
-                      {['overview', 'physical', 'ecology', 'constraints'].map((section) => <TabsContent value={section} key={section}>
-                        <NaturePanel key={(assessment?.id || current.id) + section} section={section}
-                          onSection={(next) => { if (next === 'evidence') setTab('evidence'); else setWetlandSection(next as typeof wetlandSection); }}
-                          model={result?.wetland_model} earth={result?.environmental_state} assessmentState={assessment?.state}
-                          hasResult={!!result} error={assessment?.error} findings={result?.findings} onMapEvidence={showOnMap}
-                          onInspect={() => analysisPanel.current?.scrollTo({ top: 0 })} />
-                        {section !== 'overview' && <OverlayFindings findings={(result?.findings || []).filter((f: OverlayFinding) =>
-                          section === 'physical' ? f.key === 'flood' : f.key !== 'flood')} onInspect={(f) => {
-                          if (f.geometry) showOnMap(f.key); setFinding(f);
-                        }} onMap={showOnMap} />}
-                      </TabsContent>)}
+                      {['overview', 'physical', 'ecology', 'constraints'].map(
+                        (section) => (
+                          <TabsContent value={section} key={section}>
+                            <NaturePanel
+                              key={(assessment?.id || current.id) + section}
+                              section={section}
+                              onSection={(next) => {
+                                if (next === 'evidence') setTab('evidence');
+                                else
+                                  setWetlandSection(
+                                    next as typeof wetlandSection,
+                                  );
+                              }}
+                              model={result?.wetland_model}
+                              earth={result?.environmental_state}
+                              assessmentState={assessment?.state}
+                              hasResult={!!result}
+                              error={assessment?.error}
+                              findings={result?.findings}
+                              onMapEvidence={showOnMap}
+                              onInspect={() =>
+                                analysisPanel.current?.scrollTo({ top: 0 })
+                              }
+                            />
+                            {section !== 'overview' && (
+                              <OverlayFindings
+                                findings={(result?.findings || []).filter(
+                                  (f: OverlayFinding) =>
+                                    section === 'physical'
+                                      ? f.key === 'flood'
+                                      : f.key !== 'flood',
+                                )}
+                                onInspect={(f) => {
+                                  if (f.geometry) showOnMap(f.key);
+                                  setFinding(f);
+                                }}
+                                onMap={showOnMap}
+                              />
+                            )}
+                          </TabsContent>
+                        ),
+                      )}
                     </Tabs>
                   </TabsContent>
                   <TabsContent value="history">
@@ -1095,7 +1319,14 @@ export default function Home() {
                 <h1>Compare sites</h1>
                 <p>Explicit findings, coverage and your team’s decisions.</p>
               </div>
-              <button onClick={() => { setSitesView('list'); setView('workspace'); }}>Choose sites</button>
+              <button
+                onClick={() => {
+                  setSitesView('list');
+                  setView('workspace');
+                }}
+              >
+                Choose sites
+              </button>
             </div>
             <div className="workspace-content">
               {compare.length < 2 ? (
@@ -1104,7 +1335,12 @@ export default function Home() {
                   title="Select two or three sites"
                   description="Use the checkboxes in Sites to choose the land opportunities you want to compare."
                   action={
-                    <button onClick={() => { setSitesView('list'); setView('workspace'); }}>
+                    <button
+                      onClick={() => {
+                        setSitesView('list');
+                        setView('workspace');
+                      }}
+                    >
                       Back to sites
                     </button>
                   }
@@ -1245,7 +1481,8 @@ export default function Home() {
           <DialogHeader>
             <DialogTitle>Wetland model report</DialogTitle>
             <DialogDescription>
-              Saved wetland reasoning and supporting assessment evidence, with the team review status labelled separately.
+              Saved wetland reasoning and supporting assessment evidence, with
+              the team review status labelled separately.
             </DialogDescription>
           </DialogHeader>
           <div className="actions">
@@ -1314,45 +1551,111 @@ export default function Home() {
       <Sheet open={!!finding} onOpenChange={(v) => !v && setFinding(null)}>
         <SheetContent className="evidence-sheet">
           <SheetHeader>
-            <SheetTitle>{finding?.dataset}</SheetTitle>
+            <SheetTitle>
+              {screeningFinding
+                ? screeningFinding.properties.name ||
+                  screeningFinding.properties.classification ||
+                  screeningFinding.properties.object_type.replaceAll('_', ' ')
+                : overlayFinding?.dataset}
+            </SheetTitle>
             <SheetDescription>
-              Evidence detail · boundary v{finding?.boundary_version}
+              {screeningFinding
+                ? 'Mapped object · retained Screening Context evidence'
+                : `Evidence detail · boundary v${overlayFinding?.boundary_version}`}
             </SheetDescription>
           </SheetHeader>
-          {finding && (
+          {screeningFinding && (
+            <div className="evidence-body">
+              <p className="eyebrow">MAPPED OBJECT</p>
+              <h2>
+                {screeningFinding.properties.object_type.replaceAll('_', ' ')}
+              </h2>
+              <p>
+                {screeningFinding.properties.classification ||
+                  'No additional source classification recorded.'}
+              </p>
+              <dl>
+                <dt>Source</dt>
+                <dd>
+                  {screeningFinding.properties.source.provider} ·{' '}
+                  {screeningFinding.properties.source.dataset}
+                </dd>
+                <dt>Release</dt>
+                <dd>{screeningFinding.properties.source_release}</dd>
+                <dt>Relationship to parcel</dt>
+                <dd>
+                  {screeningFinding.properties.relationships.length
+                    ? screeningFinding.properties.relationships
+                        .map((item) => item.predicate.replaceAll('_', ' '))
+                        .join(' · ')
+                    : 'No parcel relationship retained for this object'}
+                </dd>
+                <dt>Authoritative geometry</dt>
+                <dd>
+                  {screeningFinding.properties.authoritative_geometry_crs}
+                </dd>
+              </dl>
+              <button
+                onClick={() => {
+                  showOnMap(`context:${screeningFinding.properties.layer_id}`);
+                  setFinding(null);
+                }}
+              >
+                <MapPin size={14} /> Locate object layer on map
+              </button>
+              <button
+                onClick={() => {
+                  setTab('evidence');
+                  setPanelOpen(true);
+                  setFinding(null);
+                }}
+              >
+                Open evidence register <ArrowUpRight size={14} />
+              </button>
+              <p className="fineprint">
+                Map geometry is a WGS84 presentation. Persisted EPSG:27700
+                geometry and measurements remain authoritative.
+              </p>
+            </div>
+          )}
+          {overlayFinding && (
             <div className="evidence-body">
               <p className="eyebrow">MEASURED OBSERVATION</p>
               <h2>
-                {finding.measured === null
+                {overlayFinding.measured === null
                   ? 'Unknown'
-                  : fmt(finding.measured) + ' ha overlap'}
+                  : fmt(overlayFinding.measured) + ' ha overlap'}
               </h2>
-              <p>{finding.interpretation}</p>
+              <p>{overlayFinding.interpretation}</p>
               <dl>
                 <dt>Coverage</dt>
-                <dd>{finding.coverage}</dd>
-                {finding.import_bbox && (
+                <dd>{overlayFinding.coverage}</dd>
+                {overlayFinding.import_bbox && (
                   <>
                     <dt>Imported extent (W, S, E, N)</dt>
-                    <dd>{finding.import_bbox.join(', ')}°</dd>
+                    <dd>{overlayFinding.import_bbox.join(', ')}°</dd>
                   </>
                 )}
-                {finding.import_method && (
+                {overlayFinding.import_method && (
                   <>
                     <dt>Import method</dt>
-                    <dd>{finding.import_method}</dd>
+                    <dd>{overlayFinding.import_method}</dd>
                   </>
                 )}
                 <dt>Method</dt>
-                <dd>{finding.method}</dd>
+                <dd>{overlayFinding.method}</dd>
                 <dt>Rule version</dt>
-                <dd>{finding.rule_version}</dd>
+                <dd>{overlayFinding.rule_version}</dd>
                 <dt>Retrieved</dt>
-                <dd>{finding.retrieved}</dd>
+                <dd>{overlayFinding.retrieved}</dd>
                 <dt>Dataset version</dt>
-                <dd>{finding.dataset_version}</dd>
+                <dd>{overlayFinding.dataset_version}</dd>
               </dl>
-              <a href={finding.source_url} target="_blank" rel="noreferrer">
+              <a
+                href={overlayFinding.source_url}
+                target="_blank"
+                rel="noreferrer"
+              >
                 View authoritative source ↗
               </a>
               {result?.environmental_state && (
@@ -1364,7 +1667,9 @@ export default function Home() {
                         result.environmental_state.derived,
                       ) as Observation[]
                     )
-                      .filter((o) => linkedFindings(o, [finding]).length > 0)
+                      .filter(
+                        (o) => linkedFindings(o, [overlayFinding]).length > 0,
+                      )
                       .map((o) => (
                         <li key={o.id}>
                           {variableLabel(o.variable)}
@@ -1384,13 +1689,13 @@ export default function Home() {
                 </>
               )}
               <h3>Limitations & uncertainty</h3>
-              <p>{finding.limitations}</p>
+              <p>{overlayFinding.limitations}</p>
               <p>{result?.limitations}</p>
-              <small>{finding.attribution}</small>
-              {finding.geometry && (
+              <small>{overlayFinding.attribution}</small>
+              {overlayFinding.geometry && (
                 <button
                   onClick={() => {
-                    showOnMap(finding.key);
+                    showOnMap(overlayFinding.key);
                     setFinding(null);
                   }}
                 >
@@ -1398,7 +1703,7 @@ export default function Home() {
                 </button>
               )}
               <p className="fineprint">
-                {finding.geometry
+                {overlayFinding.geometry
                   ? 'The overlap geometry is highlighted on the map.'
                   : 'No overlap geometry is available for this finding.'}
               </p>

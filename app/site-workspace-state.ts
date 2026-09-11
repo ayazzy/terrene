@@ -6,10 +6,13 @@ import {
   contextPath,
   contextResponse,
   readScreeningContext,
+  readScreeningMapFeatures,
   requestScreeningContext,
   screeningAssessmentKey,
   ScreeningContextRequestError,
   type ScreeningRun,
+  type ScreeningMapFeature,
+  type ScreeningMapFeatures,
 } from './screening-context';
 import {
   resolveWorkspaceAssessment,
@@ -33,6 +36,7 @@ export type ContextState =
   | 'unsupported'
   | 'unauthorized'
   | 'failed';
+export type MapInspection = OverlayFinding | ScreeningMapFeature;
 
 export function useSiteWorkspaceState(
   site: Site | undefined,
@@ -49,7 +53,7 @@ export function useSiteWorkspaceState(
     key: string;
     request: number;
   } | null>(null);
-  const [finding, setFinding] = useState<OverlayFinding | null>(null);
+  const [finding, setFinding] = useState<MapInspection | null>(null);
   const [reportHtml, setReportHtml] = useState('');
   const [reportUrl, setReportUrl] = useState('');
   const [contextRun, setContextRun] = useState<ScreeningRun | null>(null);
@@ -63,7 +67,12 @@ export function useSiteWorkspaceState(
   const [contextExporting, setContextExporting] = useState(false);
   const [contextExportHtml, setContextExportHtml] = useState('');
   const [contextExportUrl, setContextExportUrl] = useState('');
+  const [contextMap, setContextMap] = useState<ScreeningMapFeatures | null>(
+    null,
+  );
+  const [contextMapError, setContextMapError] = useState('');
   const requestGeneration = useRef(0);
+  const mapRequestGeneration = useRef(0);
 
   const assessment = useMemo(
     () => resolveWorkspaceAssessment(site, history, selectedAssessmentId),
@@ -144,6 +153,27 @@ export function useSiteWorkspaceState(
     assessmentVersion,
     contextRetry,
   ]);
+
+  useEffect(() => {
+    if (!contextRun || contextAssessmentKey !== assessmentKey) return;
+    const abort = new AbortController();
+    const generation = ++mapRequestGeneration.current;
+    void readScreeningMapFeatures(contextRun, abort.signal)
+      .then((map) => {
+        if (abort.signal.aborted || generation !== mapRequestGeneration.current)
+          return;
+        setContextMap(map);
+      })
+      .catch((cause: Error) => {
+        if (abort.signal.aborted || generation !== mapRequestGeneration.current)
+          return;
+        setContextMapError(cause.message);
+      });
+    return () => {
+      mapRequestGeneration.current += 1;
+      abort.abort();
+    };
+  }, [assessmentKey, contextAssessmentKey, contextRun]);
 
   function applyContextFailure(cause: unknown, operation: 'read' | 'prepare') {
     const status =
@@ -285,6 +315,8 @@ export function useSiteWorkspaceState(
       exporting: contextExporting,
       exportHtml: contextExportHtml,
       exportUrl: contextExportUrl,
+      map: contextMap?.run_id === contextRun?.id ? contextMap : null,
+      mapError: contextMap?.run_id === contextRun?.id ? contextMapError : '',
       prepare: prepareContext,
       retry: retryContext,
       exportReport: exportContext,
