@@ -14,6 +14,9 @@ test('portfolio list has a dedicated intelligence-led visual hierarchy', () => {
   assert.match(page, /Screening protocol/);
   assert.match(css, /\.portfolio-list-hero::before/);
   assert.match(css, /\.portfolio-site-table tbody tr\[data-selected='true'\]/);
+  assert.match(page, /className="site-locator"[\s\S]*aria-hidden="true"/);
+  assert.match(css, /\.portfolio-site-table \.site-locator \{/);
+  assert.doesNotMatch(css, /\.portfolio-site-table \.site-icon/);
 });
 
 test('portfolio ledger keeps evidence and team state distinct', () => {

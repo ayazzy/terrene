@@ -932,34 +932,25 @@ pre,
   font-size: 0.625rem;
   letter-spacing: 0.035em;
 }
-.portfolio-site-table .site-icon {
-  position: relative;
-  width: 3.1rem;
-  height: 2.75rem;
-  flex-basis: 3.1rem;
-  justify-items: end;
-  padding: 0.45rem 0.5rem;
-  background: #26332d;
-  border-color: #405149;
-  border-radius: var(--radius-small);
-  color: #acc4b4;
+.portfolio-site-table .site-locator {
+  width: 2.75rem;
+  flex: 0 0 2.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #557562;
 }
-.portfolio-site-table .site-icon::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 1.6rem;
-  width: 1px;
-  background: #495b52;
+.portfolio-site-table .site-locator svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  stroke-width: 1.7;
 }
 .site-sequence {
-  position: absolute;
-  left: 0.38rem;
-  color: #81968a;
+  color: #89948d;
   font-family: var(--font-mono);
-  font-size: 0.5625rem;
-  letter-spacing: 0.04em;
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
 }
 .portfolio-area {
   color: #344039 !important;

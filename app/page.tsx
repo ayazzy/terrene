@@ -790,7 +790,10 @@ export default function Home() {
                                   title={s.name}
                                   onClick={() => openSite(s)}
                                 >
-                                  <span className="site-icon">
+                                  <span
+                                    className="site-locator"
+                                    aria-hidden="true"
+                                  >
                                     <span className="site-sequence">
                                       {String(index + 1).padStart(2, '0')}
                                     </span>
