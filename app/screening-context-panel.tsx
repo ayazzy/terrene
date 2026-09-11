@@ -73,6 +73,9 @@ export default function ScreeningContextPanel({
   const pictureFacts = result ? sitePictureFacts(result) : [];
   const importantGaps = result ? prioritizeGaps(result) : [];
   const reviewQuestions = result ? prioritizeQuestions(result) : [];
+  const allReviewQuestions = result
+    ? prioritizeQuestions(result, result.review_questions.length)
+    : [];
   const catalogue = result
     ? [
         ...result.groups.flatMap((group) => [...group.facts, ...group.gaps]),
@@ -469,7 +472,7 @@ export default function ScreeningContextPanel({
           )}
           {contextItems(
             'Unresolved human-review questions',
-            result.review_questions,
+            allReviewQuestions,
           )}
           <details className="screening-section">
             <summary>Source and object catalogue</summary>

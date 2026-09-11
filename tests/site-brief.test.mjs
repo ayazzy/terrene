@@ -66,7 +66,7 @@ const result = {
       id: 'ecology_designations',
       label: 'Ecology',
       facts: [
-      fact('ecology.priority_habitat.any_mapped_overlap_fraction', 0, true),
+        fact('ecology.priority_habitat.any_mapped_overlap_fraction', 0, true),
         fact('designations.overlap_fraction', 0.5),
       ],
       gaps: [gap('condition', 'ecology.habitat_condition')],
@@ -94,6 +94,12 @@ const result = {
       label: 'condition',
       text: 'Condition?',
       references: { ...refs, gap_ids: ['condition'] },
+    },
+    {
+      id: 'gap-question:ground',
+      label: 'ground',
+      text: '  condition.  ',
+      references: { ...refs, gap_ids: ['ground'] },
     },
     {
       id: 'question:built_semantics',
@@ -154,5 +160,9 @@ test('site picture spans distinct useful domains and unknowns stay concise', () 
       'gap-question:condition',
       'capability-question:a',
     ],
+  );
+  assert.equal(
+    prioritizeQuestions(result, result.review_questions.length).length,
+    3,
   );
 });

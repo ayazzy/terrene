@@ -659,10 +659,14 @@ export default function NaturePanel({
           {evidence && (
             <div className="nature-evidence-body">
               <h3>{valueText(evidence)}</h3>
-              <p>
-                {evidence.epistemic_status} · {evidence.observed_or_derived} ·
-                Source quality judgement {percent(evidence.confidence)} / 100
-              </p>
+              <div
+                className="evidence-status-line"
+                aria-label="Evidence status"
+              >
+                <span>{humanize(evidence.epistemic_status)}</span>
+                <span>{humanize(evidence.observed_or_derived)}</span>
+                <span>Source quality {percent(evidence.confidence)} / 100</span>
+              </div>
               {evidence.missing_reason && (
                 <p className="alert">{evidence.missing_reason}</p>
               )}
@@ -684,51 +688,56 @@ export default function NaturePanel({
                   </p>
                 )}
               </div>
-              <dl>
-                <dt>Source / dataset</dt>
+              <dl className="evidence-summary">
+                <dt>Source</dt>
                 <dd>
                   {evidence.source} · {evidence.source_dataset}
-                </dd>
-                <dt>Source version</dt>
-                <dd>
-                  <code>{evidence.source_version}</code>
                 </dd>
                 <dt>Observation date</dt>
                 <dd>
                   {evidence.timestamp ||
                     'Unknown — retrieval date is not an observation date'}
                 </dd>
-                <dt>Retrieved / computed</dt>
-                <dd>{evidence.retrieved_at}</dd>
-                <dt>Original resolution</dt>
+                <dt>Resolution</dt>
                 <dd>
                   {evidence.spatial.spatial_resolution_m === null
                     ? 'Unknown'
                     : evidence.spatial.spatial_resolution_m + ' m'}
                 </dd>
-                <dt>Spatial support</dt>
-                <dd>
-                  {evidence.spatial.geometry_or_cell_reference} ·{' '}
-                  {evidence.spatial.crs}
-                </dd>
-                <dt>Aggregation</dt>
-                <dd>{evidence.spatial.aggregation || 'None recorded'}</dd>
-                <dt>Calculation</dt>
-                <dd>{evidence.method}</dd>
-                <dt>Uncertainty</dt>
-                <dd>{evidence.uncertainty}</dd>
-                {earth.selection_notes[evidence.variable] && (
-                  <>
-                    <dt>Provider selection</dt>
-                    <dd>{earth.selection_notes[evidence.variable]}</dd>
-                  </>
-                )}
               </dl>
               {evidence.source_url && (
                 <a href={evidence.source_url} target="_blank" rel="noreferrer">
                   Open source dataset ↗
                 </a>
               )}
+              <details className="technical-provenance">
+                <summary>Technical provenance</summary>
+                <dl>
+                  <dt>Source version</dt>
+                  <dd>
+                    <code>{evidence.source_version}</code>
+                  </dd>
+                  <dt>Retrieved / computed</dt>
+                  <dd>{evidence.retrieved_at}</dd>
+                  <dt>Spatial support</dt>
+                  <dd>
+                    {evidence.spatial.geometry_or_cell_reference} ·{' '}
+                    {evidence.spatial.crs}
+                  </dd>
+                  <dt>Aggregation</dt>
+                  <dd>{evidence.spatial.aggregation || 'None recorded'}</dd>
+                  <dt>Calculation</dt>
+                  <dd>{evidence.method}</dd>
+                  <dt>Uncertainty</dt>
+                  <dd>{evidence.uncertainty}</dd>
+                  {earth.selection_notes[evidence.variable] && (
+                    <>
+                      <dt>Provider selection</dt>
+                      <dd>{earth.selection_notes[evidence.variable]}</dd>
+                    </>
+                  )}
+                </dl>
+              </details>
               {evidence.input_ids.length > 0 && (
                 <>
                   <h4>Trace input evidence</h4>
@@ -744,24 +753,30 @@ export default function NaturePanel({
                   ))}
                 </>
               )}
-              <h4>Raw source references</h4>
-              {evidence.raw_source_ids.map((id) => {
-                const raw = earth.raw.find((r) => r.id === id);
-                return (
-                  <div key={id} className="nature-raw">
-                    <b>{raw?.source_dataset || id}</b>
-                    <p>{raw?.raw_semantics}</p>
-                    <code>
-                      {raw?.storage_reference || 'Snapshot unavailable'}
-                    </code>
-                    {raw?.checksum && (
-                      <p>
-                        SHA-256 <code>{raw.checksum}</code>
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
+              {!!evidence.raw_source_ids.length && (
+                <details className="raw-provenance">
+                  <summary>
+                    Raw source references · {evidence.raw_source_ids.length}
+                  </summary>
+                  {evidence.raw_source_ids.map((id) => {
+                    const raw = earth.raw.find((r) => r.id === id);
+                    return (
+                      <div key={id} className="nature-raw">
+                        <b>{raw?.source_dataset || id}</b>
+                        <p>{raw?.raw_semantics}</p>
+                        <code>
+                          {raw?.storage_reference || 'Snapshot unavailable'}
+                        </code>
+                        {raw?.checksum && (
+                          <p>
+                            SHA-256 <code>{raw.checksum}</code>
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </details>
+              )}
             </div>
           )}
         </section>

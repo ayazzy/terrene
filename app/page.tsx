@@ -1022,10 +1022,10 @@ export default function Home() {
                             .filter((layer) => layer.feature_count > 0)
                             .map((layer) => `context:${layer.id}`),
                         ]}
-                      site={{
-                        name: current.name,
-                        areaHa: result?.area_ha,
-                      }}
+                        site={{
+                          name: current.name,
+                          areaHa: result?.area_ha,
+                        }}
                       />
                     ) : (
                       <section className="screening-context screening-overview useful-empty">
@@ -1097,10 +1097,10 @@ export default function Home() {
                         mode="evidence"
                         context={workspace.context}
                         onEvidence={() => setTab('evidence')}
-                      site={{
-                        name: current.name,
-                        areaHa: result?.area_ha,
-                      }}
+                        site={{
+                          name: current.name,
+                          areaHa: result?.area_ha,
+                        }}
                       />
                     )}
                     <details className="module-evidence">
@@ -1154,6 +1154,7 @@ export default function Home() {
                     >
                       <TabsList
                         className="model-tabs"
+                        variant="line"
                         aria-label="Wetland assessment sections"
                       >
                         <TabsTrigger value="overview">Summary</TabsTrigger>

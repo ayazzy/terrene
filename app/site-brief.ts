@@ -262,15 +262,24 @@ export function prioritizeQuestions(
   const importantGapIds = new Set(
     prioritizeGaps(result, 8).map((gap) => gap.id),
   );
-  return [...result.review_questions]
-    .sort((a, b) => {
-      const score = (item: ContextItem) =>
-        (item.id.startsWith('question:') ? 30 : 0) +
-        (item.references.gap_ids.some((id) => importantGapIds.has(id))
-          ? 20
-          : 0) +
-        (item.id.startsWith('capability-question:') ? -20 : 0);
-      return score(b) - score(a) || a.id.localeCompare(b.id);
+  const ranked = [...result.review_questions].sort((a, b) => {
+    const score = (item: ContextItem) =>
+      (item.id.startsWith('question:') ? 30 : 0) +
+      (item.references.gap_ids.some((id) => importantGapIds.has(id)) ? 20 : 0) +
+      (item.id.startsWith('capability-question:') ? -20 : 0);
+    return score(b) - score(a) || a.id.localeCompare(b.id);
+  });
+  const seen = new Set<string>();
+  return ranked
+    .filter((item) => {
+      const visibleText = item.text
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .replace(/[.?!]+$/, '');
+      if (seen.has(visibleText)) return false;
+      seen.add(visibleText);
+      return true;
     })
     .slice(0, limit);
 }

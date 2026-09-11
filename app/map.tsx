@@ -403,7 +403,7 @@ export default function SiteMap({
                         className="layer-swatch"
                         style={{ background: layerColor(f.key) }}
                       />
-                      <span>
+                      <span className="layer-row-copy">
                         {f.dataset}
                         <small>
                           {f.measured === null
@@ -451,7 +451,7 @@ export default function SiteMap({
                         className="layer-swatch"
                         style={{ background: layerColor(key) }}
                       />
-                      <span>
+                      <span className="layer-row-copy">
                         {layer.id.replaceAll('_', ' ')}
                         <small>
                           {layer.feature_count || 'No'} mapped object
