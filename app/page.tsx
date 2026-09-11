@@ -1189,19 +1189,32 @@ export default function Home() {
                               }
                             />
                             {section !== 'overview' && (
-                              <OverlayFindings
-                                findings={(result?.findings || []).filter(
-                                  (f: OverlayFinding) =>
-                                    section === 'physical'
-                                      ? f.key === 'flood'
-                                      : f.key !== 'flood',
-                                )}
-                                onInspect={(f) => {
-                                  if (f.geometry) showOnMap(f.key);
-                                  setFinding(f);
-                                }}
-                                onMap={showOnMap}
-                              />
+                              <details className="model-reference-layers">
+                                <summary>
+                                  Mapped reference layers ·{' '}
+                                  {
+                                    (result?.findings || []).filter(
+                                      (f: OverlayFinding) =>
+                                        section === 'physical'
+                                          ? f.key === 'flood'
+                                          : f.key !== 'flood',
+                                    ).length
+                                  }
+                                </summary>
+                                <OverlayFindings
+                                  findings={(result?.findings || []).filter(
+                                    (f: OverlayFinding) =>
+                                      section === 'physical'
+                                        ? f.key === 'flood'
+                                        : f.key !== 'flood',
+                                  )}
+                                  onInspect={(f) => {
+                                    if (f.geometry) showOnMap(f.key);
+                                    setFinding(f);
+                                  }}
+                                  onMap={showOnMap}
+                                />
+                              </details>
                             )}
                           </TabsContent>
                         ),
