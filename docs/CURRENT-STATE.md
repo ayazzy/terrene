@@ -64,7 +64,7 @@ The 12 retained Oxford verification locations have inspectable physical and hydr
 
 ## Application/UI state
 
-The current home is a map-first portfolio view with a preserved list workflow. The Site Analysis Workspace leads with a compact professional site brief: a deterministic presentation policy selects a high-level site picture, approximately six high-signal retained facts, consequential known gaps and existing human diligence questions without creating a score or unsupported narrative. Exact facts/gaps/provenance remain under Evidence, the unchanged wetland assessment is one module under Models, and immutable assessment selection remains under History. See [Site Analysis Workspace site brief](SITE-ANALYSIS-WORKSPACE-SITE-BRIEF.md).
+The current home is a map-first portfolio view with a preserved list workflow. Its list is a Terrene site-intelligence ledger rather than a generic administration table: a compact portfolio command header, retained-site and evidence-layer signals, technical site identifiers, visual coverage tracks and clearly separated screening/team-review states support scanning and comparison without changing their semantics. The Site Analysis Workspace leads with a compact professional site brief: a deterministic presentation policy selects a high-level site picture, approximately six high-signal retained facts, consequential known gaps and existing human diligence questions without creating a score or unsupported narrative. Exact facts/gaps/provenance remain under Evidence, the unchanged wetland assessment is one module under Models, and immutable assessment selection remains under History. See [Site Analysis Workspace site brief](SITE-ANALYSIS-WORKSPACE-SITE-BRIEF.md).
 
 Site identity, boundary, area, assessment state/date, team review status and secondary actions share one compact band. Wetland export is contained within its Models module. Unprepared Screening Context and no-assessment states retain useful site/boundary context and one explicit action; ordinary reads still create no immutable records.
 
@@ -102,6 +102,8 @@ Site-brief verification on 11 September 2026: the frontend regression suite, Typ
 
 Evidence/Models readability verification on 11 September 2026: **36 frontend regression tests passed**, TypeScript and focused lint passed, and the production build passed with the existing large-chunk advisory. Browser QA on Westgate covered the collapsed Evidence index, compact fact/gap rows, summary-first wetland model, collapsed Ecology components and Mean slope drawer return to Key observations. A clean reload and the completed interaction flow produced no browser warnings or errors. Backend and PostgreSQL suites were not rerun because this pass changes frontend presentation only.
 
+Portfolio-list identity verification on 11 September 2026: **39 frontend regression tests passed**, TypeScript and focused lint for the new regression coverage passed, and the production build passed with the existing large-chunk advisory. Browser QA covered the full and narrower desktop ledger, responsive column priority, filtering, two-site selection and the enabled comparison action. The changed page retains its existing 19 lint diagnostics. Backend and PostgreSQL suites were not rerun because this pass changes frontend presentation only.
+
 Screening Context map-feature verification: **183 backend tests passed on SQLite** and the focused **23-test Screening Context suite passed on PostgreSQL/PostGIS**. Retained real-data checks cover Westgate, Oxford station, Port Meadow and Redbridge; they verify deterministic WGS84 geometry, organization isolation, historical selection, integrity failures, no-write behavior, availability semantics and unchanged persisted measurements.
 
 ## Known limitations
@@ -115,7 +117,7 @@ Screening Context map-feature verification: **183 backend tests passed on SQLite
 
 ## Latest meaningful implementation
 
-The Site Analysis Workspace readability pass was completed on 11 September 2026. Evidence is now an indexed, progressively disclosed register; the wetland module is summary-first; and observation details use a closable provenance drawer with an explicit return to their originating list. It changes no acquisition, evidence projection, Screening Context rules, wetland bindings/calculations, authoritative geometry, retained snapshots or pre-existing ModuleRuns.
+The portfolio-list identity pass was completed on 11 September 2026. The preserved list workflow now uses a restrained geospatial operator aesthetic, compact evidence-coverage signals and explicit separation between screening state and team review while keeping search, filtering, comparison and site navigation intact. It changes no acquisition, evidence projection, Screening Context rules, wetland bindings/calculations, authoritative geometry, retained snapshots or pre-existing ModuleRuns.
 
 ## Current recommended engineering question
 

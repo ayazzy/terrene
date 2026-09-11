@@ -527,7 +527,7 @@ export default function Home() {
         </footer>
       </aside>
       <section
-        className={`main${view === 'site' ? ' analysis-main' : ''}${view === 'workspace' && sitesView === 'map' ? ' portfolio-main' : ''}`}
+        className={`main${view === 'site' ? ' analysis-main' : ''}${view === 'workspace' && sitesView === 'map' ? ' portfolio-main' : ''}${view === 'workspace' && sitesView === 'list' ? ' portfolio-list-main' : ''}`}
       >
         <header>
           <button
@@ -597,44 +597,61 @@ export default function Home() {
                 unavailable={!hasLoadedSites && !!readErrors.sites}
               />
             </TabsContent>
-            <TabsContent value="list">
-              <div className="heading">
-                <div>
-                  <p className="eyebrow">LAND OPPORTUNITIES</p>
-                  <h1>Your workspace</h1>
-                  <p>Identify what deserves a closer look.</p>
+            <TabsContent value="list" className="portfolio-list-panel">
+              <div className="portfolio-list-hero">
+                <div className="portfolio-list-hero-copy">
+                  <p className="eyebrow">TERRENE / LAND INTELLIGENCE</p>
+                  <h1>Saved site portfolio</h1>
+                  <p>
+                    Screen the estate, compare evidence coverage and direct the
+                    next review.
+                  </p>
+                </div>
+                <div className="portfolio-list-hero-status">
+                  <span>PORTFOLIO / OXFORDSHIRE</span>
+                  <strong>
+                    <span className="live-dot" aria-hidden="true" />
+                    {filtered.length.toString().padStart(2, '0')} visible sites
+                  </strong>
                 </div>
               </div>
-              <div className="workspace-content">
-                <div className="workspace-summary">
-                  <div>
+              <div className="workspace-content portfolio-ledger">
+                <section
+                  className="workspace-summary portfolio-summary"
+                  aria-label="Portfolio summary"
+                >
+                  <div className="portfolio-metric">
+                    <span className="portfolio-metric-index">01</span>
                     <b>{sites.length.toString().padStart(2, '0')}</b>
-                    <span>Saved sites</span>
+                    <span>Retained sites</span>
                   </div>
-                  <div>
+                  <div className="portfolio-metric">
+                    <span className="portfolio-metric-index">02</span>
                     <b>
                       {sites
                         .filter((s) => s.status === 'Investigate')
                         .length.toString()
                         .padStart(2, '0')}
                     </b>
-                    <span>To investigate</span>
+                    <span>Active investigations</span>
                   </div>
-                  <div>
+                  <div className="portfolio-metric">
+                    <span className="portfolio-metric-index">03</span>
                     <b>
                       {datasets.filter((d) => d.state === 'available').length} /{' '}
                       {datasets.length}
                     </b>
-                    <span>Reference layers available</span>
+                    <span>Reference layers online</span>
                   </div>
-                  <p>
-                    <Info size={18} /> Screening guides further assessment.
-                    <br />
-                    Wetland model v0.1 shows potential, evidence and
-                    uncertainty.
-                  </p>
-                </div>
-                <div className="toolbar">
+                  <div className="portfolio-protocol">
+                    <Info size={16} />
+                    <span>
+                      <b>Screening protocol</b>
+                      Wetland model v0.1 · decision support only
+                    </span>
+                  </div>
+                </section>
+                <div className="toolbar portfolio-toolbar">
                   <div className="search">
                     <Search size={17} />
                     <input
@@ -662,7 +679,12 @@ export default function Home() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <span className="portfolio-result-count">
+                    {filtered.length.toString().padStart(2, '0')} /{' '}
+                    {sites.length.toString().padStart(2, '0')} sites
+                  </span>
                   <button
+                    className="portfolio-compare"
                     disabled={compare.length < 2}
                     onClick={() => setView('compare')}
                   >
@@ -693,122 +715,168 @@ export default function Home() {
                     }
                   />
                 ) : (
-                  <div className="site-table">
+                  <div className="site-table portfolio-site-table">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead className="check-cell" />
-                          <TableHead>Site / boundary</TableHead>
+                          <TableHead>Site intelligence</TableHead>
                           <TableHead>Area</TableHead>
-                          <TableHead>Screening</TableHead>
-                          <TableHead>Data coverage</TableHead>
-                          <TableHead>Review decision</TableHead>
-                          <TableHead />
+                          <TableHead>Evidence coverage</TableHead>
+                          <TableHead>Screening state</TableHead>
+                          <TableHead>Team review</TableHead>
+                          <TableHead>
+                            <span className="sr-only">Open site</span>
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filtered.map((s) => (
-                          <TableRow key={s.id}>
-                            <TableCell>
-                              <Checkbox
-                                aria-label={'Compare ' + s.name}
-                                checked={compare.includes(s.id)}
-                                disabled={
-                                  !compare.includes(s.id) && compare.length >= 3
-                                }
-                                onCheckedChange={(v) =>
-                                  setCompare(
-                                    v
-                                      ? [...compare, s.id]
-                                      : compare.filter((id) => id !== s.id),
-                                  )
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <button
-                                className="site-link"
-                                onClick={() => openSite(s)}
-                              >
-                                <span className="site-icon">
-                                  <MapPin size={18} />
-                                </span>
-                                <span>
-                                  <strong>{s.name}</strong>
-                                  <small>Boundary v{s.version} · England</small>
-                                </span>
-                              </button>
-                            </TableCell>
-                            <TableCell>
-                              {s.assessment?.result &&
-                              s.assessment.version === s.version
-                                ? fmt(s.assessment.result.area_ha) + ' ha'
-                                : '—'}
-                            </TableCell>
-                            <TableCell>
-                              <EvidenceBadge
-                                state={
-                                  s.assessment?.version !== s.version
-                                    ? 'partial'
-                                    : s.assessment?.state === 'completed'
-                                      ? 'available'
-                                      : s.assessment?.state === 'partial'
-                                        ? 'partial'
-                                        : s.assessment?.state === 'failed'
-                                          ? 'warning'
-                                          : s.assessment
-                                            ? 'modelled'
-                                            : 'missing'
-                                }
-                              >
-                                {s.assessment
-                                  ? s.assessment.version !== s.version
-                                    ? 'Previous boundary'
-                                    : s.assessment.state
-                                  : 'Not screened'}
-                              </EvidenceBadge>
-                            </TableCell>
-                            <TableCell>
-                              {s.assessment?.result &&
-                              s.assessment.version === s.version
-                                ? s.assessment.result.completeness +
-                                  ' / ' +
-                                  s.assessment.result.dataset_count +
-                                  ' layers'
-                                : 'Unknown'}
-                            </TableCell>
-                            <TableCell>
-                              <Status
-                                value={s.status}
-                                onChange={(status) =>
-                                  act(() =>
-                                    api('/sites/' + s.id, 'PATCH', {
-                                      status,
-                                      expected_version: s.version,
-                                    }),
-                                  )
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <button
-                                aria-label={'Open ' + s.name}
-                                className="icon-btn"
-                                onClick={() => openSite(s)}
-                              >
-                                <ArrowUpRight size={18} />
-                              </button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {filtered.map((s, index) => {
+                          const hasCurrentAssessment =
+                            !!s.assessment?.result &&
+                            s.assessment.version === s.version;
+                          const completeness = hasCurrentAssessment
+                            ? s.assessment.result.completeness
+                            : null;
+                          const datasetCount = hasCurrentAssessment
+                            ? s.assessment.result.dataset_count
+                            : null;
+                          const coveragePercent =
+                            completeness !== null && datasetCount
+                              ? Math.min(
+                                  100,
+                                  Math.round(
+                                    (completeness / datasetCount) * 100,
+                                  ),
+                                )
+                              : 0;
+                          const screeningState =
+                            s.assessment?.version !== s.version
+                              ? 'partial'
+                              : s.assessment?.state === 'completed'
+                                ? 'available'
+                                : s.assessment?.state === 'partial'
+                                  ? 'partial'
+                                  : s.assessment?.state === 'failed'
+                                    ? 'warning'
+                                    : s.assessment
+                                      ? 'modelled'
+                                      : 'missing';
+                          return (
+                            <TableRow
+                              key={s.id}
+                              data-selected={compare.includes(s.id)}
+                            >
+                              <TableCell>
+                                <Checkbox
+                                  aria-label={'Compare ' + s.name}
+                                  checked={compare.includes(s.id)}
+                                  disabled={
+                                    !compare.includes(s.id) &&
+                                    compare.length >= 3
+                                  }
+                                  onCheckedChange={(v) =>
+                                    setCompare(
+                                      v
+                                        ? [...compare, s.id]
+                                        : compare.filter((id) => id !== s.id),
+                                    )
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <button
+                                  className="site-link"
+                                  title={s.name}
+                                  onClick={() => openSite(s)}
+                                >
+                                  <span className="site-icon">
+                                    <span className="site-sequence">
+                                      {String(index + 1).padStart(2, '0')}
+                                    </span>
+                                    <MapPin size={16} />
+                                  </span>
+                                  <span>
+                                    <strong>{s.name}</strong>
+                                    <small>
+                                      SITE {s.id.slice(-8).toUpperCase()} ·
+                                      BND V{s.version} · ENGLAND
+                                    </small>
+                                  </span>
+                                </button>
+                              </TableCell>
+                              <TableCell className="portfolio-area">
+                                {hasCurrentAssessment
+                                  ? fmt(s.assessment.result.area_ha) + ' ha'
+                                  : '—'}
+                              </TableCell>
+                              <TableCell>
+                                <div
+                                  className={`coverage-readout${hasCurrentAssessment ? '' : ' is-unknown'}`}
+                                  aria-label={
+                                    hasCurrentAssessment
+                                      ? `${completeness} of ${datasetCount} reference layers available`
+                                      : 'Reference-layer coverage unknown'
+                                  }
+                                >
+                                  <span className="coverage-value">
+                                    {hasCurrentAssessment
+                                      ? `${completeness} / ${datasetCount}`
+                                      : 'UNKNOWN'}
+                                  </span>
+                                  <span
+                                    className="coverage-track"
+                                    aria-hidden="true"
+                                  >
+                                    <span
+                                      style={{ width: `${coveragePercent}%` }}
+                                    />
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <EvidenceBadge state={screeningState}>
+                                  {s.assessment
+                                    ? s.assessment.version !== s.version
+                                      ? 'Previous boundary'
+                                      : s.assessment.state
+                                    : 'Not screened'}
+                                </EvidenceBadge>
+                              </TableCell>
+                              <TableCell>
+                                <Status
+                                  value={s.status}
+                                  onChange={(status) =>
+                                    act(() =>
+                                      api('/sites/' + s.id, 'PATCH', {
+                                        status,
+                                        expected_version: s.version,
+                                      }),
+                                    )
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <button
+                                  aria-label={'Open ' + s.name}
+                                  className="icon-btn"
+                                  onClick={() => openSite(s)}
+                                >
+                                  <ArrowUpRight size={18} />
+                                </button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
                 )}
-                <p className="fineprint">
-                  Review decisions belong to your team. Screening results
-                  describe geographic observations and provisional wetland model
-                  outputs.
+                <p className="fineprint portfolio-fineprint">
+                  <span>OPERATING NOTE</span>
+                  Screening states describe geographic observations and
+                  provisional wetland model outputs. Review decisions remain
+                  team-owned.
                 </p>
               </div>
             </TabsContent>
