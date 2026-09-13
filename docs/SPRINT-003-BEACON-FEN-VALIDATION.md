@@ -2,7 +2,7 @@
 
 ## Status
 
-Started 13 September 2026. Task 1 is the bounded project-selection and evidence-admission task. No source claim has yet been committed to Terrene, and no customer evidence has yet been collected.
+Started 13 September 2026. Tasks 1 and 2 are complete. One bounded official consent assertion is now reproducibly committed through the existing immutable Project Evidence and Project Intelligence contracts. No customer evidence has yet been collected.
 
 ## Sprint goal
 
@@ -88,6 +88,26 @@ Create Beacon Fen as a Project Subject without fabricating a Site. Commit only s
 
 **Gate:** The run reports supported consent, preserves exact official source references, shows insufficient construction/grid evidence, is reproducible, and passes integrity/readback checks.
 
+**Completed 13 September 2026:** `docs/sprints/003-beacon-fen-evidence.json` retains the curated source passage, claim locator, capture identity and five deliberately excluded assertions. `scripts/seed_beacon_fen_validation.py` creates or reuses the Site-less Project Subject, publishes the exact bundle, binds it, runs `project_intelligence_v1`, integrity-checks both records on read and refuses any semantic result other than:
+
+- reported stage `consented` / `supported`;
+- planning status `approved` / `supported`;
+- construction status `insufficient_evidence`;
+- grid-connection target `insufficient_evidence`; and
+- unresolved questions for construction status and grid target only.
+
+The script performs no source acquisition. The source `content_hash` identifies the exact retained human-submitted excerpt captured at 2026-09-13T22:10:23Z; it is not represented as a hash of the full mutable GOV.UK page.
+
+The official page reports its publication as a calendar date without a clock time. Because `SourceRecord.published_at` requires a timezone-aware datetime, the packet stores that field as null rather than fabricate midnight. The exact 2026-08-21 consent event date remains attached to the planning claim, and the omitted publication precision is recorded in `source_metadata_notes`.
+
+Local replay command:
+
+```bash
+CRC_ENV=development .venv/bin/python scripts/seed_beacon_fen_validation.py --org local-development
+```
+
+Hosted execution must use the deployment's configured database, authentication and immutable object storage rather than this local development command.
+
 ### Task 3 — Produce the practitioner walkthrough
 
 **Allocation:** Days 4–5
@@ -127,3 +147,13 @@ Synthesize confirmed, weakened and disconfirmed assumptions. Decide whether to d
 - Task 4 requires access to suitable practitioners; repository work cannot substitute for those conversations.
 - Public pages can change. Task 2 must record capture time, bounded retained excerpts and deterministic hashes.
 - The current Project Intelligence UI is read-only; Task 2 may use the existing authenticated API or a bounded local ingestion script, but it must not introduce an evidence editor.
+
+## Task 2 verification record
+
+- Curated packet hash, locator, allowed claim and excluded-assertion semantics are executable tests.
+- Identical ingestion reuses one Project Subject, bundle, binding and run.
+- Public API readback is tenant scoped and GET requests create no records.
+- An isolated command-line replay produced supported consent plus exactly two missing-evidence questions.
+- Browser QA in the local workspace verified Overview, the exact source assertion and both unresolved questions.
+- The combined Beacon Fen, Project Evidence and Project Intelligence suite passed **32 tests on SQLite** and **32 tests on disposable PostgreSQL/PostGIS**.
+- The default fresh-clone-compatible suite passed **166 tests with 63 retained-data tests explicitly skipped**.

@@ -28,6 +28,7 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 - Create/read minimal organization-owned Project Subjects without requiring a Site, and submit/list/read immutable human-structured `project_evidence_v1` source-assertion bundles.
 - Bind explicit Project Evidence bundles through `project_evidence_binding_v1`, run deterministic `project_intelligence_v1`, and list/read immutable project-specific runs.
 - Inspect Project Subjects, exact source assertions, Terrene conclusions, conflicts, unresolved questions and historical runs in a separate read-only Project Intelligence workspace.
+- Reproduce the Beacon Fen Sprint 003 validation baseline from a curated human-structured official consent excerpt without fabricating a Site, construction status or exact grid date; five semantically incompatible public assertions remain explicitly excluded from the v1 bundle.
 
 Implementation reports: [snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [snapshot-driven wetland runs](WETLAND-SNAPSHOT-MODULE-RUN.md), [evidence-aware site analysis](UI-STAGE-2.md), and [map-first home](UI-STAGE-3-MAP-HOME.md).
 
@@ -124,6 +125,8 @@ Sprint 001 design-proposal verification: **197 backend tests passed on SQLite an
 
 Sprint 002 verification: the combined Project Evidence, Design Study and Project Intelligence suite passed **43 tests on SQLite** and **43 tests on disposable PostgreSQL/PostGIS**. The default fresh-clone path passed **163 tests with 63 retained-data checks explicitly skipped**; the retained-data opt-in passed **226 tests**. After reconciling the Terrene site-brief and portfolio interface, all **46 frontend Node tests**, TypeScript, focused lint on the new/refined modules and the production build passed. The changed page retains its known 19 lint diagnostics. Browser QA covered the complete four-run synthetic history, exact evidence/correction inspection, desktop and narrow layouts, the restored Terrene portfolio map, no horizontal overflow, and no browser errors. The existing large-chunk build advisory remains. See [Project Intelligence v1](PROJECT-INTELLIGENCE-V1.md).
 
+Sprint 003 Task 2 verification: the curated Beacon Fen packet, idempotent ingestion, immutable readback, partial reasoning result, tenant-scoped API reads and no-write GET behavior passed in the combined **32-test** Beacon Fen/Project Evidence/Project Intelligence suite on both SQLite and disposable PostgreSQL/PostGIS. The default fresh-clone-compatible suite passed **166 tests with 63 retained-data tests explicitly skipped**. Browser QA verified the real Project Subject, supported consent, exact Planning Inspectorate passage and missing construction/grid evidence. The script performs no network acquisition and the tracked packet contains no full source document. See [Beacon Fen real-project validation](SPRINT-003-BEACON-FEN-VALIDATION.md).
+
 ## Known limitations
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
@@ -136,8 +139,8 @@ Sprint 002 verification: the combined Project Evidence, Design Study and Project
 
 ## Latest meaningful implementation
 
-Project Intelligence v1 was completed on 13 September 2026. It reconciles Project Subjects with the retained Design Study contract, binds exact Project Evidence, produces deterministic stage/status/target findings and exposes immutable history through API and a thin read-only UI. It does not imply a real-project claim, validated customer workflow, commercial recommendation or Scenario capability.
+Beacon Fen Sprint 003 Task 2 was completed on 13 September 2026. It exercises Project Evidence and Project Intelligence with one real official consent assertion, produces supported consent with construction/grid insufficiency, and preserves incompatible year-level promoter/statutory assertions outside the v1 bundle. It does not imply that the customer workflow is validated or that excluded assertions are false.
 
 ## Current recommended engineering question
 
-Use a real-project research engagement and customer discovery to test whether these inspectable findings materially improve a recurring project decision. Do not add automated research, scoring or workflow actions before that evidence exists.
+Use the Beacon Fen evidence and intelligence result in a bounded practitioner walkthrough, then test whether these inspectable findings materially improve a recurring project decision. Do not add automated research, scoring or workflow actions before that evidence exists.
