@@ -17,6 +17,7 @@ import OverlayFindings from './overlay-findings';
 import ScreeningContextPanel from './screening-context-panel';
 import MapFeatureInspector from './map-feature-inspector';
 import { useSiteWorkspaceState } from './site-workspace-state';
+import ProjectIntelligenceWorkspace from './project-intelligence-workspace';
 import type { OverlayFinding } from './site-evidence';
 import SiteMap from './map';
 import {
@@ -463,6 +464,17 @@ export default function Home() {
             <GitCompareArrows size={18} />
             <span className="nav-text">Compare sites</span>
           </button>
+          <button
+            className={view === 'project-intelligence' ? 'nav-active' : ''}
+            onClick={() => {
+              setView('project-intelligence');
+              setMobileNavigation(false);
+            }}
+            title="Project intelligence"
+          >
+            <Search size={18} />
+            <span className="nav-text">Project intelligence</span>
+          </button>
           <span className="nav-section">Evidence</span>
           <button
             className={view === 'data' ? 'nav-active' : ''}
@@ -510,6 +522,8 @@ export default function Home() {
             CRC <span>/</span>{' '}
             {view === 'site'
               ? current?.name
+              : view === 'project-intelligence'
+                ? 'Project intelligence'
               : view === 'data'
                 ? 'Data sources'
                 : view === 'compare'
@@ -524,7 +538,7 @@ export default function Home() {
             <b>OX</b>
           </span>
         </header>
-        {criticalError && (
+        {criticalError && view !== 'project-intelligence' && (
           <div role="alert" className="alert error">
             {criticalError}
             {criticalRead && (
@@ -534,7 +548,8 @@ export default function Home() {
             )}
           </div>
         )}
-        {view !== 'site' && refreshNotice}
+        {view !== 'site' && view !== 'project-intelligence' && refreshNotice}
+        <ProjectIntelligenceWorkspace enabled={view === 'project-intelligence'} />
         {view === 'workspace' && (
           <Tabs className="sites-views" value={sitesView} onValueChange={(value) => setSitesView(String(value))}>
             <div className="sites-view-bar">
