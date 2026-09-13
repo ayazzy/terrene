@@ -536,6 +536,88 @@
   background: #171b1a;
 }
 
+.shell :global(.spatial-main) {
+  position: relative;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.shell :global(.operating-spatial-map) {
+  position: absolute;
+  z-index: 1;
+  inset: var(--topbar-height) 0 0;
+  min-width: 0;
+  min-height: 0;
+}
+
+.shell :global(.operating-spatial-map > .map-wrap) {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.shell :global(.operating-map-reopen) {
+  z-index: 24;
+  right: 1rem;
+  left: auto;
+}
+
+.shell :global(.spatial-main > .site-workspace),
+.shell :global(.spatial-main > .project-intelligence-workspace) {
+  position: absolute;
+  z-index: 18;
+  top: var(--topbar-height);
+  right: 0;
+  bottom: 0;
+  width: min(56rem, 52%);
+  min-height: 0;
+  overflow: hidden;
+  border-left: 1px solid #4a554f;
+  box-shadow: -16px 0 32px rgb(0 0 0 / 24%);
+}
+
+.shell :global(.spatial-main > .site-workspace.dossier-collapsed) {
+  width: 0;
+  border: 0;
+  box-shadow: none;
+  visibility: hidden;
+}
+
+.shell :global(.spatial-main > .site-workspace .investigation) {
+  display: block;
+}
+
+.shell :global(.spatial-main > .site-workspace .findings-panel) {
+  width: 100%;
+}
+
+.shell :global(.spatial-main > .project-intelligence-workspace) {
+  overflow: auto;
+}
+
+.shell
+  :global(
+    .spatial-main > .project-intelligence-workspace .intelligence-layout
+  ) {
+  grid-template-columns: minmax(11rem, 13rem) minmax(0, 1fr);
+}
+
+.shell :global(.portfolio-main > .sites-views) {
+  position: absolute;
+  z-index: 16;
+  inset: var(--topbar-height) 0 0;
+  pointer-events: none;
+}
+
+.shell :global(.portfolio-main > .sites-views .sites-view-bar) {
+  pointer-events: auto;
+}
+
+.shell :global(.portfolio-main > .sites-views .sites-map-panel) {
+  pointer-events: none;
+}
+
 .shell :global(.main > header) {
   position: sticky;
 }
@@ -832,6 +914,31 @@
 @media (max-width: 47.5rem) {
   .shell {
     --topbar-height: 6.5rem;
+  }
+
+  .shell :global(.spatial-main > .site-workspace),
+  .shell :global(.spatial-main > .project-intelligence-workspace) {
+    top: 42%;
+    width: 100%;
+    border-top: 1px solid #4a554f;
+    border-left: 0;
+    box-shadow: 0 -12px 26px rgb(0 0 0 / 24%);
+  }
+
+  .shell :global(.spatial-main:has(> .site-workspace) .operating-spatial-map),
+  .shell
+    :global(
+      .spatial-main:has(> .project-intelligence-workspace)
+        .operating-spatial-map
+    ) {
+    bottom: 58%;
+  }
+
+  .shell
+    :global(
+      .spatial-main > .project-intelligence-workspace .intelligence-layout
+    ) {
+    grid-template-columns: 1fr;
   }
 
   .shell > .rail,

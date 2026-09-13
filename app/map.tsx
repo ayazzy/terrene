@@ -3,7 +3,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Layers, LocateFixed, ArrowUpRight } from 'lucide-react';
+import {
+  Layers,
+  LocateFixed,
+  ArrowUpRight,
+  FileSearch,
+  MapPin,
+  Search,
+  X,
+} from 'lucide-react';
 import type { Geometry, Polygon, LineString, Position } from 'geojson';
 import type { OverlayFinding } from './site-evidence';
 import { layerGroup, layerColor } from './site-evidence';
@@ -15,6 +23,38 @@ import {
   type BuiltWorldLayerId,
   type ScreeningMapFeatures,
 } from './screening-map-features';
+import {
+  entityKey,
+  infrastructureEntityLabel,
+  linkedSiteDisplayAnchor,
+  searchableInfrastructureEntities,
+  type InfrastructureEntity,
+} from './infrastructure-entities';
+import { portfolioBounds } from './portfolio-geometry';
+import infrastructureStyles from './infrastructure-map.module.css';
+
+type EntitySelection = { kind: 'site' | 'project_subject'; id: string } | null;
+
+function geometryBounds(nextGeometry: Geometry) {
+  const bounds = new maplibregl.LngLatBounds();
+  const walkCoordinates = (
+    value: Position | Position[] | Position[][] | Position[][][],
+  ) => {
+    if (typeof value[0] === 'number') bounds.extend(value as [number, number]);
+    else
+      (value as (Position | Position[] | Position[][])[]).forEach(
+        walkCoordinates,
+      );
+  };
+  const walkGeometry = (item: Geometry): void => {
+    if (item.type === 'GeometryCollection')
+      item.geometries.forEach(walkGeometry);
+    else if ('coordinates' in item) walkCoordinates(item.coordinates);
+  };
+  walkGeometry(nextGeometry);
+  return bounds;
+}
+
 type Props = {
   geometry: Geometry | null;
   findings?: OverlayFinding[];
@@ -39,6 +79,12 @@ type Props = {
   onClearMapObject?: () => void;
   hiddenLayerIds?: string[];
   onHiddenLayerIdsChange?: (ids: string[]) => void;
+  entities?: InfrastructureEntity[];
+  selectedEntity?: EntitySelection;
+  onSelectEntity?: (selection: EntitySelection) => void;
+  onOpenEntity?: (entity: InfrastructureEntity) => void;
+  entityLoading?: boolean;
+  entityUnavailable?: boolean;
 };
 export default function SiteMap({
   geometry,
@@ -58,6 +104,12 @@ export default function SiteMap({
   onClearMapObject,
   hiddenLayerIds,
   onHiddenLayerIdsChange,
+  entities = [],
+  selectedEntity = null,
+  onSelectEntity,
+  onOpenEntity,
+  entityLoading = false,
+  entityUnavailable = false,
 }: Props) {
   const el = useRef<HTMLDivElement>(null),
     map = useRef<maplibregl.Map | null>(null);
@@ -66,9 +118,12 @@ export default function SiteMap({
     [revision, setRevision] = useState(0),
     [localHiddenLayerIds, setLocalHiddenLayerIds] = useState<string[]>([]),
     [layersOpen, setLayersOpen] = useState(false),
+    [rosterOpen, setRosterOpen] = useState(true),
+    [entityQuery, setEntityQuery] = useState(''),
     [coordinates, setCoordinates] = useState(''),
     [error, setError] = useState('');
   const drawRef = useRef(draw);
+  const geometryRef = useRef(geometry);
   const lastOverlayFocus = useRef('');
   const overlay = useRef<SVGSVGElement>(null);
   const inspectRef = useRef({ findings, onInspect });
@@ -77,6 +132,7 @@ export default function SiteMap({
     onInspectMapObject,
     selectedMapObject,
   });
+  const entityRef = useRef({ entities, onSelectEntity });
   useEffect(() => {
     inspectRef.current = { findings, onInspect };
   }, [findings, onInspect]);
@@ -87,6 +143,9 @@ export default function SiteMap({
       selectedMapObject,
     };
   }, [screeningFeatures, onInspectMapObject, selectedMapObject]);
+  useEffect(() => {
+    entityRef.current = { entities, onSelectEntity };
+  }, [entities, onSelectEntity]);
   const ready = !!projection;
   const effectiveHiddenLayerIds = hiddenLayerIds ?? localHiddenLayerIds;
   const hiddenLayerSet = useMemo(
@@ -103,11 +162,21 @@ export default function SiteMap({
     },
     [effectiveHiddenLayerIds, hiddenLayerIds, onHiddenLayerIdsChange],
   );
-  const isVisible = (key: string) =>
-    !hiddenLayerSet.has(`environment:${key}`);
+  const isVisible = (key: string) => !hiddenLayerSet.has(`environment:${key}`);
   const activeSelection =
     selected && isVisible(selected) ? selected : undefined;
   const repaint = () => setRevision((v) => v + 1);
+  const fit = useCallback((nextGeometry: Geometry | null) => {
+    const currentMap = map.current;
+    if (!currentMap || !nextGeometry) return;
+    const bounds = geometryBounds(nextGeometry);
+    if (!bounds.isEmpty())
+      currentMap.fitBounds(bounds, {
+        padding: 65,
+        maxZoom: 16,
+        duration: 400,
+      });
+  }, []);
   useEffect(() => {
     if (!el.current) return;
     const m = new maplibregl.Map({
@@ -168,7 +237,7 @@ export default function SiteMap({
         // Hit-test the projected evidence on click without intercepting map drag/zoom.
         const hit = [
           ...(overlay.current?.querySelectorAll<SVGGeometryElement>(
-            '[data-map-object], path[data-layer]:not([data-layer="site"])',
+            '[data-map-object], [data-entity-kind], path[data-layer]:not([data-layer="site"])',
           ) || []),
         ]
           .reverse()
@@ -179,6 +248,11 @@ export default function SiteMap({
           );
         const objectId = hit?.dataset.mapObject;
         if (objectId) builtWorldRef.current.onInspectMapObject?.(objectId);
+        else if (hit?.dataset.entityKind && hit.dataset.entityId)
+          entityRef.current.onSelectEntity?.({
+            kind: hit.dataset.entityKind as 'site' | 'project_subject',
+            id: hit.dataset.entityId,
+          });
         else {
           const finding = inspectRef.current.findings.find(
             (f) => f.key === hit?.dataset.layer,
@@ -187,34 +261,55 @@ export default function SiteMap({
         }
       }
     });
-    const observer = new ResizeObserver(() => m.resize());
+    let resizeFrame = 0;
+    const observer = new ResizeObserver(() => {
+      m.resize();
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => {
+        if (geometryRef.current) fit(geometryRef.current);
+      });
+    });
     observer.observe(el.current);
     return () => {
       observer.disconnect();
+      cancelAnimationFrame(resizeFrame);
       m.remove();
       map.current = null;
     };
-  }, []);
+  }, [fit]);
   useEffect(() => {
     drawRef.current = draw;
     if (map.current)
       map.current.getCanvas().style.cursor = draw ? 'crosshair' : '';
   }, [draw]);
-  function fit(g: Geometry | null) {
+  useEffect(() => {
+    geometryRef.current = geometry;
+  }, [geometry]);
+  const fitAllEntities = useCallback(() => {
     const m = map.current;
-    if (!m || !g) return;
-    const bounds = new maplibregl.LngLatBounds();
-    const walk = (v: Position | Position[] | Position[][] | Position[][][]) => {
-      if (typeof v[0] === 'number') bounds.extend(v as [number, number]);
-      else (v as (Position | Position[] | Position[][])[]).forEach(walk);
-    };
-    if ('coordinates' in g) walk(g.coordinates);
-    if (!bounds.isEmpty())
-      m.fitBounds(bounds, { padding: 65, maxZoom: 16, duration: 400 });
-  }
+    const sites = entityRef.current.entities
+      .filter((entity) => entity.kind === 'site')
+      .map((entity) => entity.site);
+    const bounds = portfolioBounds(sites);
+    if (!m || !bounds) return;
+    m.fitBounds(
+      [
+        [bounds[0], bounds[1]],
+        [bounds[2], bounds[3]],
+      ],
+      {
+        padding: { top: 90, right: 80, bottom: 90, left: 360 },
+        maxZoom: 13,
+        duration: 400,
+      },
+    );
+  }, []);
   useEffect(() => {
     if (ready) fit(geometry);
-  }, [geometry, ready, projection]);
+  }, [geometry, ready, projection, fit]);
+  useEffect(() => {
+    if (ready && entities.length && !selectedEntity) fitAllEntities();
+  }, [ready, entities.length, selectedEntity, fitAllEntities]);
   useEffect(() => {
     if (ready) {
       const focusKey = `${selected ?? ''}:${focusRequest}`;
@@ -236,6 +331,7 @@ export default function SiteMap({
     projection,
     hiddenLayerSet,
     setLayerHidden,
+    fit,
   ]);
   useEffect(() => {
     if (!ready || !mapObjectFocusRequest) return;
@@ -243,7 +339,7 @@ export default function SiteMap({
       (item) => item.id === builtWorldRef.current.selectedMapObject,
     );
     if (feature) fit(feature.geometry);
-  }, [mapObjectFocusRequest, ready, projection]);
+  }, [mapObjectFocusRequest, ready, projection, fit]);
   useEffect(() => {
     if (ready && map.current?.isStyleLoaded())
       map.current.setLayoutProperty(
@@ -292,6 +388,27 @@ export default function SiteMap({
     })[layer];
   const builtLayerVisible = (layer: BuiltWorldLayerId) =>
     !hiddenLayerSet.has(`built:${layer}`);
+  const siteEntities = entities.filter((entity) => entity.kind === 'site');
+  const linkedProjects = entities.filter(
+    (entity) =>
+      entity.kind === 'project_subject' &&
+      entity.locationState === 'site_linked',
+  );
+  const unlocatedProjects = entities.filter(
+    (entity) =>
+      entity.kind === 'project_subject' &&
+      entity.locationState !== 'site_linked',
+  );
+  const rosterEntities = searchableInfrastructureEntities(
+    entities,
+    entityQuery,
+    entities.length,
+  );
+  const shownRosterEntities = entityQuery.trim() ? rosterEntities : entities;
+  const chosenEntity = entities.find(
+    (entity) =>
+      entity.kind === selectedEntity?.kind && entity.id === selectedEntity.id,
+  );
   function renderBuiltFeature(feature: (typeof builtFeatures)[number]) {
     const layer = feature.properties.layer_id;
     if (!builtLayerVisible(layer)) return null;
@@ -344,7 +461,10 @@ export default function SiteMap({
     );
   }
   return (
-    <div className="map-wrap">
+    <div
+      className={`map-wrap${entities.length || entityLoading || entityUnavailable ? ` ${infrastructureStyles.operatingMap}` : ''}`}
+      data-primary-map="infrastructure-operating-picture"
+    >
       <div ref={el} className="map-canvas" />
       <svg
         ref={overlay}
@@ -352,6 +472,36 @@ export default function SiteMap({
         aria-label="Site boundary and measured overlaps"
         data-revision={revision}
       >
+        {!hiddenLayerSet.has('site-boundary') &&
+          siteEntities.map((entity) => {
+            const selectedSite =
+              selectedEntity?.kind === 'site' &&
+              selectedEntity.id === entity.id;
+            const linkedSelection =
+              chosenEntity?.kind === 'project_subject' &&
+              chosenEntity.subject.site_id === entity.id;
+            const displayGeometry =
+              selectedSite && geometry ? geometry : entity.geometry;
+            if (!displayGeometry) return null;
+            return (
+              <path
+                key={`entity-site:${entity.id}`}
+                data-entity-kind="site"
+                data-entity-id={entity.id}
+                data-selected={selectedSite || linkedSelection}
+                d={path(displayGeometry)}
+                fill="#a8c0ae"
+                fillOpacity={selectedSite || linkedSelection ? 0.2 : 0.07}
+                stroke={selectedSite || linkedSelection ? '#b7d7c0' : '#8d9c92'}
+                strokeWidth={selectedSite || linkedSelection ? 3 : 1.5}
+                fillRule="evenodd"
+              >
+                <title>
+                  {entity.name} · saved Site boundary v{entity.site.version}
+                </title>
+              </path>
+            );
+          })}
         {findings
           .filter((f) => f.geometry && isVisible(f.key))
           .map((f) => (
@@ -378,17 +528,19 @@ export default function SiteMap({
             </path>
           ))}
         {builtFeatures.map(renderBuiltFeature)}
-        {geometry && !hiddenLayerSet.has('site-boundary') && (
-          <path
-            data-layer="site"
-            d={path(geometry)}
-            fill="var(--wetland)"
-            fillOpacity=".05"
-            stroke="var(--action-primary)"
-            strokeWidth="3"
-            fillRule="evenodd"
-          />
-        )}
+        {!siteEntities.length &&
+          geometry &&
+          !hiddenLayerSet.has('site-boundary') && (
+            <path
+              data-layer="site"
+              d={path(geometry)}
+              fill="var(--wetland)"
+              fillOpacity=".05"
+              stroke="var(--action-primary)"
+              strokeWidth="3"
+              fillRule="evenodd"
+            />
+          )}
         {draft && (
           <path
             d={path(draft)}
@@ -415,8 +567,47 @@ export default function SiteMap({
             );
           })}
       </svg>
+      {!hiddenLayerSet.has('project-subjects') && projection && (
+        <div
+          className={infrastructureStyles.projectMarkers}
+          aria-label="Site-linked Project Subjects"
+        >
+          {linkedProjects.map((entity) => {
+            const anchor = linkedSiteDisplayAnchor(entity.geometry);
+            if (!anchor) return null;
+            const point = projection.project(anchor as [number, number]);
+            const isSelected =
+              selectedEntity?.kind === entity.kind &&
+              selectedEntity.id === entity.id;
+            return (
+              <button
+                key={entityKey(entity)}
+                className={infrastructureStyles.projectMarker}
+                data-selected={isSelected}
+                style={{ left: point.x, top: point.y }}
+                aria-label={`Open ${entity.name}`}
+                aria-pressed={isSelected}
+                onClick={() => onOpenEntity?.(entity)}
+              >
+                <span aria-hidden="true" />
+                <strong>{entity.name}</strong>
+              </button>
+            );
+          })}
+        </div>
+      )}
       {error && <div className="map-error">{error}</div>}
       <div className="map-toolbar">
+        {!!entities.length && (
+          <button
+            aria-expanded={rosterOpen}
+            aria-controls="infrastructure-entity-roster"
+            onClick={() => setRosterOpen((value) => !value)}
+          >
+            <Search size={16} /> Entities{' '}
+            <span className="layer-count">{entities.length}</span>
+          </button>
+        )}
         <button
           aria-expanded={layersOpen}
           aria-controls="map-layers"
@@ -424,7 +615,15 @@ export default function SiteMap({
         >
           <Layers size={16} /> Layers{' '}
           <span className="layer-count">
-            {findings.filter((f) => f.geometry && isVisible(f.key)).length +
+            {Number(
+              siteEntities.some((entity) => !!entity.geometry) &&
+                !hiddenLayerSet.has('site-boundary'),
+            ) +
+              Number(
+                linkedProjects.length > 0 &&
+                  !hiddenLayerSet.has('project-subjects'),
+              ) +
+              findings.filter((f) => f.geometry && isVisible(f.key)).length +
               builtWorldLayerIds.filter((layer) =>
                 builtFeatures.some(
                   (feature) =>
@@ -437,8 +636,8 @@ export default function SiteMap({
         <button
           aria-label="Fit site boundary"
           title="Fit site boundary"
-          disabled={!geometry}
-          onClick={() => fit(geometry)}
+          disabled={!geometry && !siteEntities.length}
+          onClick={() => (geometry ? fit(geometry) : fitAllEntities())}
         >
           <LocateFixed size={17} />
         </button>
@@ -455,7 +654,10 @@ export default function SiteMap({
               Close
             </button>
           </div>
-          <p>Saved evidence for the selected immutable assessment.</p>
+          <p>
+            Current entity geography and saved evidence for the selected
+            immutable assessment.
+          </p>
           <label className="base-layer" htmlFor="map-basemap">
             <Checkbox
               id="map-basemap"
@@ -465,21 +667,48 @@ export default function SiteMap({
             OpenStreetMap basemap
           </label>
           <div className="layer-group">
-            <h3>Site</h3>
+            <h3>Infrastructure entities</h3>
             <div className="layer-row">
               <label htmlFor="map-site-boundary">
                 <Checkbox
                   id="map-site-boundary"
                   checked={!hiddenLayerSet.has('site-boundary')}
-                  disabled={!geometry}
+                  disabled={
+                    !geometry &&
+                    !siteEntities.some((entity) => !!entity.geometry)
+                  }
                   onCheckedChange={(value) =>
                     setLayerHidden('site-boundary', !value)
                   }
                 />
                 <i className="layer-swatch boundary" />
                 <span className="layer-row-copy">
-                  Site boundary
-                  <small>{geometry ? boundaryLabel : 'Unavailable'}</small>
+                  Site boundaries
+                  <small>
+                    {geometry
+                      ? boundaryLabel
+                      : `${siteEntities.length} retained Sites`}
+                  </small>
+                </span>
+              </label>
+            </div>
+            <div className="layer-row">
+              <label htmlFor="map-project-subjects">
+                <Checkbox
+                  id="map-project-subjects"
+                  checked={!hiddenLayerSet.has('project-subjects')}
+                  disabled={!linkedProjects.length}
+                  onCheckedChange={(value) =>
+                    setLayerHidden('project-subjects', !value)
+                  }
+                />
+                <i className={infrastructureStyles.projectSwatch} />
+                <span className="layer-row-copy">
+                  Project Subjects
+                  <small>
+                    {linkedProjects.length} Site-linked ·{' '}
+                    {unlocatedProjects.length} unlocated
+                  </small>
                 </span>
               </label>
             </div>
@@ -598,12 +827,9 @@ export default function SiteMap({
                     </div>
                   );
                 })
-              : ![
-                    'loading',
-                    'failed',
-                    'unavailable',
-                    'unsupported',
-                  ].includes(screeningFeaturesState) && (
+              : !['loading', 'failed', 'unavailable', 'unsupported'].includes(
+                  screeningFeaturesState,
+                ) && (
                   <p>
                     {screeningFeaturesState === 'idle'
                       ? 'Prepare or select a supported Screening Context run to inspect built-world layers.'
@@ -623,6 +849,131 @@ export default function SiteMap({
           </p>
         </section>
       )}
+      {rosterOpen &&
+        (entities.length > 0 || entityLoading || entityUnavailable) && (
+          <aside
+            id="infrastructure-entity-roster"
+            className={infrastructureStyles.roster}
+            aria-label="Infrastructure entity roster"
+          >
+            <header>
+              <span>
+                <strong>Entity index</strong>
+                <small>Sites + Project Subjects</small>
+              </span>
+              <button
+                aria-label="Close entity roster"
+                onClick={() => setRosterOpen(false)}
+              >
+                <X size={15} />
+              </button>
+            </header>
+            <label>
+              <Search size={14} aria-hidden="true" />
+              <span className="sr-only">Search entity roster</span>
+              <input
+                value={entityQuery}
+                onChange={(event) => setEntityQuery(event.target.value)}
+                placeholder="Filter entities"
+              />
+            </label>
+            {entityLoading && !entities.length ? (
+              <p>Loading authorized entities…</p>
+            ) : entityUnavailable && !entities.length ? (
+              <p role="alert">
+                Project Subjects are unavailable. Saved Sites remain separate
+                from missing project intelligence.
+              </p>
+            ) : (
+              <div className={infrastructureStyles.rosterRows}>
+                {shownRosterEntities
+                  .filter((entity) => entity.kind === 'site')
+                  .map((entity) => (
+                    <button
+                      key={entityKey(entity)}
+                      aria-pressed={
+                        entityKey(entity) ===
+                        (selectedEntity
+                          ? `${selectedEntity.kind}:${selectedEntity.id}`
+                          : '')
+                      }
+                      onClick={() => onOpenEntity?.(entity)}
+                    >
+                      <MapPin size={15} />
+                      <span>
+                        <strong>{entity.name}</strong>
+                        <small>{infrastructureEntityLabel(entity)}</small>
+                        <em>{entity.evidenceState}</em>
+                      </span>
+                    </button>
+                  ))}
+                {!!shownRosterEntities.filter(
+                  (entity) =>
+                    entity.kind === 'project_subject' &&
+                    entity.locationState === 'site_linked',
+                ).length && <h3>Site-linked intelligence</h3>}
+                {shownRosterEntities
+                  .filter(
+                    (entity) =>
+                      entity.kind === 'project_subject' &&
+                      entity.locationState === 'site_linked',
+                  )
+                  .map((entity) => (
+                    <button
+                      key={entityKey(entity)}
+                      aria-pressed={
+                        entityKey(entity) ===
+                        (selectedEntity
+                          ? `${selectedEntity.kind}:${selectedEntity.id}`
+                          : '')
+                      }
+                      onClick={() => onOpenEntity?.(entity)}
+                    >
+                      <FileSearch size={15} />
+                      <span>
+                        <strong>{entity.name}</strong>
+                        <small>{infrastructureEntityLabel(entity)}</small>
+                        <em>{entity.evidenceState}</em>
+                      </span>
+                    </button>
+                  ))}
+                {!!shownRosterEntities.filter(
+                  (entity) =>
+                    entity.kind === 'project_subject' &&
+                    entity.locationState !== 'site_linked',
+                ).length && <h3>Unlocated intelligence</h3>}
+                {shownRosterEntities
+                  .filter(
+                    (entity) =>
+                      entity.kind === 'project_subject' &&
+                      entity.locationState !== 'site_linked',
+                  )
+                  .map((entity) => (
+                    <button
+                      key={entityKey(entity)}
+                      aria-pressed={
+                        entityKey(entity) ===
+                        (selectedEntity
+                          ? `${selectedEntity.kind}:${selectedEntity.id}`
+                          : '')
+                      }
+                      onClick={() => onOpenEntity?.(entity)}
+                    >
+                      <FileSearch size={15} />
+                      <span>
+                        <strong>{entity.name}</strong>
+                        <small>{infrastructureEntityLabel(entity)}</small>
+                        <em>{entity.evidenceState}</em>
+                      </span>
+                    </button>
+                  ))}
+                {!shownRosterEntities.length && (
+                  <p>No matching infrastructure entities.</p>
+                )}
+              </div>
+            )}
+          </aside>
+        )}
       <div className="map-boundary-label">
         <i className="swatch boundary" />
         {boundaryLabel}

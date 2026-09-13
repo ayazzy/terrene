@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState, useCallback, useRef } from 'react';
-import dynamic from 'next/dynamic';
 import {
   readResource,
   criticalReadFailure,
@@ -24,6 +23,7 @@ import ProjectIntelligenceWorkspace from './project-intelligence-workspace';
 import {
   OperatingCommandBar,
   OperatingRail,
+  type ShellSearchResult,
   type ShellSelection,
 } from './operating-shell';
 import shellStyles from './operating-shell.module.css';
@@ -36,6 +36,13 @@ import {
 } from './operating-picture-state';
 import type { OverlayFinding } from './site-evidence';
 import SiteMap from './map';
+import {
+  projectInfrastructureEntities,
+  searchableInfrastructureEntities,
+  infrastructureEntityLabel,
+  type InfrastructureEntity,
+} from './infrastructure-entities';
+import { useInfrastructureEntities } from './use-infrastructure-entities';
 import {
   EvidenceBadge,
   WorkspaceLoading,
@@ -91,14 +98,6 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
-const PortfolioMap = dynamic(() => import('./portfolio-map'), {
-  ssr: false,
-  loading: () => (
-    <div className="portfolio-map portfolio-loading">
-      Loading saved-site map…
-    </div>
-  ),
-});
 const statuses = ['Unreviewed', 'Investigate', 'Hold', 'Archived'];
 async function api(path: string, method = 'GET', body?: any): Promise<any> {
   const r = await fetch('/api' + path, {
@@ -155,6 +154,7 @@ export default function Home() {
   const dossierFocusIntent = useRef<'close' | 'reopen' | null>(null);
   const historyRequestFence = useRef(createLatestRequestFence());
   const operatingPicture = useOperatingPictureState();
+  const projectEntityIndex = useInfrastructureEntities();
   const operatingState = operatingPicture.state;
   const [sites, setSites] = useState<any[]>([]),
     [datasets, setDatasets] = useState<any[]>([]),
@@ -190,12 +190,7 @@ export default function Home() {
     [navigationCompact, setNavigationCompact] = useState(true),
     [mobileNavigation, setMobileNavigation] = useState(false);
   const operatingProjection = projectOperatingPictureState(operatingState);
-  const {
-    view,
-    sitesView,
-    activeSiteId: active,
-    selectedMapSiteId: selectedMapSite,
-  } = operatingProjection;
+  const { view, sitesView, activeSiteId: active } = operatingProjection;
   function setView(next: string) {
     if (next === 'workspace') {
       operatingPicture.transition((currentState) => ({
@@ -220,9 +215,6 @@ export default function Home() {
         section: 'overview',
       }));
   }
-  function setSelectedMapSite(id: string | null) {
-    operatingPicture.selectEntity(id ? { kind: 'site', id } : null, sitesView);
-  }
   const closeMobileNavigation = useCallback(
     () => setMobileNavigation(false),
     [],
@@ -242,6 +234,11 @@ export default function Home() {
     ? (operatingState.section as 'overview' | 'evidence' | 'models' | 'history')
     : 'overview';
   const current = sites.find((s) => s.id === active);
+  const infrastructureEntities = projectInfrastructureEntities(
+    sites,
+    projectEntityIndex.subjects,
+    projectEntityIndex.runs,
+  );
   const workspace = useSiteWorkspaceState(current, history, {
     selectedAssessmentId: requestedSiteAssessmentId,
     tab: requestedSiteSection,
@@ -604,13 +601,21 @@ export default function Home() {
           ? 'Unavailable'
           : 'No sources recorded'
         : `${availableSourceCount} / ${datasets.length} available`;
-  const commandSearchResults = query.trim()
-    ? sites
-        .filter((site) =>
-          site.name.toLowerCase().includes(query.trim().toLowerCase()),
-        )
-        .slice(0, 5)
-    : [];
+  const commandSearchResults: ShellSearchResult[] =
+    searchableInfrastructureEntities(infrastructureEntities, query, 8).map(
+      (entity) => ({
+        id: entity.id,
+        name: entity.name,
+        kind: entity.kind,
+        detail: infrastructureEntityLabel(entity),
+        evidenceState: entity.evidenceState,
+      }),
+    );
+  const selectedInfrastructureEntity = infrastructureEntities.find(
+    (entity) =>
+      entity.kind === operatingState.selection?.kind &&
+      entity.id === operatingState.selection.id,
+  );
   const commandSelection: ShellSelection | null =
     operatingState.selection?.kind === 'site'
       ? {
@@ -624,9 +629,37 @@ export default function Home() {
         ? {
             kind: 'project_subject',
             id: operatingState.selection.id,
-            label: 'Project Subject',
+            label: selectedInfrastructureEntity?.name || 'Project Subject',
           }
         : null;
+  const spatialView =
+    (view === 'workspace' && sitesView === 'map') ||
+    view === 'site' ||
+    view === 'project-intelligence';
+  const selectedMapGeometry =
+    view === 'site' && current
+      ? viewingHistorical
+        ? assessment?.geometry || null
+        : current.geometry
+      : selectedInfrastructureEntity?.geometry || null;
+  function openInfrastructureEntity(entity: InfrastructureEntity) {
+    setQuery('');
+    if (entity.kind === 'site') openSite(entity.site);
+    else
+      operatingPicture.transition({
+        mode: 'project',
+        selection: { kind: 'project_subject', id: entity.id },
+        artifact: null,
+        section: 'overview',
+        dossierOpen: true,
+      });
+  }
+  function openSearchResult(result: ShellSearchResult) {
+    const entity = infrastructureEntities.find(
+      (item) => item.kind === result.kind && item.id === result.id,
+    );
+    if (entity) openInfrastructureEntity(entity);
+  }
   const viewLabel =
     view === 'site'
       ? current?.name || 'Site investigation'
@@ -654,20 +687,14 @@ export default function Home() {
         onMobileClose={closeMobileNavigation}
       />
       <section
-        className={`main${view === 'site' ? ' analysis-main' : ''}${view === 'workspace' && sitesView === 'map' ? ' portfolio-main' : ''}${view === 'workspace' && sitesView === 'list' ? ' portfolio-list-main' : ''}`}
+        className={`main${spatialView ? ' spatial-main' : ''}${view === 'site' ? ' analysis-main' : ''}${view === 'workspace' && sitesView === 'map' ? ' portfolio-main' : ''}${view === 'workspace' && sitesView === 'list' ? ' portfolio-list-main' : ''}`}
       >
         <OperatingCommandBar
           viewLabel={viewLabel}
           query={query}
           searchResults={commandSearchResults}
           onQueryChange={setQuery}
-          onOpenSite={(id) => {
-            const site = sites.find((item) => item.id === id);
-            if (site) {
-              setQuery('');
-              openSite(site);
-            }
-          }}
+          onOpenEntity={openSearchResult}
           onMobileMenu={() => setMobileNavigation((value) => !value)}
           mobileNavigationOpen={mobileNavigation}
           sourceStatus={sourceStatus}
@@ -688,6 +715,77 @@ export default function Home() {
           </div>
         )}
         {view !== 'site' && view !== 'project-intelligence' && refreshNotice}
+        {spatialView && (
+          <div className="operating-spatial-map">
+            <SiteMap
+              geometry={selectedMapGeometry}
+              findings={view === 'site' ? result?.findings : []}
+              selected={view === 'site' ? mapFocus?.key : undefined}
+              focusRequest={view === 'site' ? mapFocus?.request : undefined}
+              boundaryLabel={
+                view === 'site' && current
+                  ? `Boundary v${viewingHistorical ? assessment?.version : current.version}${viewingHistorical ? ' · historical assessment' : ''}`
+                  : 'Current saved Site boundaries'
+              }
+              onInspect={(finding) => {
+                if (view !== 'site') return;
+                showOnMap(finding.key);
+                setFinding(finding);
+              }}
+              screeningFeatures={view === 'site' ? mapEvidence.features : null}
+              screeningFeaturesState={
+                view === 'site' ? mapEvidence.state : 'idle'
+              }
+              screeningFeaturesError={view === 'site' ? mapEvidence.error : ''}
+              selectedMapObject={
+                view === 'site' ? mapEvidence.selectedObjectId : null
+              }
+              mapObjectFocusRequest={
+                view === 'site' ? mapEvidence.focusRequest : 0
+              }
+              onInspectMapObject={(id) => {
+                if (view !== 'site') return;
+                changeSitePanel(true);
+                mapEvidence.selectObject(id);
+              }}
+              onClearMapObject={mapEvidence.clearSelection}
+              hiddenLayerIds={operatingState.hiddenLayers}
+              onHiddenLayerIdsChange={operatingPicture.setHiddenLayers}
+              entities={infrastructureEntities}
+              selectedEntity={operatingState.selection}
+              onSelectEntity={(selection) => {
+                if (!selection) {
+                  operatingPicture.selectEntity(null, 'map');
+                  return;
+                }
+                const entity = infrastructureEntities.find(
+                  (item) =>
+                    item.kind === selection.kind && item.id === selection.id,
+                );
+                if (!entity) return;
+                if (view === 'workspace')
+                  operatingPicture.selectEntity(selection, 'map');
+                else openInfrastructureEntity(entity);
+              }}
+              onOpenEntity={openInfrastructureEntity}
+              entityLoading={loading || projectEntityIndex.loading}
+              entityUnavailable={
+                (!hasLoadedSites && !!readErrors.sites) ||
+                (!!projectEntityIndex.error &&
+                  !projectEntityIndex.subjects.length)
+              }
+            />
+            {view === 'site' && !panelOpen && (
+              <button
+                ref={reopenAnalysisButton}
+                className="reopen-analysis operating-map-reopen"
+                onClick={reopenSitePanel}
+              >
+                <PanelLeftOpen size={16} /> Open analysis
+              </button>
+            )}
+          </div>
+        )}
         <ProjectIntelligenceWorkspace
           enabled={view === 'project-intelligence'}
           selectedSubjectId={requestedProjectSubjectId}
@@ -738,14 +836,10 @@ export default function Home() {
               </button>
             </div>
             <TabsContent value="map" className="sites-map-panel">
-              <PortfolioMap
-                sites={sites}
-                selected={selectedMapSite}
-                onSelect={setSelectedMapSite}
-                onOpen={openSite}
-                loading={loading}
-                unavailable={!hasLoadedSites && !!readErrors.sites}
-              />
+              <p className="sr-only">
+                The persistent infrastructure map contains the Site and Project
+                Subject entity index.
+              </p>
             </TabsContent>
             <TabsContent value="list" className="portfolio-list-panel">
               <div className="portfolio-status-strip">
@@ -1024,7 +1118,7 @@ export default function Home() {
         )}
         {view === 'site' && current && (
           <section
-            className="site-workspace"
+            className={`site-workspace${panelOpen ? '' : ' dossier-collapsed'}`}
             aria-label="Site analysis workspace"
           >
             <div className="heading site-heading">
@@ -1149,43 +1243,6 @@ export default function Home() {
             <div
               className={`investigation${panelOpen ? '' : ' panel-collapsed'}`}
             >
-              <div className="analysis-map">
-                <SiteMap
-                  key={assessment?.id || current.id}
-                  geometry={
-                    viewingHistorical ? assessment.geometry : current.geometry
-                  }
-                  findings={result?.findings}
-                  selected={mapFocus?.key}
-                  focusRequest={mapFocus?.request}
-                  boundaryLabel={`Boundary v${viewingHistorical ? assessment.version : current.version}${viewingHistorical ? ' · historical assessment' : ''}`}
-                  onInspect={(f) => {
-                    showOnMap(f.key);
-                    setFinding(f);
-                  }}
-                  screeningFeatures={mapEvidence.features}
-                  screeningFeaturesState={mapEvidence.state}
-                  screeningFeaturesError={mapEvidence.error}
-                  selectedMapObject={mapEvidence.selectedObjectId}
-                  mapObjectFocusRequest={mapEvidence.focusRequest}
-                  onInspectMapObject={(id) => {
-                    changeSitePanel(true);
-                    mapEvidence.selectObject(id);
-                  }}
-                  onClearMapObject={mapEvidence.clearSelection}
-                  hiddenLayerIds={operatingState.hiddenLayers}
-                  onHiddenLayerIdsChange={operatingPicture.setHiddenLayers}
-                />
-                {!panelOpen && (
-                  <button
-                    ref={reopenAnalysisButton}
-                    className="reopen-analysis"
-                    onClick={reopenSitePanel}
-                  >
-                    <PanelLeftOpen size={16} /> Open analysis
-                  </button>
-                )}
-              </div>
               <div
                 className="findings-panel"
                 ref={analysisPanel}

@@ -30,7 +30,9 @@ export type OperatingShellView =
 export type ShellSearchResult = {
   id: string;
   name: string;
-  status: string;
+  kind: 'site' | 'project_subject';
+  detail: string;
+  evidenceState: string;
 };
 
 export type ShellSelection = {
@@ -169,7 +171,7 @@ type OperatingCommandBarProps = {
   query: string;
   searchResults: ShellSearchResult[];
   onQueryChange: (query: string) => void;
-  onOpenSite: (id: string) => void;
+  onOpenEntity: (result: ShellSearchResult) => void;
   onMobileMenu: () => void;
   mobileNavigationOpen: boolean;
   sourceStatus: string;
@@ -185,7 +187,7 @@ export function OperatingCommandBar({
   query,
   searchResults,
   onQueryChange,
-  onOpenSite,
+  onOpenEntity,
   onMobileMenu,
   mobileNavigationOpen,
   sourceStatus,
@@ -228,40 +230,48 @@ export function OperatingCommandBar({
 
       <form
         className={styles.search}
-        aria-label="Search saved sites"
+        aria-label="Search infrastructure entities"
         onSubmit={(event) => {
           event.preventDefault();
-          if (searchResults[0]) onOpenSite(searchResults[0].id);
+          if (searchResults[0]) onOpenEntity(searchResults[0]);
         }}
       >
         <Search aria-hidden="true" />
-        <label htmlFor="operating-picture-search">Search saved sites</label>
+        <label htmlFor="operating-picture-search">
+          Search infrastructure entities
+        </label>
         <input
           id="operating-picture-search"
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
-          placeholder="Search saved sites"
+          placeholder="Search Sites and Project Subjects"
           autoComplete="off"
         />
         {hasQuery && (
           <div className={styles.searchResults}>
             {searchResults.length ? (
-              searchResults.map((site) => (
+              searchResults.map((entity) => (
                 <button
-                  key={site.id}
+                  key={`${entity.kind}:${entity.id}`}
                   type="button"
-                  onClick={() => onOpenSite(site.id)}
+                  onClick={() => onOpenEntity(entity)}
                 >
-                  <MapPin aria-hidden="true" />
+                  {entity.kind === 'site' ? (
+                    <MapPin aria-hidden="true" />
+                  ) : (
+                    <FileSearch aria-hidden="true" />
+                  )}
                   <span>
-                    <strong>{site.name}</strong>
-                    <small>{site.status}</small>
+                    <strong>{entity.name}</strong>
+                    <small>
+                      {entity.detail} · {entity.evidenceState}
+                    </small>
                   </span>
-                  <code>{site.id.slice(-8).toUpperCase()}</code>
+                  <code>{entity.id.slice(-8).toUpperCase()}</code>
                 </button>
               ))
             ) : (
-              <p>No matching saved sites</p>
+              <p>No matching Sites or Project Subjects</p>
             )}
           </div>
         )}

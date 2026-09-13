@@ -1,0 +1,222 @@
+.operatingMap {
+  min-height: 0;
+  height: 100%;
+  color: #e7ece8;
+  background: #202522;
+}
+
+.operatingMap :global(.map-canvas .maplibregl-canvas) {
+  filter: grayscale(1) invert(1) brightness(0.7) contrast(0.6);
+}
+
+.projectMarkers {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.projectMarker {
+  position: absolute;
+  min-height: 1.75rem;
+  max-width: 14rem;
+  justify-content: flex-start;
+  gap: 0.45rem;
+  padding: 0.25rem 0.5rem;
+  transform: translate(-0.75rem, -50%);
+  pointer-events: auto;
+  border: 1px solid #d5a763;
+  border-radius: 2px;
+  background: #262b28eb;
+  color: #f2dfbf;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 35%);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.projectMarker > span,
+.projectSwatch {
+  width: 0.65rem;
+  height: 0.65rem;
+  flex: 0 0 0.65rem;
+  transform: rotate(45deg);
+  border: 1px solid #ffe2ad;
+  background: #b77835;
+}
+
+.projectMarker strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projectMarker[data-selected='true'] {
+  border-color: #ffe4b6;
+  background: #6d4c27;
+  color: white;
+}
+
+.roster {
+  position: absolute;
+  z-index: 20;
+  top: 1rem;
+  left: 1rem;
+  width: min(20rem, calc(100% - 7rem));
+  max-height: calc(100% - 5rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #4b5750;
+  border-radius: 2px;
+  background: #1c211ff2;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 28%);
+  backdrop-filter: blur(8px);
+}
+
+.roster > header {
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.625rem 0.5rem 0.75rem;
+  border-bottom: 1px solid #3b4540;
+}
+
+.roster > header > span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.roster > header strong {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.roster > header small {
+  color: #89958e;
+  font-size: 0.625rem;
+}
+
+.roster > header button {
+  width: 1.75rem;
+  min-height: 1.75rem;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+}
+
+.roster > label {
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.625rem;
+  padding: 0 0.625rem;
+  border: 1px solid #46514b;
+  background: #272e2a;
+  color: #8f9b94;
+}
+
+.roster > label input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #e5ebe7;
+  font-size: 0.75rem;
+}
+
+.roster > p,
+.rosterRows > p {
+  margin: 0;
+  padding: 0.75rem;
+  color: #a9b3ad;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.rosterRows {
+  overflow: auto;
+  padding: 0 0.4rem 0.5rem;
+}
+
+.rosterRows h3 {
+  margin: 0.75rem 0.35rem 0.35rem;
+  color: #829087;
+  font-size: 0.625rem;
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.rosterRows button {
+  width: 100%;
+  min-height: 3.6rem;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.55rem 0.6rem;
+  border-color: transparent;
+  background: transparent;
+  text-align: left;
+}
+
+.rosterRows button:hover,
+.rosterRows button[aria-pressed='true'] {
+  border-color: #4b5c53;
+  background: #2b3731;
+}
+
+.rosterRows button > svg {
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+  color: #adc8b6;
+}
+
+.rosterRows button > span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.rosterRows strong,
+.rosterRows small,
+.rosterRows em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rosterRows strong {
+  color: #e7ede9;
+  font-size: 0.75rem;
+}
+
+.rosterRows small {
+  color: #9aa69f;
+  font-size: 0.65rem;
+}
+
+.rosterRows em {
+  color: #77837c;
+  font-size: 0.625rem;
+  font-style: normal;
+}
+
+@media (max-width: 47.5rem) {
+  .roster {
+    top: 0.75rem;
+    left: 0.75rem;
+    width: calc(100% - 4.5rem);
+    max-height: calc(100% - 1.5rem);
+  }
+
+  .projectMarker strong {
+    max-width: 7rem;
+  }
+}

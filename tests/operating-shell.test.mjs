@@ -24,8 +24,10 @@ test('shell identifies Terrene as infrastructure intelligence', () => {
   assert.doesNotMatch(shell, /Operational|Live evidence|SYSTEM STATUS/);
 });
 
-test('command bar exposes search, scope, source records, and selection', () => {
-  assert.match(shell, /aria-label="Search saved sites"/);
+test('command bar exposes entity search, scope, source records, and selection', () => {
+  assert.match(shell, /aria-label="Search infrastructure entities"/);
+  assert.match(shell, /Search Sites and Project Subjects/);
+  assert.match(shell, /entity\.kind === 'site'/);
   assert.match(
     shell,
     /<small>Scope<\/small>[\s\S]*<strong>Oxfordshire<\/strong>/,
