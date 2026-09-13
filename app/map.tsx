@@ -7,6 +7,14 @@ import { Layers, LocateFixed, ArrowUpRight } from 'lucide-react';
 import type { Geometry, Polygon, LineString, Position } from 'geojson';
 import type { OverlayFinding } from './site-evidence';
 import { layerGroup, layerColor } from './site-evidence';
+import {
+  builtWorldLayerIds,
+  mapFeatureName,
+  mapLayerLabel,
+  mapLayerStatus,
+  type BuiltWorldLayerId,
+  type ScreeningMapFeatures,
+} from './screening-map-features';
 type Props = {
   geometry: Geometry | null;
   findings?: OverlayFinding[];
@@ -16,6 +24,19 @@ type Props = {
   boundaryLabel?: string;
   onInspect?: (finding: OverlayFinding) => void;
   onDraw?: (g: Polygon) => void;
+  screeningFeatures?: ScreeningMapFeatures | null;
+  screeningFeaturesState?:
+    | 'idle'
+    | 'loading'
+    | 'available'
+    | 'failed'
+    | 'unavailable'
+    | 'unsupported';
+  screeningFeaturesError?: string;
+  selectedMapObject?: string | null;
+  mapObjectFocusRequest?: number;
+  onInspectMapObject?: (id: string) => void;
+  onClearMapObject?: () => void;
 };
 export default function SiteMap({
   geometry,
@@ -26,6 +47,13 @@ export default function SiteMap({
   focusRequest,
   boundaryLabel = 'Site boundary',
   onInspect,
+  screeningFeatures,
+  screeningFeaturesState = 'idle',
+  screeningFeaturesError = '',
+  selectedMapObject,
+  mapObjectFocusRequest = 0,
+  onInspectMapObject,
+  onClearMapObject,
 }: Props) {
   const el = useRef<HTMLDivElement>(null),
     map = useRef<maplibregl.Map | null>(null);
@@ -33,8 +61,12 @@ export default function SiteMap({
     [points, setPoints] = useState<number[][]>([]),
     [revision, setRevision] = useState(0),
     [base, setBase] = useState(true),
+    [boundaryVisible, setBoundaryVisible] = useState(true),
     [hiddenLayers, setHiddenLayers] = useState<
       Record<string, number | undefined>
+    >({}),
+    [hiddenBuiltLayers, setHiddenBuiltLayers] = useState<
+      Partial<Record<BuiltWorldLayerId, boolean>>
     >({}),
     [layersOpen, setLayersOpen] = useState(false),
     [coordinates, setCoordinates] = useState(''),
@@ -42,9 +74,21 @@ export default function SiteMap({
   const drawRef = useRef(draw);
   const overlay = useRef<SVGSVGElement>(null);
   const inspectRef = useRef({ findings, onInspect });
+  const builtWorldRef = useRef({
+    screeningFeatures,
+    onInspectMapObject,
+    selectedMapObject,
+  });
   useEffect(() => {
     inspectRef.current = { findings, onInspect };
   }, [findings, onInspect]);
+  useEffect(() => {
+    builtWorldRef.current = {
+      screeningFeatures,
+      onInspectMapObject,
+      selectedMapObject,
+    };
+  }, [screeningFeatures, onInspectMapObject, selectedMapObject]);
   const ready = !!projection;
   const isVisible = (key: string) =>
     !(key in hiddenLayers) ||
@@ -111,8 +155,8 @@ export default function SiteMap({
       } else {
         // Hit-test the projected evidence on click without intercepting map drag/zoom.
         const hit = [
-          ...(overlay.current?.querySelectorAll<SVGPathElement>(
-            'path[data-layer]:not([data-layer="site"])',
+          ...(overlay.current?.querySelectorAll<SVGGeometryElement>(
+            '[data-map-object], path[data-layer]:not([data-layer="site"])',
           ) || []),
         ]
           .reverse()
@@ -121,10 +165,14 @@ export default function SiteMap({
               element.isPointInFill(new DOMPoint(e.point.x, e.point.y)) ||
               element.isPointInStroke(new DOMPoint(e.point.x, e.point.y)),
           );
-        const finding = inspectRef.current.findings.find(
-          (f) => f.key === hit?.dataset.layer,
-        );
-        if (finding) inspectRef.current.onInspect?.(finding);
+        const objectId = hit?.dataset.mapObject;
+        if (objectId) builtWorldRef.current.onInspectMapObject?.(objectId);
+        else {
+          const finding = inspectRef.current.findings.find(
+            (f) => f.key === hit?.dataset.layer,
+          );
+          if (finding) inspectRef.current.onInspect?.(finding);
+        }
       }
     });
     const observer = new ResizeObserver(() => m.resize());
@@ -164,6 +212,13 @@ export default function SiteMap({
     }
   }, [selected, focusRequest, ready, projection]);
   useEffect(() => {
+    if (!ready || !mapObjectFocusRequest) return;
+    const feature = builtWorldRef.current.screeningFeatures?.features.find(
+      (item) => item.id === builtWorldRef.current.selectedMapObject,
+    );
+    if (feature) fit(feature.geometry);
+  }, [mapObjectFocusRequest, ready, projection]);
+  useEffect(() => {
     if (ready && map.current?.isStyleLoaded())
       map.current.setLayoutProperty(
         'base',
@@ -195,6 +250,73 @@ export default function SiteMap({
   }
   const draft: LineString | null =
     points.length > 1 ? { type: 'LineString', coordinates: points } : null;
+  const builtFeatures = (screeningFeatures?.features || []).filter((feature) =>
+    screeningFeatures?.layers.some(
+      (layer) =>
+        layer.id === feature.properties.layer_id &&
+        (layer.state === 'available' || layer.state === 'partial'),
+    ),
+  );
+  const builtLayerColor = (layer: BuiltWorldLayerId) =>
+    ({
+      buildings: '#8a633e',
+      functional_sites: '#65756b',
+      railway_tracks: '#7b4654',
+      railway_stations: '#304f47',
+    })[layer];
+  const builtLayerVisible = (layer: BuiltWorldLayerId) =>
+    !hiddenBuiltLayers[layer];
+  function renderBuiltFeature(feature: (typeof builtFeatures)[number]) {
+    const layer = feature.properties.layer_id;
+    if (!builtLayerVisible(layer)) return null;
+    const isSelected = selectedMapObject === feature.id;
+    const geometry = feature.geometry;
+    if (geometry.type === 'Point' || geometry.type === 'MultiPoint') {
+      const positions =
+        geometry.type === 'Point'
+          ? [geometry.coordinates]
+          : geometry.coordinates;
+      return positions.map((position, index) => {
+        if (!projection) return null;
+        const point = projection.project(position as [number, number]);
+        return (
+          <circle
+            key={`${feature.id}:${index}`}
+            data-map-object={feature.id}
+            cx={point.x}
+            cy={point.y}
+            r={isSelected ? 7 : 5}
+            fill={builtLayerColor(layer)}
+            stroke="white"
+            strokeWidth={isSelected ? 3 : 2}
+          >
+            <title>
+              {mapFeatureName(feature)} · Terrene Earth mapped object
+            </title>
+          </circle>
+        );
+      });
+    }
+    return (
+      <path
+        key={feature.id}
+        data-map-object={feature.id}
+        data-map-layer={layer}
+        data-selected={isSelected}
+        d={path(geometry)}
+        fill={
+          geometry.type.includes('Polygon') ? builtLayerColor(layer) : 'none'
+        }
+        fillOpacity={isSelected ? 0.5 : 0.3}
+        stroke={builtLayerColor(layer)}
+        strokeWidth={isSelected ? 4 : layer === 'railway_tracks' ? 2.5 : 1.75}
+        strokeDasharray={layer === 'railway_tracks' ? '5 3' : undefined}
+        fillRule="evenodd"
+      >
+        <title>{mapFeatureName(feature)} · Terrene Earth mapped object</title>
+      </path>
+    );
+  }
   return (
     <div className="map-wrap">
       <div ref={el} className="map-canvas" />
@@ -229,7 +351,8 @@ export default function SiteMap({
               </title>
             </path>
           ))}
-        {geometry && (
+        {builtFeatures.map(renderBuiltFeature)}
+        {geometry && boundaryVisible && (
           <path
             data-layer="site"
             d={path(geometry)}
@@ -270,12 +393,19 @@ export default function SiteMap({
       <div className="map-toolbar">
         <button
           aria-expanded={layersOpen}
-          aria-controls="environmental-layers"
+          aria-controls="map-layers"
           onClick={() => setLayersOpen((value) => !value)}
         >
           <Layers size={16} /> Layers{' '}
           <span className="layer-count">
-            {findings.filter((f) => f.geometry && isVisible(f.key)).length}
+            {findings.filter((f) => f.geometry && isVisible(f.key)).length +
+              builtWorldLayerIds.filter((layer) =>
+                builtFeatures.some(
+                  (feature) =>
+                    feature.properties.layer_id === layer &&
+                    builtLayerVisible(layer),
+                ),
+              ).length}
           </span>
         </button>
         <button
@@ -289,17 +419,17 @@ export default function SiteMap({
       </div>
       {layersOpen && (
         <section
-          id="environmental-layers"
+          id="map-layers"
           className="layer-control"
-          aria-label="Environmental layers"
+          aria-label="Map layers"
         >
           <div className="layer-control-title">
-            <strong>Environmental layers</strong>
+            <strong>Map layers</strong>
             <button className="text-btn" onClick={() => setLayersOpen(false)}>
               Close
             </button>
           </div>
-          <p>Saved intersections · inside this boundary</p>
+          <p>Saved evidence for the selected immutable assessment.</p>
           <label className="base-layer" htmlFor="map-basemap">
             <Checkbox
               id="map-basemap"
@@ -308,57 +438,165 @@ export default function SiteMap({
             />{' '}
             OpenStreetMap basemap
           </label>
-          {[...new Set(findings.map((f) => layerGroup(f.key)))].map((group) => (
-            <div className="layer-group" key={group}>
-              <h3>{group}</h3>
-              {findings
-                .filter((f) => layerGroup(f.key) === group)
-                .map((f) => (
-                  <div className="layer-row" key={f.key}>
-                    <label htmlFor={`layer-${f.key}`}>
-                      <Checkbox
-                        id={`layer-${f.key}`}
-                        aria-label={`Show ${f.dataset}`}
-                        disabled={!f.geometry}
-                        checked={!!f.geometry && isVisible(f.key)}
-                        onCheckedChange={(value) =>
-                          setHiddenLayers((keys) => {
-                            const next = { ...keys };
-                            if (value) delete next[f.key];
-                            else next[f.key] = focusRequest;
-                            return next;
-                          })
-                        }
-                      />
-                      <i
-                        className="layer-swatch"
-                        style={{ background: layerColor(f.key) }}
-                      />
-                      <span>
-                        {f.dataset}
-                        <small>
-                          {f.measured === null
-                            ? 'Evidence unavailable'
-                            : !f.geometry
-                              ? 'No mapped overlap'
-                              : `${f.percent ?? 0}% overlap`}
-                        </small>
-                      </span>
-                    </label>
-                    <button
-                      className="icon-btn"
-                      aria-label={`Inspect ${f.dataset} evidence`}
-                      onClick={() => onInspect?.(f)}
-                    >
-                      <ArrowUpRight size={14} />
-                    </button>
-                  </div>
-                ))}
+          <div className="layer-group">
+            <h3>Site</h3>
+            <div className="layer-row">
+              <label htmlFor="map-site-boundary">
+                <Checkbox
+                  id="map-site-boundary"
+                  checked={boundaryVisible}
+                  disabled={!geometry}
+                  onCheckedChange={(value) => setBoundaryVisible(!!value)}
+                />
+                <i className="layer-swatch boundary" />
+                <span>
+                  Site boundary
+                  <small>{geometry ? boundaryLabel : 'Unavailable'}</small>
+                </span>
+              </label>
             </div>
-          ))}
-          {!findings.length && (
-            <p>Create a new assessment to obtain saved reference-layer observations.</p>
-          )}
+          </div>
+          <div className="layer-group">
+            <h3>Environmental evidence</h3>
+            {[...new Set(findings.map((f) => layerGroup(f.key)))].map(
+              (group) => (
+                <div className="layer-subgroup" key={group}>
+                  <h4>{group}</h4>
+                  {findings
+                    .filter((f) => layerGroup(f.key) === group)
+                    .map((f) => (
+                      <div className="layer-row" key={f.key}>
+                        <label htmlFor={`layer-${f.key}`}>
+                          <Checkbox
+                            id={`layer-${f.key}`}
+                            aria-label={`Show ${f.dataset}`}
+                            disabled={!f.geometry}
+                            checked={!!f.geometry && isVisible(f.key)}
+                            onCheckedChange={(value) =>
+                              setHiddenLayers((keys) => {
+                                const next = { ...keys };
+                                if (value) delete next[f.key];
+                                else next[f.key] = focusRequest;
+                                return next;
+                              })
+                            }
+                          />
+                          <i
+                            className="layer-swatch"
+                            style={{ background: layerColor(f.key) }}
+                          />
+                          <span>
+                            {f.dataset}
+                            <small>
+                              {f.measured === null
+                                ? 'Evidence unavailable'
+                                : !f.geometry
+                                  ? 'No mapped overlap'
+                                  : `${f.percent ?? 0}% overlap`}
+                            </small>
+                          </span>
+                        </label>
+                        <button
+                          className="icon-btn"
+                          aria-label={`Inspect ${f.dataset} evidence`}
+                          onClick={() => onInspect?.(f)}
+                        >
+                          <ArrowUpRight size={14} />
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              ),
+            )}
+            {!findings.length && (
+              <p>No saved displayable environmental overlays.</p>
+            )}
+          </div>
+          <div className="layer-group terrene-map-layers">
+            <h3>Terrene Earth · built world</h3>
+            {screeningFeaturesState === 'loading' && (
+              <p>Loading persisted mapped objects…</p>
+            )}
+            {screeningFeaturesState === 'failed' && (
+              <p role="alert">
+                Built-world layers could not be loaded. Missing map data is not
+                reported as zero. {screeningFeaturesError}
+              </p>
+            )}
+            {screeningFeaturesState === 'unsupported' && (
+              <p>
+                This historical evidence does not support persisted built-world
+                objects. Current objects are not substituted.
+              </p>
+            )}
+            {screeningFeaturesState === 'unavailable' && (
+              <p>
+                No built-world map evidence is stored for this assessment.
+                Missing evidence is not reported as zero.
+              </p>
+            )}
+            {screeningFeatures
+              ? screeningFeatures.layers.map((layer) => {
+                  const enabled =
+                    layer.feature_count > 0 &&
+                    (layer.state === 'available' || layer.state === 'partial');
+                  return (
+                    <div className="layer-row" key={layer.id}>
+                      <label htmlFor={`map-built-${layer.id}`}>
+                        <Checkbox
+                          id={`map-built-${layer.id}`}
+                          aria-label={`Show ${mapLayerLabel(layer.id)}`}
+                          disabled={!enabled}
+                          checked={enabled && builtLayerVisible(layer.id)}
+                          onCheckedChange={(value) => {
+                            setHiddenBuiltLayers((hidden) => ({
+                              ...hidden,
+                              [layer.id]: !value,
+                            }));
+                            if (
+                              !value &&
+                              builtFeatures.some(
+                                (feature) =>
+                                  feature.id === selectedMapObject &&
+                                  feature.properties.layer_id === layer.id,
+                              )
+                            )
+                              onClearMapObject?.();
+                          }}
+                        />
+                        <i
+                          className="layer-swatch terrene-layer-swatch"
+                          style={{ background: builtLayerColor(layer.id) }}
+                        />
+                        <span>
+                          {mapLayerLabel(layer.id)}
+                          <small className={`layer-state state-${layer.state}`}>
+                            {mapLayerStatus(layer)}
+                          </small>
+                        </span>
+                      </label>
+                    </div>
+                  );
+                })
+              : ![
+                    'loading',
+                    'failed',
+                    'unavailable',
+                    'unsupported',
+                  ].includes(screeningFeaturesState) && (
+                  <p>
+                    {screeningFeaturesState === 'idle'
+                      ? 'Prepare or select a supported Screening Context run to inspect built-world layers.'
+                      : 'Layer availability is unavailable.'}
+                  </p>
+                )}
+            {screeningFeatures && (
+              <p className="terrene-source-note">
+                Generalised source mapping—not surveyed, cadastral, legal or
+                engineering geometry.
+              </p>
+            )}
+          </div>
           <p className="layer-footnote">
             Terrain, watercourse and land-cover measurements are inspectable in
             analysis. No displayable layers are retained for those inputs.
@@ -381,6 +619,33 @@ export default function SiteMap({
             />
             <span>
               Highlighted: {findings.find((f) => f.key === selected)?.dataset}
+            </span>
+          </div>
+        )}
+      {selectedMapObject &&
+        builtFeatures.some(
+          (feature) =>
+            feature.id === selectedMapObject &&
+            builtLayerVisible(feature.properties.layer_id),
+        ) && (
+          <div className="map-selection map-object-selection">
+            <i
+              className="layer-swatch terrene-layer-swatch"
+              style={{
+                background: builtLayerColor(
+                  builtFeatures.find(
+                    (feature) => feature.id === selectedMapObject,
+                  )!.properties.layer_id,
+                ),
+              }}
+            />
+            <span>
+              Selected:{' '}
+              {mapFeatureName(
+                builtFeatures.find(
+                  (feature) => feature.id === selectedMapObject,
+                )!,
+              )}
             </span>
           </div>
         )}
