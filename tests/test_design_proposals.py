@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from shapely.geometry import box, mapping, shape
-from sqlalchemy import create_engine, delete, func, select
+from sqlalchemy import create_engine, delete, func, select, update
 
 from backend import api, core
 from backend import land_evidence_store as evidence_store
@@ -227,6 +227,7 @@ def test_complete_api_flow_survives_reload_and_baseline_never_moves(proposal_api
     lambda geometry: geometry['features'][0]['geometry'].update(type='Point', coordinates=[0, 0]),
     lambda geometry: geometry['features'][0]['geometry']['coordinates'][0].pop(),
     lambda geometry: geometry['features'][0]['geometry']['coordinates'][0][0].__setitem__(0, 181),
+    lambda geometry: geometry['features'][0]['geometry']['coordinates'][0][0].__setitem__(0, 10**1000),
     lambda geometry: geometry['features'][0]['properties'].update(role='panel_array'),
     lambda geometry: geometry['features'][0]['properties'].pop('label'),
 ])
@@ -306,6 +307,15 @@ def test_project_creation_rejects_missing_or_changed_historical_boundary(proposa
     })
     assert response.status_code == 409
 
+    core.store_object(f'org-a/boundaries/{site_id}/1.json', json.dumps({
+        'type': 'Polygon',
+    }))
+    response = client.post('/api/projects', json={
+        'name': 'Malformed', 'project_type': 'solar', 'site_id': site_id,
+        'evidence_snapshot_id': snapshot.id,
+    })
+    assert response.status_code == 409
+
     core.store_object(f'org-a/boundaries/{site_id}/1.json', json.dumps(mapping(
         box(-1.3, 51.7, -1.2, 51.8)
     )))
@@ -331,3 +341,65 @@ def test_project_requires_snapshot_for_the_exact_selected_site(proposal_api):
             'site_id': site_id, 'evidence_snapshot_id': snapshot_id,
         })
         assert response.status_code == 409
+
+
+def test_revision_append_revalidates_committed_snapshot_and_project_copy(proposal_api):
+    client, _, database, _ = proposal_api
+    payload, snapshot = commit_baseline(database)
+    project = create_project(
+        client, payload['environmental_state']['location_id'], snapshot.id,
+    )
+    alternative = create_alternative(client, project['id'], 'Option A')
+    geometry = footprint(payload['geometry'], 'development')
+    manifest_path = core.ROOT / 'objects' / snapshot.manifest_key
+    manifest = manifest_path.read_bytes()
+    manifest_path.unlink()
+
+    missing = client.post(f'/api/alternatives/{alternative["id"]}/revisions', json={
+        'geometry': geometry, 'parent_revision_id': None,
+        'idempotency_key': 'missing-manifest',
+    })
+    assert missing.status_code == 409
+
+    core.store_object_immutable(snapshot.manifest_key, manifest)
+    with database.begin() as connection:
+        connection.execute(update(core.infrastructure_projects).where(
+            core.infrastructure_projects.c.id == project['id'],
+        ).values(evidence_content_hash='tampered'))
+    contradictory = client.post(
+        f'/api/alternatives/{alternative["id"]}/revisions', json={
+            'geometry': geometry, 'parent_revision_id': None,
+            'idempotency_key': 'contradictory-project',
+        },
+    )
+    assert contradictory.status_code == 409
+    with database.connect() as connection:
+        assert connection.execute(select(func.count()).select_from(
+            core.design_revisions
+        )).scalar_one() == 0
+
+
+def test_revision_append_rejects_corrupt_lineage_head(proposal_api):
+    client, _, database, _ = proposal_api
+    payload, snapshot = commit_baseline(database)
+    project = create_project(
+        client, payload['environmental_state']['location_id'], snapshot.id,
+    )
+    alternative = create_alternative(client, project['id'], 'Option A')
+    first = create_revision(
+        client, alternative['id'], footprint(payload['geometry'], 'first'), 'first',
+    )
+    with database.begin() as connection:
+        connection.execute(update(core.design_revisions).where(
+            core.design_revisions.c.id == first['id'],
+        ).values(geometry_fingerprint='tampered'))
+
+    response = client.post(f'/api/alternatives/{alternative["id"]}/revisions', json={
+        'geometry': footprint(payload['geometry'], 'second'),
+        'parent_revision_id': first['id'], 'idempotency_key': 'second',
+    })
+    assert response.status_code == 409
+    with database.connect() as connection:
+        assert connection.execute(select(func.count()).select_from(
+            core.design_revisions
+        )).scalar_one() == 1

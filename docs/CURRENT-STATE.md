@@ -98,7 +98,7 @@ Site Analysis Workspace v2A verification: **28 frontend regression tests passed*
 
 Screening Context map-feature verification: **183 backend tests passed on SQLite** and the focused **23-test Screening Context suite passed on PostgreSQL/PostGIS**. Retained real-data checks cover Westgate, Oxford station, Port Meadow and Redbridge; they verify deterministic WGS84 geometry, organization isolation, historical selection, integrity failures, no-write behavior, availability semantics and unchanged persisted measurements.
 
-Sprint 001 design-proposal verification: **194 backend tests passed on SQLite and PostgreSQL/PostGIS**, including the focused **11-test** Project/Alternative/Revision suite and a process-level persistence reload. The additive v6 migration also passed against the disposable PostgreSQL database.
+Sprint 001 design-proposal verification: **197 backend tests passed on SQLite and PostgreSQL/PostGIS**, including the focused **14-test** Project/Alternative/Revision suite after independent-review fixes. Persistence is verified across a database/engine reload; regressions cover missing/corrupt baselines and lineage plus malformed geometry/boundary inputs. The additive v6 migration passed against the disposable PostgreSQL database.
 
 ## Known limitations
 

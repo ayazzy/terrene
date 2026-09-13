@@ -8,10 +8,10 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import datetime
 import json
-import math
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+from shapely.errors import ShapelyError
 from shapely.geometry import shape
 from shapely.ops import unary_union
 from shapely.validation import explain_validity
@@ -220,10 +220,11 @@ def _revision_record(row: dict[str, Any]) -> RevisionRecord:
 def _position(value: Any) -> None:
     if (not isinstance(value, list) or len(value) != 2
             or any(isinstance(item, bool) or not isinstance(item, (int, float))
-                   for item in value)
-            or not all(math.isfinite(item) for item in value)):
+                   for item in value)):
         raise ValueError('Use finite two-dimensional longitude/latitude positions')
-    if not -180 <= value[0] <= 180 or not -90 <= value[1] <= 90:
+    # Range comparisons safely reject NaN, infinity and arbitrarily large ints
+    # without coercing them to floats (which can raise OverflowError).
+    if not (-180 <= value[0] <= 180) or not (-90 <= value[1] <= 90):
         raise ValueError('Design coordinates must be valid WGS84 longitude/latitude')
 
 
@@ -326,11 +327,63 @@ def _historical_boundary(*, org: str, site_id: str, boundary_version: int,
     try:
         submitted = json.loads(content)
         normalized = core.boundary(submitted)
-    except (json.JSONDecodeError, TypeError, ValueError) as error:
+        geometry = shape(normalized)
+    except (json.JSONDecodeError, TypeError, ValueError, KeyError, AttributeError,
+            IndexError, OverflowError, ShapelyError) as error:
         raise ProposalIntegrityError('Pinned historical Site boundary is invalid') from error
     if fingerprint(normalized) != expected_fingerprint:
         raise ProposalIntegrityError('Pinned historical Site boundary fingerprint mismatch')
-    return shape(normalized)
+    return geometry
+
+
+def _verify_project_baseline(project: dict[str, Any], *, org: str):
+    """Revalidate a Project's copied baseline before extending its lineage."""
+    snapshot = _verified_snapshot(
+        project['site_id'], project['evidence_snapshot_id'], org,
+    )
+    expected = {
+        'evidence_content_hash': snapshot.content_hash,
+        'evidence_schema_version': snapshot.schema_version,
+        'evidence_registry_version': snapshot.registry_version,
+        'evidence_snapshot_created': snapshot.created.isoformat(),
+        'boundary_version': snapshot.boundary_version,
+        'boundary_geometry_fingerprint': snapshot.boundary_geometry_fingerprint,
+    }
+    differences = [
+        field for field, value in expected.items() if project[field] != value
+    ]
+    if differences:
+        raise ProposalIntegrityError(
+            'Project baseline contradicts its committed Evidence Snapshot: '
+            + ', '.join(differences)
+        )
+    return snapshot
+
+
+def _verify_revision_lineage(row: dict[str, Any],
+                             project: dict[str, Any]) -> RevisionRecord:
+    """Integrity-check a stored revision and its copied Project baseline."""
+    record = _revision_record(row)
+    expected = {
+        'project_id': project['id'],
+        'site_id': project['site_id'],
+        'evidence_snapshot_id': project['evidence_snapshot_id'],
+        'evidence_content_hash': project['evidence_content_hash'],
+        'evidence_schema_version': project['evidence_schema_version'],
+        'evidence_registry_version': project['evidence_registry_version'],
+        'evidence_snapshot_created': project['evidence_snapshot_created'],
+        'boundary_version': project['boundary_version'],
+        'boundary_geometry_fingerprint': project['boundary_geometry_fingerprint'],
+    }
+    differences = [
+        field for field, value in expected.items() if row[field] != value
+    ]
+    if differences:
+        raise ProposalIntegrityError(
+            'Stored revision contradicts its Project baseline: '
+            + ', '.join(differences)
+        )
+    return record
 
 
 def create_project(data: ProjectInput, *, org: str) -> ProjectRecord:
@@ -453,12 +506,15 @@ def create_revision(alternative_id: str, data: RevisionInput, *,
                     raise ProposalConflict(
                         'Idempotency key was already used for a different revision request'
                     )
-                return _revision_record(dict(prior_retry))
+                return _verify_revision_lineage(dict(prior_retry), project)
+
+            _verify_project_baseline(project, org=org)
 
             head = connection.execute(select(core.design_revisions).where(
                 core.design_revisions.c.org == org,
                 core.design_revisions.c.alternative_id == alternative_id,
             ).order_by(core.design_revisions.c.revision_number.desc())).mappings().first()
+            head_record = _verify_revision_lineage(dict(head), project) if head else None
             if data.parent_revision_id is not None:
                 parent = connection.execute(select(core.design_revisions).where(
                     core.design_revisions.c.id == data.parent_revision_id,
@@ -468,7 +524,8 @@ def create_revision(alternative_id: str, data: RevisionInput, *,
                 )).mappings().first()
                 if not parent:
                     raise ProposalNotFound('Parent revision not found')
-            expected_head = head['id'] if head else None
+                _verify_revision_lineage(dict(parent), project)
+            expected_head = head_record.id if head_record else None
             if data.parent_revision_id != expected_head:
                 raise ProposalConflict(
                     'Alternative changed. Refresh and base the revision on its current head.'

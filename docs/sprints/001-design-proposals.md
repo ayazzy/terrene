@@ -58,18 +58,31 @@ With authenticated organisation context and existing `site_id` plus committed
 
 ## Verification
 
-`tests/test_design_proposals.py` exercises the full flow, process-level database
+`tests/test_design_proposals.py` exercises the full flow, database/engine
 reload, unchanged revision 1, fixed baseline after a newer snapshot, exact retry,
 changed retry conflict, stale edit, invalid/duplicate geometry, cross-organisation
-links, historical-boundary integrity and valid outside-boundary geometry.
+links, historical-boundary integrity and valid outside-boundary geometry. Lead
+review fixes additionally cover a missing snapshot manifest, contradictory copied
+baseline, corrupt lineage head, malformed stored boundary and oversized integer
+coordinates.
 
 Implementation-worker results: focused Project/Alternative/Revision suite
 `11 passed`; complete Python/SQLite suite `194 passed`, with the existing 13
 dependency warnings; complete PostgreSQL/PostGIS suite `194 passed`, with 85
 dependency/SQLAlchemy inspection warnings. The v6 migration completed against
 the disposable PostgreSQL database.
-Review results are recorded in the final sprint readout rather than anticipated
-here.
+Independent review found one blocking baseline-integrity gap and two malformed-
+input error paths. The engineering lead resolved them before sign-off by
+revalidating the committed snapshot and copied baseline before every new append,
+integrity-checking the stored head/parent, and returning safe 4xx errors for the
+malformed cases. The reviewer also confirmed organisation scoping, safe response
+fields, outside-boundary semantics and separation from Earth/ModuleRuns.
+
+Final lead verification after the review fixes: focused proposal suite
+`14 passed`; complete SQLite suite `197 passed` with 13 warnings; complete
+PostgreSQL/PostGIS suite `197 passed` with 88 warnings; additive migration v6,
+Python compilation and `git diff --check` passed. Warnings are the existing
+dependency deprecations and PostgreSQL geometry-reflection advisory.
 
 ## Limitations and unresolved review findings
 
@@ -78,11 +91,16 @@ intersection calculation, alternative comparison, solar layout, scoring,
 simulation, workflow scheduling or construction-grade validation. The initial
 roles and `solar` type are intentionally narrow. PostgreSQL/PostGIS verification
 depends on an available disposable test database. No customer or scientific
-validation is claimed. Reviewer findings are pending at the implementation-worker
-handoff and must be reflected before final sign-off.
+validation is claimed. No unresolved blocking review finding remains. A committed
+stress test for truly simultaneous PostgreSQL retry/stale writers remains a
+verification limitation; database locking and uniqueness were exercised by the
+implementation worker, including PostgreSQL, and the reviewer separately forced
+simultaneous identical SQLite retries.
 
 ## Git
 
 Branch: `feat/versioned-design-proposals`.
 
 - `3339cc4` — `feat: add versioned infrastructure design proposals`
+- `b03a8de` — `docs: record design proposal sprint`
+- Sprint-closing lead commit — `fix: verify proposal baselines before revision append`
