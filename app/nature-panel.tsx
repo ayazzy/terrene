@@ -14,6 +14,13 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from '@/components/ui/accordion';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import type { OverlayFinding } from './site-evidence';
 import { EvidenceBadge } from './status-primitives';
 import {
@@ -234,6 +241,28 @@ export default function NaturePanel({
             'ecology.irreplaceable_habitat_fraction',
             'land_use.developed_fraction',
           ];
+  const keyObservations = [
+    'terrain.slope_deg',
+    'hydrology.watercourse_intersection',
+    'hydrology.mapped_flood_extent_fraction',
+    'land_use.developed_fraction',
+  ]
+    .map((variable) => {
+      const chosenId = model.current_state?.[variable]?.observation_id;
+      return (
+        (chosenId && byId.get(chosenId)) ||
+        observations.find(
+          (item) => item.variable === variable && item.source !== 'CRC',
+        )
+      );
+    })
+    .filter((item): item is Observation => !!item);
+  const evidenceReturnLabel =
+    section === 'overview'
+      ? 'key observations'
+      : section === 'evidence'
+        ? 'evidence register'
+        : `${section} analysis`;
   const observationRow = (o: Observation) => (
     <li key={o.id}>
       <button onClick={() => inspect(o.id)}>
@@ -254,96 +283,88 @@ export default function NaturePanel({
       {model.synthetic && (
         <div className="alert">Synthetic inputs · demonstration only</div>
       )}
-      {!evidence && (
-        <>
-          {section === 'overview' && (
-            <>
-              <p className="eyebrow">WETLAND INVESTIGATION</p>
-              <h2>Wetland assessment</h2>
-              <p className="nature-muted">
-                <b>Model unvalidated.</b> Physical characteristics do not
-                establish restoration need.
-              </p>
-              <div className="analysis-dimensions">
-                {primary.map((key) => {
-                  const c = model.components.find((item) => item.key === key);
-                  return (
-                    c && (
-                      <button
-                        key={key}
-                        onClick={() => onSection?.(destination[key])}
-                      >
-                        <span>
-                          <small>{titles[key]}</small>
-                          <strong>{componentBand(c)}</strong>
-                        </span>
-                        <span>
-                          {c.score !== null && (
-                            <EvidenceBadge
-                              state={c.coverage < 1 ? 'partial' : 'modelled'}
-                            >
-                              {c.coverage < 1
-                                ? 'Partial evidence'
-                                : 'Provisional'}
-                            </EvidenceBadge>
-                          )}
-                          <ArrowUpRight size={14} />
-                        </span>
-                      </button>
-                    )
-                  );
-                })}
+      <>
+        {section === 'overview' && (
+          <>
+            <section
+              className="model-overview-status"
+              aria-label="Wetland model status"
+            >
+              <div>
+                <small>Overall result</small>
+                <strong>
+                  {overall.score === null
+                    ? 'Insufficient evidence'
+                    : humanize(overall.band)}
+                </strong>
               </div>
-              <button
-                className="evidence-summary-link"
-                onClick={() => onSection?.('evidence')}
-              >
-                <span>
-                  <strong>
-                    {coverage
-                      ? coverage.available < coverage.required
-                        ? 'Partial evidence'
-                        : 'Required inputs present'
-                      : 'Inspect evidence completeness'}
-                  </strong>
-                  <small>
-                    {coverage
-                      ? `${coverage.available} of ${coverage.required} required inputs present`
-                      : 'Legacy assessment · detailed inputs retained'}{' '}
-                    · inspect gaps
-                  </small>
-                </span>
-                <ArrowUpRight size={16} />
-              </button>
-              <h3>Key observations</h3>
-              <ul className="nature-inputs key-observations">
-                {[
-                  'terrain.slope_deg',
-                  'hydrology.watercourse_intersection',
-                  'hydrology.mapped_flood_extent_fraction',
-                  'land_use.developed_fraction',
-                ].map((variable) => {
-                  const chosenId =
-                    model.current_state?.[variable]?.observation_id;
-                  const o =
-                    (chosenId && byId.get(chosenId)) ||
-                    observations.find(
-                      (item) =>
-                        item.variable === variable && item.source !== 'CRC',
-                    );
-                  return o ? observationRow(o) : null;
-                })}
-              </ul>
-              {!!findings.filter(
-                (f) =>
-                  f.key !== 'flood' && f.measured !== null && f.measured > 0,
-              ).length && (
-                <p className="interpretation-note">
-                  Mapped ecological designation or habitat overlaps this
-                  boundary. Existing ecological value needs review before
-                  considering intervention.
-                </p>
-              )}
+              <div>
+                <small>Required evidence</small>
+                <strong>
+                  {coverage
+                    ? `${coverage.available} of ${coverage.required} inputs`
+                    : 'Not recorded'}
+                </strong>
+              </div>
+            </section>
+            <h3>Assessment dimensions</h3>
+            <div className="analysis-dimensions">
+              {primary.map((key) => {
+                const c = model.components.find((item) => item.key === key);
+                return (
+                  c && (
+                    <button
+                      key={key}
+                      onClick={() => onSection?.(destination[key])}
+                    >
+                      <span>
+                        <small>{titles[key]}</small>
+                        <strong>{componentBand(c)}</strong>
+                      </span>
+                      <span>
+                        {c.score !== null && (
+                          <EvidenceBadge
+                            state={c.coverage < 1 ? 'partial' : 'modelled'}
+                          >
+                            {c.coverage < 1
+                              ? 'Partial evidence'
+                              : 'Provisional'}
+                          </EvidenceBadge>
+                        )}
+                        <ArrowUpRight size={14} />
+                      </span>
+                    </button>
+                  )
+                );
+              })}
+            </div>
+            <button
+              className="evidence-summary-link"
+              onClick={() => onSection?.('evidence')}
+            >
+              <span>
+                <strong>Review missing model inputs</strong>
+                <small>
+                  {model.missing_inputs.length} recorded gaps · Evidence
+                </small>
+              </span>
+              <ArrowUpRight size={16} />
+            </button>
+            <h3>Key observations · {keyObservations.length}</h3>
+            <ul className="nature-inputs key-observations">
+              {keyObservations.map(observationRow)}
+            </ul>
+            {!!findings.filter(
+              (f) => f.key !== 'flood' && f.measured !== null && f.measured > 0,
+            ).length && (
+              <p className="interpretation-note">
+                Mapped ecological designation or habitat overlaps this boundary.
+                Existing ecological value needs review before considering
+                intervention.
+              </p>
+            )}
+            <details className="model-disclosure">
+              <summary>Model confidence and limits</summary>
               <p className="model-caution">
                 <b>
                   Model{' '}
@@ -358,7 +379,15 @@ export default function NaturePanel({
                 {model.evidence_summary?.model_confidence.meaning ||
                   'No validated prediction or predictive accuracy is established.'}
               </p>
-              <h3>Investigate next</h3>
+            </details>
+            <details className="model-disclosure">
+              <summary>
+                Investigate next ·{' '}
+                {
+                  model.missing_inputs.filter((g) => g.role !== 'optional')
+                    .length
+                }
+              </summary>
               <ul className="investigation-next">
                 {model.missing_inputs
                   .filter((g) => g.role !== 'optional')
@@ -375,294 +404,300 @@ export default function NaturePanel({
                     </li>
                   ))}
               </ul>
-            </>
-          )}
-          {section !== 'overview' && (
-            <>
-              <p className="eyebrow">
-                {section === 'evidence'
-                  ? 'EVIDENCE REGISTER'
-                  : 'ENVIRONMENTAL ANALYSIS'}
-              </p>
-              <h2>
-                {section === 'physical'
-                  ? 'Physical environment'
-                  : section === 'ecology'
-                    ? 'Ecology & restoration need'
-                    : section === 'constraints'
-                      ? 'Constraints & feasibility'
-                      : 'Evidence & provenance'}
-              </h2>
-              <p className="nature-muted">
-                {section === 'physical'
-                  ? 'Terrain and mapped water context describe physical characteristics. They do not establish a reliable water supply.'
-                  : section === 'ecology'
-                    ? 'Mapped cover and designations do not establish habitat condition or restoration need.'
-                    : section === 'constraints'
-                      ? 'Development and incomplete constraint evidence must be assessed separately from physical potential.'
-                      : 'Availability, source quality and model confidence are separate. Open an observation to trace its source.'}
-              </p>
-            </>
-          )}
-          {section === 'ecology' && model.current_state && (
-            <p className="interpretation-note">
-              Mapped cover:{' '}
-              <b>
-                {humanize(
-                  String(
-                    model.current_state['land_use.current_cover']?.value ??
-                      'Unknown',
-                  ),
-                )}
-              </b>
-              . Habitat condition:{' '}
-              <b>
-                {model.current_state['ecology.habitat_condition']?.value == null
-                  ? 'Evidence unavailable'
-                  : String(
-                      model.current_state['ecology.habitat_condition'].value,
-                    )}
-              </b>
-              .
+            </details>
+          </>
+        )}
+        {section !== 'overview' && (
+          <>
+            <p className="eyebrow">
+              {section === 'evidence'
+                ? 'EVIDENCE REGISTER'
+                : 'ENVIRONMENTAL ANALYSIS'}
             </p>
-          )}
-          {componentKeys[section] && (
-            <>
-              <Accordion
-                className="nature-scores"
-                multiple
-                defaultValue={componentKeys[section]}
-              >
-                {model.components
-                  .filter((c) => componentKeys[section].includes(c.key))
-                  .map((c) => (
-                    <AccordionItem value={c.key} key={c.key}>
-                      <AccordionTrigger className="nature-score-trigger">
-                        <span>
-                          {titles[c.key] || c.label}
-                          <small>
-                            {c.score === null
-                              ? 'Insufficient evidence'
-                              : c.coverage < 1
-                                ? 'Partial evidence'
-                                : 'Provisional rules'}{' '}
-                            · {percent(c.coverage)}% input coverage
-                          </small>
-                        </span>
-                        <b>{componentBand(c)}</b>
-                      </AccordionTrigger>
-                      <AccordionContent className="nature-score-detail">
-                        {c.key === 'physical_potential' &&
-                          !!c.supporting_evidence?.length && (
-                            <ul className="supporting-reasons">
-                              {c.supporting_evidence.map((reason) => (
-                                <li key={reason}>{reason}</li>
-                              ))}
-                            </ul>
-                          )}
-                        {c.coverage < 1 && c.score !== null && (
-                          <p className="interpretation-note">
-                            This category describes available evidence only.
-                            Missing inputs could change it.
-                          </p>
+            <h2>
+              {section === 'physical'
+                ? 'Physical environment'
+                : section === 'ecology'
+                  ? 'Ecology & restoration need'
+                  : section === 'constraints'
+                    ? 'Constraints & feasibility'
+                    : 'Evidence & provenance'}
+            </h2>
+            <p className="nature-muted">
+              {section === 'physical'
+                ? 'Terrain and mapped water context describe physical characteristics. They do not establish a reliable water supply.'
+                : section === 'ecology'
+                  ? 'Mapped cover and designations do not establish habitat condition or restoration need.'
+                  : section === 'constraints'
+                    ? 'Development and incomplete constraint evidence must be assessed separately from physical potential.'
+                    : 'Availability, source quality and model confidence are separate. Open an observation to trace its source.'}
+            </p>
+          </>
+        )}
+        {section === 'ecology' && model.current_state && (
+          <p className="interpretation-note">
+            Mapped cover:{' '}
+            <b>
+              {humanize(
+                String(
+                  model.current_state['land_use.current_cover']?.value ??
+                    'Unknown',
+                ),
+              )}
+            </b>
+            . Habitat condition:{' '}
+            <b>
+              {model.current_state['ecology.habitat_condition']?.value == null
+                ? 'Evidence unavailable'
+                : String(
+                    model.current_state['ecology.habitat_condition'].value,
+                  )}
+            </b>
+            .
+          </p>
+        )}
+        {componentKeys[section] && (
+          <>
+            <Accordion className="nature-scores" multiple>
+              {model.components
+                .filter((c) => componentKeys[section].includes(c.key))
+                .map((c) => (
+                  <AccordionItem value={c.key} key={c.key}>
+                    <AccordionTrigger className="nature-score-trigger">
+                      <span>
+                        {titles[c.key] || c.label}
+                        <small>
+                          {c.score === null
+                            ? 'Insufficient evidence'
+                            : c.coverage < 1
+                              ? 'Partial evidence'
+                              : 'Provisional rules'}{' '}
+                          · {percent(c.coverage)}% input coverage
+                        </small>
+                      </span>
+                      <b>{componentBand(c)}</b>
+                    </AccordionTrigger>
+                    <AccordionContent className="nature-score-detail">
+                      {c.key === 'physical_potential' &&
+                        !!c.supporting_evidence?.length && (
+                          <ul className="supporting-reasons">
+                            {c.supporting_evidence.map((reason) => (
+                              <li key={reason}>{reason}</li>
+                            ))}
+                          </ul>
                         )}
-                        <ul className="nature-inputs">
-                          {c.inputs.map((i) => (
-                            <li key={i.variable}>
-                              <button
-                                disabled={
-                                  !i.observation_id ||
-                                  !byId.has(i.observation_id)
-                                }
-                                onClick={() => inspect(i.observation_id)}
-                              >
-                                <span>
-                                  {variableLabel(i.variable)}
-                                  <small>
-                                    {i.observation_id &&
-                                    byId.has(i.observation_id)
-                                      ? valueText(byId.get(i.observation_id)!)
-                                      : valueText(i)}
-                                  </small>
-                                </span>
-                                <ArrowUpRight size={14} />
-                              </button>
-                              {i.missing_reason && <p>{i.missing_reason}</p>}
-                            </li>
-                          ))}
-                        </ul>
-                        <details className="method-detail">
-                          <summary>Calculation & internal index</summary>
-                          <p>{c.rule}</p>
-                          <p>
-                            {c.score === null
-                              ? 'Index unavailable'
-                              : `${c.score} / 100 · uncalibrated internal index`}
-                            . Data support {percent(c.confidence)} / 100; not
-                            predictive accuracy.
-                          </p>
-                        </details>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-              </Accordion>
-              <details className="domain-observations">
-                <summary>All observations in this section</summary>
-                <ul className="nature-inputs">
-                  {observations
-                    .filter((o) =>
-                      domain.some((prefix) => o.variable.startsWith(prefix)),
-                    )
-                    .map(observationRow)}
-                </ul>
-              </details>
-            </>
-          )}
-          {section === 'constraints' && (
-            <>
-              <h3>Checks before intervention</h3>
-              <ul className="nature-gaps">
-                {model.review_flags.map((f) => (
-                  <li key={f}>{f}</li>
+                      {c.coverage < 1 && c.score !== null && (
+                        <p className="interpretation-note">
+                          This category describes available evidence only.
+                          Missing inputs could change it.
+                        </p>
+                      )}
+                      <ul className="nature-inputs">
+                        {c.inputs.map((i) => (
+                          <li key={i.variable}>
+                            <button
+                              disabled={
+                                !i.observation_id || !byId.has(i.observation_id)
+                              }
+                              onClick={() => inspect(i.observation_id)}
+                            >
+                              <span>
+                                {variableLabel(i.variable)}
+                                <small>
+                                  {i.observation_id &&
+                                  byId.has(i.observation_id)
+                                    ? valueText(byId.get(i.observation_id)!)
+                                    : valueText(i)}
+                                </small>
+                              </span>
+                              <ArrowUpRight size={14} />
+                            </button>
+                            {i.missing_reason && <p>{i.missing_reason}</p>}
+                          </li>
+                        ))}
+                      </ul>
+                      <details className="method-detail">
+                        <summary>Calculation & internal index</summary>
+                        <p>{c.rule}</p>
+                        <p>
+                          {c.score === null
+                            ? 'Index unavailable'
+                            : `${c.score} / 100 · uncalibrated internal index`}
+                          . Data support {percent(c.confidence)} / 100; not
+                          predictive accuracy.
+                        </p>
+                      </details>
+                    </AccordionContent>
+                  </AccordionItem>
                 ))}
-              </ul>
-            </>
-          )}
-          {section === 'evidence' && (
-            <>
-              <div className="evidence-completeness">
-                <EvidenceBadge
-                  state={
-                    coverage && coverage.available === coverage.required
-                      ? 'available'
-                      : 'partial'
-                  }
-                >
-                  {coverage && coverage.available === coverage.required
-                    ? 'Required inputs present'
-                    : 'Partial evidence'}
-                </EvidenceBadge>
-                <p>
-                  {coverage &&
-                    `${coverage.available} of ${coverage.required} required inputs present. `}
-                  Presence alone does not establish complete spatial coverage.
-                </p>
-              </div>
-              <h3>Evidence gaps · {model.missing_inputs.length}</h3>
-              <p className="nature-muted">
-                Includes scored inputs and unassessed context. The
-                required-input count above comes from the model’s completeness
-                gate.
-              </p>
-              <ul className="nature-gaps">
-                {model.missing_inputs.map((g) => (
-                  <li key={g.variable}>
-                    <div className="gap-title">
-                      <strong>{variableLabel(g.variable)}</strong>
-                      <EvidenceBadge state="missing">Missing</EvidenceBadge>
-                    </div>
-                    <p>{g.reason}</p>
-                    <small>
-                      {g.variable === 'ecology.distance_to_habitat_m'
-                        ? 'Optional scored input'
-                        : humanize(g.role)}
-                    </small>
-                  </li>
-                ))}
-              </ul>
-              <h3>Environmental observations · {observations.length}</h3>
-              <label className="evidence-filter">
-                Show{' '}
-                <select
-                  value={evidenceFilter}
-                  onChange={(e) => setEvidenceFilter(e.target.value)}
-                >
-                  <option value="all">All observations</option>
-                  <option value="available">Available observations</option>
-                  <option value="modelled">Derived observations</option>
-                  <option value="partial">Partial observations</option>
-                  <option value="unavailable">Unavailable observations</option>
-                </select>
-              </label>
+            </Accordion>
+            <details className="domain-observations">
+              <summary>All observations in this section</summary>
               <ul className="nature-inputs">
                 {observations
-                  .filter(
-                    (o) =>
-                      evidenceFilter === 'all' ||
-                      observationState(o) === evidenceFilter,
+                  .filter((o) =>
+                    domain.some((prefix) => o.variable.startsWith(prefix)),
                   )
                   .map(observationRow)}
               </ul>
-              {!observations.some(
-                (o) =>
-                  evidenceFilter === 'all' ||
-                  observationState(o) === evidenceFilter,
-              ) && (
-                <p className="nature-muted">
-                  No observations in this category.
-                </p>
-              )}
-              <Accordion multiple>
-                <AccordionItem value="method">
-                  <AccordionTrigger>
-                    Model, source quality & limitations
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <p>{overall.rule}</p>
-                    <p>{model.limitations}</p>
-                    <p>
-                      Available data quality:{' '}
-                      {model.evidence_summary?.data_quality.label ||
-                        'Not recorded'}
-                      . {model.evidence_summary?.data_quality.meaning}
-                    </p>
-                    <p>
-                      Model confidence:{' '}
-                      {model.evidence_summary?.model_confidence.label ||
-                        'Unvalidated'}
-                      . {model.evidence_summary?.model_confidence.meaning}
-                    </p>
-                    <p>
-                      {model.model_version} ·{' '}
-                      {new Date(model.state_as_of).toLocaleString('en-GB')}
-                    </p>
-                    <p>Weights and thresholds retained for this run:</p>
-                    <pre>{JSON.stringify(model.config, null, 2)}</pre>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-              <button className="nature-download" onClick={download}>
-                <Download size={15} /> Download evidence JSON
-              </button>
-            </>
-          )}
-        </>
-      )}
-      {evidence && (
-        <section
-          className="inline-evidence"
-          aria-label="Environmental evidence detail"
-        >
-          <button
-            className="back"
-            onClick={() => {
-              setEvidence(null);
-              onInspect?.();
-            }}
+            </details>
+          </>
+        )}
+        {section === 'constraints' && (
+          <>
+            <h3>Checks before intervention</h3>
+            <ul className="nature-gaps">
+              {model.review_flags.map((f) => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
+          </>
+        )}
+        {section === 'evidence' && (
+          <>
+            <div className="evidence-completeness">
+              <EvidenceBadge
+                state={
+                  coverage && coverage.available === coverage.required
+                    ? 'available'
+                    : 'partial'
+                }
+              >
+                {coverage && coverage.available === coverage.required
+                  ? 'Required inputs present'
+                  : 'Partial evidence'}
+              </EvidenceBadge>
+              <p>
+                {coverage &&
+                  `${coverage.available} of ${coverage.required} required inputs present. `}
+                Presence alone does not establish complete spatial coverage.
+              </p>
+            </div>
+            <h3>Evidence gaps · {model.missing_inputs.length}</h3>
+            <p className="nature-muted">
+              Includes scored inputs and unassessed context. The required-input
+              count above comes from the model’s completeness gate.
+            </p>
+            <ul className="nature-gaps">
+              {model.missing_inputs.map((g) => (
+                <li key={g.variable}>
+                  <div className="gap-title">
+                    <strong>{variableLabel(g.variable)}</strong>
+                    <EvidenceBadge state="missing">Missing</EvidenceBadge>
+                  </div>
+                  <p>{g.reason}</p>
+                  <small>
+                    {g.variable === 'ecology.distance_to_habitat_m'
+                      ? 'Optional scored input'
+                      : humanize(g.role)}
+                  </small>
+                </li>
+              ))}
+            </ul>
+            <h3>Environmental observations · {observations.length}</h3>
+            <label className="evidence-filter">
+              Show{' '}
+              <select
+                value={evidenceFilter}
+                onChange={(e) => setEvidenceFilter(e.target.value)}
+              >
+                <option value="all">All observations</option>
+                <option value="available">Available observations</option>
+                <option value="modelled">Derived observations</option>
+                <option value="partial">Partial observations</option>
+                <option value="unavailable">Unavailable observations</option>
+              </select>
+            </label>
+            <ul className="nature-inputs">
+              {observations
+                .filter(
+                  (o) =>
+                    evidenceFilter === 'all' ||
+                    observationState(o) === evidenceFilter,
+                )
+                .map(observationRow)}
+            </ul>
+            {!observations.some(
+              (o) =>
+                evidenceFilter === 'all' ||
+                observationState(o) === evidenceFilter,
+            ) && (
+              <p className="nature-muted">No observations in this category.</p>
+            )}
+            <Accordion multiple>
+              <AccordionItem value="method">
+                <AccordionTrigger>
+                  Model, source quality & limitations
+                </AccordionTrigger>
+                <AccordionContent>
+                  <p>{overall.rule}</p>
+                  <p>{model.limitations}</p>
+                  <p>
+                    Available data quality:{' '}
+                    {model.evidence_summary?.data_quality.label ||
+                      'Not recorded'}
+                    . {model.evidence_summary?.data_quality.meaning}
+                  </p>
+                  <p>
+                    Model confidence:{' '}
+                    {model.evidence_summary?.model_confidence.label ||
+                      'Unvalidated'}
+                    . {model.evidence_summary?.model_confidence.meaning}
+                  </p>
+                  <p>
+                    {model.model_version} ·{' '}
+                    {new Date(model.state_as_of).toLocaleString('en-GB')}
+                  </p>
+                  <p>Weights and thresholds retained for this run:</p>
+                  <pre>{JSON.stringify(model.config, null, 2)}</pre>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+            <button className="nature-download" onClick={download}>
+              <Download size={15} /> Download evidence JSON
+            </button>
+          </>
+        )}
+      </>
+      <Sheet
+        open={!!evidence}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEvidence(null);
+            onInspect?.();
+          }
+        }}
+      >
+        {evidence && (
+          <SheetContent
+            className="nature-evidence evidence-drawer"
+            side="right"
           >
-            <ArrowLeft size={14} /> Back to {section}
-          </button>
-          <h2>{variableLabel(evidence.variable)}</h2>
-          <p className="nature-muted">
-            <code>{evidence.variable}</code>
-          </p>
-          {evidence && (
+            <button
+              className="back"
+              onClick={() => {
+                setEvidence(null);
+                onInspect?.();
+              }}
+            >
+              <ArrowLeft size={14} /> Back to {evidenceReturnLabel}
+            </button>
+            <SheetHeader>
+              <SheetTitle>{variableLabel(evidence.variable)}</SheetTitle>
+              <SheetDescription>
+                <code>{evidence.variable}</code>
+              </SheetDescription>
+            </SheetHeader>
             <div className="nature-evidence-body">
               <h3>{valueText(evidence)}</h3>
-              <p>
-                {evidence.epistemic_status} · {evidence.observed_or_derived} ·
-                Source quality judgement {percent(evidence.confidence)} / 100
-              </p>
+              <div
+                className="evidence-status-line"
+                aria-label="Evidence status"
+              >
+                <span>{humanize(evidence.epistemic_status)}</span>
+                <span>{humanize(evidence.observed_or_derived)}</span>
+                <span>Source quality {percent(evidence.confidence)} / 100</span>
+              </div>
               {evidence.missing_reason && (
                 <p className="alert">{evidence.missing_reason}</p>
               )}
@@ -684,51 +719,56 @@ export default function NaturePanel({
                   </p>
                 )}
               </div>
-              <dl>
-                <dt>Source / dataset</dt>
+              <dl className="evidence-summary">
+                <dt>Source</dt>
                 <dd>
                   {evidence.source} · {evidence.source_dataset}
-                </dd>
-                <dt>Source version</dt>
-                <dd>
-                  <code>{evidence.source_version}</code>
                 </dd>
                 <dt>Observation date</dt>
                 <dd>
                   {evidence.timestamp ||
                     'Unknown — retrieval date is not an observation date'}
                 </dd>
-                <dt>Retrieved / computed</dt>
-                <dd>{evidence.retrieved_at}</dd>
-                <dt>Original resolution</dt>
+                <dt>Resolution</dt>
                 <dd>
                   {evidence.spatial.spatial_resolution_m === null
                     ? 'Unknown'
                     : evidence.spatial.spatial_resolution_m + ' m'}
                 </dd>
-                <dt>Spatial support</dt>
-                <dd>
-                  {evidence.spatial.geometry_or_cell_reference} ·{' '}
-                  {evidence.spatial.crs}
-                </dd>
-                <dt>Aggregation</dt>
-                <dd>{evidence.spatial.aggregation || 'None recorded'}</dd>
-                <dt>Calculation</dt>
-                <dd>{evidence.method}</dd>
-                <dt>Uncertainty</dt>
-                <dd>{evidence.uncertainty}</dd>
-                {earth.selection_notes[evidence.variable] && (
-                  <>
-                    <dt>Provider selection</dt>
-                    <dd>{earth.selection_notes[evidence.variable]}</dd>
-                  </>
-                )}
               </dl>
               {evidence.source_url && (
                 <a href={evidence.source_url} target="_blank" rel="noreferrer">
                   Open source dataset ↗
                 </a>
               )}
+              <details className="technical-provenance">
+                <summary>Technical provenance</summary>
+                <dl>
+                  <dt>Source version</dt>
+                  <dd>
+                    <code>{evidence.source_version}</code>
+                  </dd>
+                  <dt>Retrieved / computed</dt>
+                  <dd>{evidence.retrieved_at}</dd>
+                  <dt>Spatial support</dt>
+                  <dd>
+                    {evidence.spatial.geometry_or_cell_reference} ·{' '}
+                    {evidence.spatial.crs}
+                  </dd>
+                  <dt>Aggregation</dt>
+                  <dd>{evidence.spatial.aggregation || 'None recorded'}</dd>
+                  <dt>Calculation</dt>
+                  <dd>{evidence.method}</dd>
+                  <dt>Uncertainty</dt>
+                  <dd>{evidence.uncertainty}</dd>
+                  {earth.selection_notes[evidence.variable] && (
+                    <>
+                      <dt>Provider selection</dt>
+                      <dd>{earth.selection_notes[evidence.variable]}</dd>
+                    </>
+                  )}
+                </dl>
+              </details>
               {evidence.input_ids.length > 0 && (
                 <>
                   <h4>Trace input evidence</h4>
@@ -744,28 +784,34 @@ export default function NaturePanel({
                   ))}
                 </>
               )}
-              <h4>Raw source references</h4>
-              {evidence.raw_source_ids.map((id) => {
-                const raw = earth.raw.find((r) => r.id === id);
-                return (
-                  <div key={id} className="nature-raw">
-                    <b>{raw?.source_dataset || id}</b>
-                    <p>{raw?.raw_semantics}</p>
-                    <code>
-                      {raw?.storage_reference || 'Snapshot unavailable'}
-                    </code>
-                    {raw?.checksum && (
-                      <p>
-                        SHA-256 <code>{raw.checksum}</code>
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
+              {!!evidence.raw_source_ids.length && (
+                <details className="raw-provenance">
+                  <summary>
+                    Raw source references · {evidence.raw_source_ids.length}
+                  </summary>
+                  {evidence.raw_source_ids.map((id) => {
+                    const raw = earth.raw.find((r) => r.id === id);
+                    return (
+                      <div key={id} className="nature-raw">
+                        <b>{raw?.source_dataset || id}</b>
+                        <p>{raw?.raw_semantics}</p>
+                        <code>
+                          {raw?.storage_reference || 'Snapshot unavailable'}
+                        </code>
+                        {raw?.checksum && (
+                          <p>
+                            SHA-256 <code>{raw.checksum}</code>
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </details>
+              )}
             </div>
-          )}
-        </section>
-      )}
+          </SheetContent>
+        )}
+      </Sheet>
     </div>
   );
 }

@@ -116,8 +116,14 @@ export const layerGroup = (key: string) =>
       ? 'Ecology & designations'
       : 'Reference layers';
 export const layerColor = (key: string) =>
-  key === 'flood'
-    ? 'var(--water)'
-    : key === 'sssi'
+  key === 'context:buildings'
+    ? 'var(--action-primary)'
+    : key === 'context:functional_sites'
       ? 'var(--soil)'
-      : 'var(--vegetation)';
+      : key.startsWith('context:railway_')
+        ? 'var(--text-primary)'
+        : key === 'flood'
+          ? 'var(--water)'
+          : key === 'sssi'
+            ? 'var(--soil)'
+            : 'var(--vegetation)';
