@@ -103,6 +103,25 @@ project_evidence_sources=Table(
     Column('source_hash',String,nullable=False),Column('first_bundle_id',String,nullable=False),
     Column('created',String,nullable=False),
 )
+project_intelligence_runs=Table(
+    'project_intelligence_runs',meta,
+    Column('id',String,primary_key=True),Column('org',String,index=True,nullable=False),
+    Column('project_subject_id',String,index=True,nullable=False),
+    Column('evidence_binding_id',String,index=True,nullable=False),
+    Column('evidence_binding_content_hash',String,nullable=False),
+    Column('module_id',String,nullable=False),Column('module_version',String,nullable=False),
+    Column('input_binding_version',String,nullable=False),
+    Column('model_signature',String,nullable=False),
+    Column('evidence_binding',JSON,nullable=False),
+    Column('model_spec',JSON,nullable=False),Column('result',JSON,nullable=False),
+    Column('content_hash',String,nullable=False),
+    Column('created',String,nullable=False),Column('completed',String,nullable=False),
+    UniqueConstraint(
+        'org','project_subject_id','evidence_binding_id','module_id',
+        'module_version','input_binding_version','model_signature',
+        name='uq_project_intelligence_execution',
+    ),
+)
 infrastructure_projects=Table(
     'infrastructure_projects',meta,
     Column('id',String,primary_key=True),Column('org',String,index=True,nullable=False),
@@ -161,6 +180,9 @@ Index('project_evidence_lookup',project_evidence_bundles.c.org,
       project_evidence_bundles.c.project_subject_id,project_evidence_bundles.c.created)
 Index('project_evidence_member_lookup',project_evidence_bundle_members.c.kind,
       project_evidence_bundle_members.c.member_id)
+Index('project_intelligence_history',project_intelligence_runs.c.org,
+      project_intelligence_runs.c.project_subject_id,
+      project_intelligence_runs.c.created)
 Index('infrastructure_project_site',infrastructure_projects.c.org,
       infrastructure_projects.c.site_id)
 Index('design_alternative_project',design_alternatives.c.org,
