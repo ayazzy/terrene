@@ -21,6 +21,12 @@ import {
   type WorkspaceTab,
 } from './site-workspace-state';
 import ProjectIntelligenceWorkspace from './project-intelligence-workspace';
+import {
+  OperatingCommandBar,
+  OperatingRail,
+  type ShellSelection,
+} from './operating-shell';
+import shellStyles from './operating-shell.module.css';
 import { useOperatingPictureState } from './use-operating-picture-state';
 import {
   createLatestRequestFence,
@@ -37,7 +43,6 @@ import {
 } from './status-primitives';
 import {
   Plus,
-  Orbit,
   ArrowUpRight,
   ArrowLeft,
   MapPin,
@@ -45,16 +50,11 @@ import {
   Play,
   Upload,
   PenLine,
-  Search,
-  PanelLeft,
-  GitCompareArrows,
   Check,
   Info,
   RefreshCw,
   PanelLeftClose,
   PanelLeftOpen,
-  Menu,
-  Database,
   FileText,
   Map as MapIcon,
   List,
@@ -150,6 +150,9 @@ function Status({
 }
 export default function Home() {
   const analysisPanel = useRef<HTMLDivElement>(null);
+  const analysisCloseButton = useRef<HTMLButtonElement>(null);
+  const reopenAnalysisButton = useRef<HTMLButtonElement>(null);
+  const dossierFocusIntent = useRef<'close' | 'reopen' | null>(null);
   const historyRequestFence = useRef(createLatestRequestFence());
   const operatingPicture = useOperatingPictureState();
   const operatingState = operatingPicture.state;
@@ -181,11 +184,10 @@ export default function Home() {
     [filter, setFilter] = useState('all'),
     [compare, setCompare] = useState<string[]>([]),
     [history, setHistory] = useState<any[]>([]),
-    [mode, setMode] = useState(''),
     [email, setEmail] = useState(''),
     [password, setPassword] = useState(''),
     [rawGeometry, setRawGeometry] = useState<any>(null),
-    [navigationCompact, setNavigationCompact] = useState(false),
+    [navigationCompact, setNavigationCompact] = useState(true),
     [mobileNavigation, setMobileNavigation] = useState(false);
   const operatingProjection = projectOperatingPictureState(operatingState);
   const {
@@ -219,11 +221,12 @@ export default function Home() {
       }));
   }
   function setSelectedMapSite(id: string | null) {
-    operatingPicture.selectEntity(
-      id ? { kind: 'site', id } : null,
-      sitesView,
-    );
+    operatingPicture.selectEntity(id ? { kind: 'site', id } : null, sitesView);
   }
+  const closeMobileNavigation = useCallback(
+    () => setMobileNavigation(false),
+    [],
+  );
   const requestedSiteAssessmentId =
     operatingState.artifact?.kind === 'site_assessment'
       ? operatingState.artifact.id
@@ -284,6 +287,14 @@ export default function Home() {
   function changeSitePanel(next: boolean) {
     setPanelOpen(next);
   }
+  function collapseSitePanel() {
+    dossierFocusIntent.current = 'reopen';
+    setPanelOpen(false);
+  }
+  function reopenSitePanel() {
+    dossierFocusIntent.current = 'close';
+    setPanelOpen(true);
+  }
   function selectSiteAssessment(id: string | null) {
     if (id) workspace.selectAssessment(id);
     else workspace.returnToLatest();
@@ -308,13 +319,23 @@ export default function Home() {
       failure: readErrors.sites,
     },
     { label: 'Reference dataset updates', failure: readErrors.datasets },
-    { label: 'Live service status', failure: readErrors.health },
+    { label: 'Application service status', failure: readErrors.health },
     { label: 'Assessment history', failure: historyFailure },
   ].filter((item) => item.failure);
   const showRefreshNotice = refreshFailures.length > 0 && !criticalRead;
   useEffect(() => {
     analysisPanel.current?.scrollTo({ top: 0 });
   }, [tab, assessment?.id, mapEvidence.selectedObjectId]);
+  useEffect(() => {
+    const intent = dossierFocusIntent.current;
+    if (!intent) return;
+    dossierFocusIntent.current = null;
+    const animation = requestAnimationFrame(() => {
+      if (intent === 'close') analysisCloseButton.current?.focus();
+      else reopenAnalysisButton.current?.focus();
+    });
+    return () => cancelAnimationFrame(animation);
+  }, [panelOpen]);
   const reload = useCallback(async () => {
     setRefreshing(true);
     const [siteRead, datasetRead, healthRead] = await Promise.all([
@@ -328,8 +349,6 @@ export default function Home() {
     }
     if (!datasetRead.failure && 'data' in datasetRead)
       setDatasets(datasetRead.data);
-    if (!healthRead.failure && 'data' in healthRead)
-      setMode(healthRead.data.mode);
     setReadErrors({
       sites: siteRead.failure,
       datasets: datasetRead.failure,
@@ -391,10 +410,13 @@ export default function Home() {
     void reload();
   }
   const refreshNotice = showRefreshNotice && (
-    <section className="refresh-notice" aria-label="Live refresh availability">
+    <section
+      className="refresh-notice"
+      aria-label="Source refresh availability"
+    >
       <div className="refresh-notice-heading">
         <p role="status">
-          <strong>Live refresh unavailable</strong>
+          <strong>Source refresh unavailable</strong>
           <span>
             {result
               ? 'Saved assessment evidence remains available.'
@@ -550,138 +572,111 @@ export default function Home() {
       s.name.toLowerCase().includes(query.toLowerCase()) &&
       (filter === 'all' || s.status === filter),
   );
+  const availableSourceCount = datasets.filter(
+    (dataset) => dataset.state === 'available',
+  ).length;
+  const sourceTimes = datasets
+    .map((dataset) => Date.parse(dataset.retrieved))
+    .filter(Number.isFinite);
+  const latestSourceTime = sourceTimes.length ? Math.max(...sourceTimes) : null;
+  const sourceAsOf = latestSourceTime
+    ? `As of ${new Intl.DateTimeFormat('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }).format(new Date(latestSourceTime))}`
+    : loading
+      ? 'Dates loading'
+      : 'Dates unavailable';
+  const sourceState =
+    loading && !datasets.length
+      ? 'loading'
+      : !datasets.length
+        ? 'unavailable'
+        : readErrors.datasets || availableSourceCount < datasets.length
+          ? 'partial'
+          : 'available';
+  const sourceStatus =
+    loading && !datasets.length
+      ? 'Loading'
+      : !datasets.length
+        ? readErrors.datasets
+          ? 'Unavailable'
+          : 'No sources recorded'
+        : `${availableSourceCount} / ${datasets.length} available`;
+  const commandSearchResults = query.trim()
+    ? sites
+        .filter((site) =>
+          site.name.toLowerCase().includes(query.trim().toLowerCase()),
+        )
+        .slice(0, 5)
+    : [];
+  const commandSelection: ShellSelection | null =
+    operatingState.selection?.kind === 'site'
+      ? {
+          kind: 'site',
+          id: operatingState.selection.id,
+          label:
+            sites.find((site) => site.id === operatingState.selection?.id)
+              ?.name || 'Selected site',
+        }
+      : operatingState.selection?.kind === 'project_subject'
+        ? {
+            kind: 'project_subject',
+            id: operatingState.selection.id,
+            label: 'Project Subject',
+          }
+        : null;
+  const viewLabel =
+    view === 'site'
+      ? current?.name || 'Site investigation'
+      : view === 'project-intelligence'
+        ? 'Project intelligence'
+        : view === 'data'
+          ? 'Source register'
+          : view === 'compare'
+            ? 'Site comparison'
+            : sitesView === 'list'
+              ? 'Site roster'
+              : 'Geographic overview';
   return (
-    <main
-      className={`crc-shell${navigationCompact ? ' nav-compact' : ''}${mobileNavigation ? ' nav-mobile-open' : ''}`}
-    >
-      <aside id="primary-navigation" aria-label="Primary navigation">
-        <div className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            <Orbit />
-          </span>
-          <span className="brand-wordmark">Terrene</span>
-          <button
-            className="sidebar-toggle"
-            aria-label={
-              navigationCompact ? 'Expand sidebar' : 'Collapse sidebar'
-            }
-            title={navigationCompact ? 'Expand sidebar' : 'Collapse sidebar'}
-            aria-controls="primary-navigation"
-            aria-expanded={!navigationCompact}
-            onClick={() => setNavigationCompact((value) => !value)}
-          >
-            {navigationCompact ? <PanelLeftOpen /> : <PanelLeftClose />}
-          </button>
-        </div>
-        <p className="brand-descriptor">EARTH INTELLIGENCE</p>
-        <nav>
-          <span className="nav-section">Workspace</span>
-          <button
-            className={view === 'workspace' ? 'nav-active' : ''}
-            onClick={() => {
-              setView('workspace');
-              setMobileNavigation(false);
-            }}
-            title="Sites"
-          >
-            <PanelLeft size={18} /> <span className="nav-text">Sites</span>{' '}
-            <span className="nav-count">{sites.length}</span>
-          </button>
-          <button
-            className={view === 'compare' ? 'nav-active' : ''}
-            onClick={() => {
-              setView('compare');
-              setMobileNavigation(false);
-            }}
-            title="Compare sites"
-          >
-            <GitCompareArrows size={18} />
-            <span className="nav-text">Compare sites</span>
-          </button>
-          <button
-            className={view === 'project-intelligence' ? 'nav-active' : ''}
-            onClick={() => {
-              setView('project-intelligence');
-              setMobileNavigation(false);
-            }}
-            title="Project intelligence"
-          >
-            <Search size={18} />
-            <span className="nav-text">Project intelligence</span>
-          </button>
-          <span className="nav-section">Evidence</span>
-          <button
-            className={view === 'data' ? 'nav-active' : ''}
-            onClick={() => {
-              setView('data');
-              setMobileNavigation(false);
-            }}
-            title="Data sources"
-          >
-            <Database size={18} />
-            <span className="nav-text">Data sources</span>
-          </button>
-        </nav>
-        <div className="sidebar-note">
-          <span className="sidebar-note-label">
-            <span className="live-dot" /> SYSTEM STATUS
-          </span>
-          <div className="sidebar-status-row">
-            <span>Evidence services</span>
-            <strong>{readErrors.health ? 'Unavailable' : 'Operational'}</strong>
-          </div>
-          <div className="sidebar-status-row">
-            <span>Workspace</span>
-            <strong>
-              {mode
-                ? mode === 'development'
-                  ? 'Local'
-                  : 'Organisation'
-                : 'Unknown'}
-            </strong>
-          </div>
-        </div>
-        <footer>
-          <div className="workspace-avatar">OX</div>
-          <div className="workspace-identity">
-            <strong>Oxfordshire pilot</strong>
-            <span>England · Terrene workspace</span>
-          </div>
-        </footer>
-      </aside>
+    <main className={`crc-shell ${shellStyles.shell}`}>
+      <OperatingRail
+        view={view}
+        siteCount={sites.length}
+        compact={navigationCompact}
+        mobileOpen={mobileNavigation}
+        onViewChange={(next) => {
+          setView(next);
+          setMobileNavigation(false);
+        }}
+        onCompactChange={() => setNavigationCompact((value) => !value)}
+        onMobileClose={closeMobileNavigation}
+      />
       <section
         className={`main${view === 'site' ? ' analysis-main' : ''}${view === 'workspace' && sitesView === 'map' ? ' portfolio-main' : ''}${view === 'workspace' && sitesView === 'list' ? ' portfolio-list-main' : ''}`}
       >
-        <header>
-          <button
-            className="mobile-menu"
-            aria-label="Open navigation"
-            onClick={() => setMobileNavigation((value) => !value)}
-          >
-            <Menu />
-          </button>
-          <span className="breadcrumb">
-            Terrene <span>/</span>{' '}
-            {view === 'site'
-              ? current?.name
-              : view === 'project-intelligence'
-                ? 'Project intelligence'
-              : view === 'data'
-                ? 'Data sources'
-                : view === 'compare'
-                  ? 'Compare'
-                  : 'Land opportunities'}
-          </span>
-          <span className="pilot">
-            <span className="environment-status">
-              <span
-                className={`live-dot${refreshFailures.length ? ' is-unavailable' : ''}`}
-              />{' '}
-              {refreshFailures.length ? 'Refresh unavailable' : 'Live evidence'}
-            </span>
-            <b>OX</b>
-          </span>
-        </header>
+        <OperatingCommandBar
+          viewLabel={viewLabel}
+          query={query}
+          searchResults={commandSearchResults}
+          onQueryChange={setQuery}
+          onOpenSite={(id) => {
+            const site = sites.find((item) => item.id === id);
+            if (site) {
+              setQuery('');
+              openSite(site);
+            }
+          }}
+          onMobileMenu={() => setMobileNavigation((value) => !value)}
+          mobileNavigationOpen={mobileNavigation}
+          sourceStatus={sourceStatus}
+          sourceAsOf={sourceAsOf}
+          sourceState={sourceState}
+          selection={commandSelection}
+          refreshing={refreshing}
+          onRefresh={retryReads}
+        />
         {criticalError && view !== 'project-intelligence' && (
           <div role="alert" className="alert error">
             {criticalError}
@@ -715,9 +710,7 @@ export default function Home() {
             operatingPicture.transition(
               (currentState) => ({
                 ...currentState,
-                artifact: id
-                  ? { kind: 'project_intelligence_run', id }
-                  : null,
+                artifact: id ? { kind: 'project_intelligence_run', id } : null,
                 section: id ? currentState.section : 'overview',
               }),
               method,
@@ -755,22 +748,18 @@ export default function Home() {
               />
             </TabsContent>
             <TabsContent value="list" className="portfolio-list-panel">
-              <div className="portfolio-list-hero">
-                <div className="portfolio-list-hero-copy">
-                  <p className="eyebrow">TERRENE / LAND INTELLIGENCE</p>
-                  <h1>Saved site portfolio</h1>
+              <div className="portfolio-status-strip">
+                <div>
+                  <h1>Infrastructure site roster</h1>
                   <p>
-                    Screen the estate, compare evidence coverage and direct the
-                    next review.
+                    Evidence coverage, screening state and team review remain
+                    separate.
                   </p>
                 </div>
-                <div className="portfolio-list-hero-status">
-                  <span>PORTFOLIO / OXFORDSHIRE</span>
-                  <strong>
-                    <span className="live-dot" aria-hidden="true" />
-                    {filtered.length.toString().padStart(2, '0')} visible sites
-                  </strong>
-                </div>
+                <span>
+                  {filtered.length.toString().padStart(2, '0')} visible of{' '}
+                  {sites.length.toString().padStart(2, '0')} retained sites
+                </span>
               </div>
               <div className="workspace-content portfolio-ledger">
                 <section
@@ -809,15 +798,6 @@ export default function Home() {
                   </div>
                 </section>
                 <div className="toolbar portfolio-toolbar">
-                  <div className="search">
-                    <Search size={17} />
-                    <input
-                      aria-label="Search sites"
-                      placeholder="Search sites…"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                    />
-                  </div>
                   <Select
                     value={filter}
                     onValueChange={(v) => v && setFilter(v)}
@@ -862,7 +842,7 @@ export default function Home() {
                     title={
                       sites.length
                         ? 'No sites match these filters'
-                        : 'No land sites saved'
+                        : 'No infrastructure sites saved'
                     }
                     description="Draw a boundary or upload GeoJSON to create a site for evidence screening."
                     action={
@@ -959,8 +939,8 @@ export default function Home() {
                                   <span>
                                     <strong>{s.name}</strong>
                                     <small>
-                                      SITE {s.id.slice(-8).toUpperCase()} ·
-                                      BND V{s.version} · ENGLAND
+                                      SITE {s.id.slice(-8).toUpperCase()} · BND
+                                      V{s.version} · ENGLAND
                                     </small>
                                   </span>
                                 </button>
@@ -1198,8 +1178,9 @@ export default function Home() {
                 />
                 {!panelOpen && (
                   <button
+                    ref={reopenAnalysisButton}
                     className="reopen-analysis"
-                    onClick={() => changeSitePanel(true)}
+                    onClick={reopenSitePanel}
                   >
                     <PanelLeftOpen size={16} /> Open analysis
                   </button>
@@ -1218,9 +1199,10 @@ export default function Home() {
                     </small>
                   </span>
                   <button
+                    ref={analysisCloseButton}
                     className="icon-btn"
                     aria-label="Collapse analysis panel"
-                    onClick={() => changeSitePanel(false)}
+                    onClick={collapseSitePanel}
                   >
                     <PanelLeftClose size={17} />
                   </button>
@@ -1229,10 +1211,14 @@ export default function Home() {
                   <MapFeatureInspector
                     feature={mapEvidence.selectedObject}
                     layer={mapEvidence.features.layers.find(
-                      (layer) => layer.id === mapEvidence.selectedObject?.properties.layer_id,
+                      (layer) =>
+                        layer.id ===
+                        mapEvidence.selectedObject?.properties.layer_id,
                     )}
                     limitations={mapEvidence.features.limitations}
-                    onLocate={() => mapEvidence.locateObject(mapEvidence.selectedObject!.id)}
+                    onLocate={() =>
+                      mapEvidence.locateObject(mapEvidence.selectedObject!.id)
+                    }
                     onClose={mapEvidence.clearSelection}
                   />
                 )}
@@ -1271,9 +1257,10 @@ export default function Home() {
                             .filter((item: OverlayFinding) => !!item.geometry)
                             .map((item: OverlayFinding) => item.key),
                           ...(mapEvidence.features?.layers || [])
-                            .filter((layer) =>
-                              layer.feature_count > 0
-                              && ['available', 'partial'].includes(layer.state),
+                            .filter(
+                              (layer) =>
+                                layer.feature_count > 0 &&
+                                ['available', 'partial'].includes(layer.state),
                             )
                             .map((layer) => `context:${layer.id}`),
                         ]}
@@ -1682,7 +1669,7 @@ export default function Home() {
             <DialogDescription>
               {editing
                 ? 'Boundary changes preserve prior assessments as history.'
-                : 'Start with a name and an exact land boundary.'}
+                : 'Start with a name and an exact site boundary.'}
             </DialogDescription>
           </DialogHeader>
           <label>

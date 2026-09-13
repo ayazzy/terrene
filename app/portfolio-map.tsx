@@ -232,8 +232,7 @@ export default function PortfolioMap({
             const p = projection.project(anchor as [number, number]);
             const mapWidth = projection.getContainer().clientWidth;
             const narrowLabel = mapWidth < 600;
-            const contextVisible =
-              hovered === site.id || selected === site.id;
+            const contextVisible = hovered === site.id || selected === site.id;
             return (
               <button
                 key={site.id}
@@ -365,7 +364,7 @@ export default function PortfolioMap({
         {!loading && !unavailable && !sites.length && (
           <div className="portfolio-site-card">
             <h2>No saved sites yet</h2>
-            <p>Use New site to draw or upload your first land boundary.</p>
+            <p>Use New site to draw or upload your first site boundary.</p>
           </div>
         )}
         {!!missing && (

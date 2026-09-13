@@ -1,0 +1,49 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+
+const [page, shell, css, layout, portfolioMap] = await Promise.all([
+  readFile(new URL('../app/page.tsx', import.meta.url), 'utf8'),
+  readFile(new URL('../app/operating-shell.tsx', import.meta.url), 'utf8'),
+  readFile(
+    new URL('../app/operating-shell.module.css', import.meta.url),
+    'utf8',
+  ),
+  readFile(new URL('../app/layout.tsx', import.meta.url), 'utf8'),
+  readFile(new URL('../app/portfolio-map.tsx', import.meta.url), 'utf8'),
+]);
+
+test('shell identifies Terrene as infrastructure intelligence', () => {
+  assert.match(shell, />Terrene</);
+  assert.match(shell, />Infrastructure intelligence</);
+  assert.match(shell, /Infrastructure operating picture/);
+  assert.doesNotMatch(page, /Land opportunities|EARTH INTELLIGENCE/);
+  assert.match(layout, /Terrene — Infrastructure Intelligence/);
+  assert.doesNotMatch(layout, /Earth Intelligence|understanding land/);
+  assert.doesNotMatch(`${page}\n${portfolioMap}`, /land sites|land boundary/i);
+  assert.doesNotMatch(shell, /Operational|Live evidence|SYSTEM STATUS/);
+});
+
+test('command bar exposes search, scope, source records, and selection', () => {
+  assert.match(shell, /aria-label="Search saved sites"/);
+  assert.match(
+    shell,
+    /<small>Scope<\/small>[\s\S]*<strong>Oxfordshire<\/strong>/,
+  );
+  assert.match(shell, /<small>Sources<\/small>[\s\S]*\{sourceStatus\}/);
+  assert.match(shell, /<small>Source records<\/small>[\s\S]*\{sourceAsOf\}/);
+  assert.match(shell, /<small>Selection<\/small>/);
+  assert.match(page, /Date\.parse\(dataset\.retrieved\)/);
+  assert.match(page, /dataset\.state === 'available'/);
+  assert.match(page, /operatingState\.selection\?\.kind === 'site'/);
+});
+
+test('responsive shell keeps context explicit without claiming telemetry', () => {
+  assert.match(css, /@media \(max-width: 47\.5rem\)/);
+  assert.match(css, /--topbar-height: 6\.5rem/);
+  assert.match(css, /\.mobileContext[\s\S]*display: block/);
+  assert.match(shell, /Oxfordshire · \{sourceAsOf\.replace/);
+  assert.match(page, /'Dates unavailable'/);
+  assert.match(page, /'No sources recorded'/);
+  assert.doesNotMatch(shell, /confidence|latency|sensor|readiness/i);
+});

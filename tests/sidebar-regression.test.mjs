@@ -2,20 +2,27 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [page, css] = await Promise.all([
+const [page, shell, shellCss, css] = await Promise.all([
   readFile(new URL('../app/page.tsx', import.meta.url), 'utf8'),
+  readFile(new URL('../app/operating-shell.tsx', import.meta.url), 'utf8'),
+  readFile(
+    new URL('../app/operating-shell.module.css', import.meta.url),
+    'utf8',
+  ),
   readFile(new URL('../app/globals.css', import.meta.url), 'utf8'),
 ]);
 
-test('desktop sidebar presentation has one React-owned compact state', () => {
+test('operating rail has one React-owned compact state and defaults narrow', () => {
   assert.match(
     page,
-    /className={`crc-shell\$\{navigationCompact \? ' nav-compact' : ''\}/,
+    /navigationCompact, setNavigationCompact\] = useState\(true\)/,
   );
+  assert.match(page, /<OperatingRail[\s\S]*compact=\{navigationCompact\}/);
   assert.match(
     page,
-    /onClick=\{\(\) => setNavigationCompact\(\(value\) => !value\)\}/,
+    /onCompactChange=\{\(\) =>[\s\S]*setNavigationCompact\(\(value\) => !value\)/,
   );
+  assert.match(shellCss, /--sidebar-compact: 3\.75rem/);
   assert.doesNotMatch(
     css,
     /\.crc-shell:has\(\.analysis-main\)[^{]*\{[^}]*--sidebar-width/s,
@@ -26,13 +33,36 @@ test('desktop sidebar presentation has one React-owned compact state', () => {
   );
 });
 
-test('sidebar toggle exposes the current action and expanded state', () => {
-  assert.equal((page.match(/'Expand sidebar'/g) || []).length, 2);
-  assert.equal((page.match(/'Collapse sidebar'/g) || []).length, 2);
-  assert.match(page, /aria-controls="primary-navigation"/);
-  assert.match(page, /aria-expanded=\{!navigationCompact\}/);
+test('rail toggle and compact navigation remain labelled without visible text', () => {
+  assert.equal((shell.match(/'Expand navigation'/g) || []).length, 2);
+  assert.equal((shell.match(/'Collapse navigation'/g) || []).length, 2);
+  assert.match(shell, /aria-controls="primary-navigation"/);
+  assert.match(shell, /aria-expanded=\{!compact\}/);
+  assert.match(shell, /mobileOpen \? \([\s\S]*<X \/>/);
+  assert.match(shell, /compact \? \([\s\S]*<PanelLeftOpen \/>/);
+  assert.match(shell, /aria-label=\{item\.label\}/);
+  assert.match(shellCss, /button:focus-visible::after/);
+});
+
+test('narrow navigation opens and closes with deterministic focus', () => {
+  assert.match(shell, /if \(event\.key === 'Escape'\) onMobileClose\(\)/);
+  assert.match(shell, /closeButton\.current\?\.focus\(\)/);
+  assert.match(shell, /mobileMenuButton\.current\?\.focus\(\)/);
+  assert.match(shell, /aria-expanded=\{mobileNavigationOpen\}/);
+  assert.match(page, /onMobileClose=\{closeMobileNavigation\}/);
+});
+
+test('dossier collapse and reopen preserve keyboard focus', () => {
+  assert.match(page, /dossierFocusIntent\.current = 'reopen'/);
+  assert.match(page, /reopenAnalysisButton\.current\?\.focus\(\)/);
+  assert.match(page, /dossierFocusIntent\.current = 'close'/);
+  assert.match(page, /analysisCloseButton\.current\?\.focus\(\)/);
   assert.match(
     page,
-    /navigationCompact \? <PanelLeftOpen \/> : <PanelLeftClose \/>/,
+    /ref=\{reopenAnalysisButton\}[\s\S]*onClick=\{reopenSitePanel\}/,
+  );
+  assert.match(
+    page,
+    /ref=\{analysisCloseButton\}[\s\S]*onClick=\{collapseSitePanel\}/,
   );
 });
