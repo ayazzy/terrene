@@ -16,7 +16,7 @@ The core concepts are deliberately distinct:
 
 The web application consists of a React/TypeScript frontend, a FastAPI API and a Python worker. PostgreSQL/PostGIS provides the intended relational/spatial store; SQLite plus Shapely supports local development and isolated tests. Native artifacts, immutable manifests and reports use content-addressed object storage (`data/objects` locally; private R2-compatible storage when hosted).
 
-The frontend calls the API through the server-side route in `app/api/[...path]/route.ts`. MapLibre displays a raster basemap and bounded evidence geometry. The API owns authorization, site/boundary operations, assessment submission, saved evidence and report access. The worker owns deterministic acquisition/processing/model execution under lease and fencing rules.
+The frontend calls the API through the server-side route in `app/api/[...path]/route.ts`. MapLibre displays a raster basemap and bounded evidence geometry. One bounded Infrastructure Operating Picture shell owns global mode navigation, saved-Site search and literal scope/source/selection context around the URL-addressable interaction controller; feature workspaces keep their own evidence semantics. The portfolio and Site MapLibre instances remain separate until the planned unified entity-map iteration. The API owns authorization, site/boundary operations, assessment submission, saved evidence and report access. The worker owns deterministic acquisition/processing/model execution under lease and fencing rules.
 
 Existing assessment/job persistence predates the newer Land Evidence projection. It remains authoritative historical implementation and is not rewritten by the additive architecture below.
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-Active. Task 1 completed 14 September 2026. This sprint begins from GitHub `main` at `e40a9f4`, after the Beacon Fen Task 2 merge. Sprint 003 is closed incomplete; no practitioner or customer validation is implied.
+Active. Tasks 1–2 completed 14 September 2026. This sprint begins from GitHub `main` at `e40a9f4`, after the Beacon Fen Task 2 merge. Sprint 003 is closed incomplete; no practitioner or customer validation is implied.
 
 ## Repository basis
 
@@ -70,6 +70,8 @@ Create the typed interaction foundation before changing the visual shell.
 ## Task 2 — Build the modern operating shell
 
 **Allocation:** Days 3–4
+
+**Status:** Completed 14 September 2026. See [Task 2 modern operating shell](SPRINT-004-TASK-2-OPERATING-SHELL.md).
 
 Replace the three competing visual systems with one Infrastructure Operating Picture shell.
 
