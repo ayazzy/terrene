@@ -24,7 +24,8 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 - Bind a committed snapshot through `wetland_input_binding_v1`, execute the unchanged wetland model, and persist an immutable ModuleRun.
 - Intentionally prepare or reuse Screening Context v1 for a selected saved assessment, inspect its non-scoring facts/gaps/provenance in Overview, and download a self-contained HTML review artifact.
 - Read the built-world objects attached to an immutable Screening Context run through an authenticated, organization-scoped WGS84 GeoJSON presentation contract without changing their authoritative EPSG:27700 evidence.
-- Create/read minimal organization-owned infrastructure Projects without requiring a Site, and submit/list/read immutable human-structured `project_evidence_v1` source-assertion bundles.
+- View and select persisted buildings, functional sites, railway tracks and railway stations on the Site Analysis Workspace map, with truthful per-layer availability and one shared parcel-relationship/source inspector.
+- Create/read minimal organization-owned Project Subjects without requiring a Site, and submit/list/read immutable human-structured `project_evidence_v1` source-assertion bundles.
 
 Implementation reports: [snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [snapshot-driven wetland runs](WETLAND-SNAPSHOT-MODULE-RUN.md), [evidence-aware site analysis](UI-STAGE-2.md), and [map-first home](UI-STAGE-3-MAP-HOME.md).
 
@@ -71,11 +72,16 @@ The current home is a map-first portfolio view with a preserved list workflow. S
 
 One shared site-workspace controller scopes the selected assessment, Screening Context lifecycle, history selection, map/evidence focus, exports and workspace controls. Switching sites or historical assessments clears stale artifact views and keys Screening Context to the exact assessment/site/boundary identity. Historical map, boundary, Earth evidence, context and model output move together. The desktop review panel is wider; at narrow widths the map and independently scrollable analytical workspace stack deliberately. The UI remains a small-portfolio application and fetches site/history collections without pagination.
 
+The analytical map consumes the selected Screening Context run's map-feature contract and preserves its source-bounded layer states: available objects, mapped zero, unavailable, partial and unsupported historical evidence. Terrene-rendered built-world geometry is visually distinct from the raster basemap. Object selection is shared with Overview/Evidence, does not move the default parcel focus, and opens one inspector with plain parcel relationship, measurement, source/release and limitation; raw identities, fingerprints, exact predicates and detailed provenance remain under Advanced provenance. Locate object is intentional. Hiding its layer, changing run, site or historical assessment clears selection.
+
 Screening Context is an explicit assessment action: POST creates/reuses a snapshot and ModuleRun; GET only discovers or reads stored records. History selection scopes the action to the saved assessment and boundary. Unsupported legacy evidence fails without rewriting it. Export labels current team review status separately from the immutable context. See [Screening Context v1](SCREENING-CONTEXT-V1.md).
 
 `GET /api/screening-context-runs/{run_id}/map-features` integrity-checks the selected run and committed Evidence Snapshot, then deterministically presents only its persisted Building, FunctionalSite, RailwayTrack and RailwayStation objects as EPSG:4326 GeoJSON. Layer metadata distinguishes available objects, qualified mapped zero, unavailable, partial and unsupported evidence. The response retains safe source, classification, fingerprint, relationship and measurement linkage while omitting raw storage locations and source payloads; it creates no persistence and never substitutes current objects into a historical run.
 
 The Screening Context read lifecycle is finite: stored, absent, unsupported, authentication/authorization and server/network outcomes are distinct; unresolved reads recover to Retry after 15 seconds. Routine workspace refreshes do not restart an unchanged assessment read, and cancelled or stale assessment responses cannot replace the selected assessment's context.
+
+Versioned infrastructure proposals are currently API-only. The frontend has no
+project list, alternative editor, design map tools or revision-history UI.
 
 ## Verification baseline
 
@@ -95,7 +101,11 @@ The finite Screening Context read-state fix was verified with **177 backend test
 
 Site Analysis Workspace v2A verification: **28 frontend regression tests passed**, TypeScript passed, focused lint passed on the new/refined workspace modules, and the production build passed with the existing large-chunk advisory. Browser QA covered populated and absent Screening Context, Evidence/Models navigation, model-to-evidence routing, historical selection/reset, both distinct exports, desktop 1440×900 and narrow 390×844 layouts, and finished with no browser warnings or errors. Backend and PostgreSQL suites were not rerun because this iteration changes frontend information architecture and state only.
 
+Site Analysis Workspace v2 verification: **32 frontend regression tests passed**, TypeScript passed, focused lint passed on the new/refined map/workspace modules, and the production build passed with the existing large-chunk advisory. Browser QA at 1280px, 1024px and 390px used isolated retained records for Westgate, Oxford station, Port Meadow and Redbridge; verified object counts, source/relationship inspection, exact 43.3473% and 279.31 m evidence, mapped-zero/partial/unsupported semantics, layer-driven selection reset, historical switching, no horizontal overflow and no browser warnings/errors. Backend and PostgreSQL suites were not rerun because the v2B contract and evidence persistence were unchanged.
+
 Screening Context map-feature verification: **183 backend tests passed on SQLite** and the focused **23-test Screening Context suite passed on PostgreSQL/PostGIS**. Retained real-data checks cover Westgate, Oxford station, Port Meadow and Redbridge; they verify deterministic WGS84 geometry, organization isolation, historical selection, integrity failures, no-write behavior, availability semantics and unchanged persisted measurements.
+
+Sprint 001 design-proposal verification: **197 backend tests passed on SQLite and PostgreSQL/PostGIS**, including the focused **14-test** Project/Alternative/Revision suite after independent-review fixes. Persistence is verified across a database/engine reload; regressions cover missing/corrupt baselines and lineage plus malformed geometry/boundary inputs. The additive v6 migration passed against the disposable PostgreSQL database.
 
 ## Known limitations
 
@@ -105,10 +115,11 @@ Screening Context map-feature verification: **183 backend tests passed on SQLite
 - Hosted Supabase/Render/R2 credentials and end-to-end tenant acceptance have not been configured or verified; the reserved Sites frontend is not a deployed product.
 - Team review status is not yet an immutable historical Decision record.
 - Scenario modelling is not implemented. Broader Terrene Applications remain hypotheses, not completed architecture.
+- Proposed design revisions accept bounded Polygon/MultiPolygon GeoJSON only; there is no CAD/PDF ingestion, centreline buffering, layout generation, environmental intersection, impact calculation or A/B consequence comparison.
 
 ## Latest meaningful implementation
 
-Project Evidence v1 was completed on 13 September 2026. It adds an authenticated backend contract and immutable persistence for minimal Projects and human-submitted, source-backed project evidence without changing land evidence, existing assessments, Screening Context, wetland bindings/calculations, retained snapshots or pre-existing ModuleRuns.
+Project Evidence v1 was completed on 13 September 2026. It adds an authenticated backend contract and immutable persistence for minimal Project Subjects and human-submitted, source-backed project evidence without changing land evidence, Design Studies, existing assessments, Screening Context, wetland bindings/calculations, retained snapshots or pre-existing ModuleRuns.
 
 ## Current recommended engineering question
 

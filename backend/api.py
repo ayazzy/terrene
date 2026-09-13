@@ -167,12 +167,22 @@ from backend.screening_context_map import (
     ScreeningMapFeatureCollection, build_screening_map_features,
 )
 from backend.project_evidence import (
-    ProjectCreate, ProjectEvidenceBundleRead, ProjectEvidenceBundleRecord,
+    ProjectSubjectCreate, ProjectEvidenceBundleRead, ProjectEvidenceBundleRecord,
     ProjectEvidenceConflict, ProjectEvidenceNotFound,
-    ProjectEvidenceSubmission, ProjectEvidenceValidationError, ProjectNotFound,
-    ProjectRecord, create_project as create_project_record,
-    get_project as get_project_record, get_project_evidence,
-    list_project_evidence, persist_project_evidence,
+    ProjectEvidenceSubmission, ProjectEvidenceValidationError,
+    ProjectSubjectNotFound, ProjectSubjectRecord,
+    create_project_subject, get_project_subject, get_project_evidence,
+    list_project_evidence, list_project_subjects, persist_project_evidence,
+)
+from backend.design_proposals import (
+    AlternativeInput, AlternativeRecord, ProjectInput,
+    ProjectRecord as DesignProjectRecord,
+    ProposalConflict, ProposalIntegrityError, ProposalNotFound,
+    RevisionInput, RevisionRecord, create_alternative,
+    create_project as create_design_project,
+    create_revision, get_alternative, get_project as get_design_project,
+    get_revision, list_alternatives, list_projects as list_design_projects,
+    list_revisions,
 )
 
 
@@ -232,11 +242,11 @@ def context_report(id: str, org=Depends(organization)):
 
 
 # Project Evidence stores attributed source claims only. No route in this
-# surface edits a Project, fetches a source URL, or creates Reasoning output.
+# surface edits a Project Subject, fetches a source URL, or creates Reasoning output.
 def project_evidence_operation(operation):
     try:
         return operation()
-    except (ProjectNotFound, ProjectEvidenceNotFound):
+    except (ProjectSubjectNotFound, ProjectEvidenceNotFound):
         raise HTTPException(404, 'Record not found')
     except ProjectEvidenceValidationError as error:
         raise HTTPException(422, str(error))
@@ -249,22 +259,29 @@ def project_evidence_operation(operation):
         raise HTTPException(500, 'Project Evidence integrity check failed; history has not been overwritten.')
 
 
-@app.post('/api/projects', response_model=ProjectRecord)
-def create_project(data: ProjectCreate, org=Depends(organization)):
+@app.post('/api/project-subjects', response_model=ProjectSubjectRecord)
+def create_evidence_project_subject(
+    data: ProjectSubjectCreate, org=Depends(organization),
+):
     return project_evidence_operation(
-        lambda: create_project_record(data, org=org)
+        lambda: create_project_subject(data, org=org)
     )
 
 
-@app.get('/api/projects/{id}', response_model=ProjectRecord)
-def read_project(id: str, org=Depends(organization)):
+@app.get('/api/project-subjects', response_model=list[ProjectSubjectRecord])
+def read_project_subjects(org=Depends(organization)):
+    return project_evidence_operation(lambda: list_project_subjects(org=org))
+
+
+@app.get('/api/project-subjects/{id}', response_model=ProjectSubjectRecord)
+def read_project_subject(id: str, org=Depends(organization)):
     return project_evidence_operation(
-        lambda: get_project_record(id, org=org)
+        lambda: get_project_subject(id, org=org)
     )
 
 
 @app.post(
-    '/api/projects/{id}/evidence-bundles',
+    '/api/project-subjects/{id}/evidence-bundles',
     response_model=ProjectEvidenceBundleRead,
 )
 def submit_project_evidence(
@@ -276,7 +293,7 @@ def submit_project_evidence(
 
 
 @app.get(
-    '/api/projects/{id}/evidence-bundles',
+    '/api/project-subjects/{id}/evidence-bundles',
     response_model=list[ProjectEvidenceBundleRecord],
 )
 def read_project_evidence_list(id: str, org=Depends(organization)):
@@ -286,7 +303,7 @@ def read_project_evidence_list(id: str, org=Depends(organization)):
 
 
 @app.get(
-    '/api/projects/{id}/evidence-bundles/{bundle_id}',
+    '/api/project-subjects/{id}/evidence-bundles/{bundle_id}',
     response_model=ProjectEvidenceBundleRead,
 )
 def read_project_evidence_bundle(
@@ -295,3 +312,67 @@ def read_project_evidence_bundle(
     return project_evidence_operation(
         lambda: get_project_evidence(id, bundle_id, org=org)
     )
+def proposal_operation(operation):
+    try:
+        return operation()
+    except ProposalNotFound:
+        raise HTTPException(404, 'Record not found')
+    except ProposalConflict as error:
+        raise HTTPException(409, str(error))
+    except ProposalIntegrityError:
+        raise HTTPException(
+            409,
+            'Pinned evidence or boundary integrity check failed; no proposed design was changed.',
+        )
+    except ValueError as error:
+        raise HTTPException(422, str(error))
+
+
+@app.post('/api/projects', response_model=DesignProjectRecord)
+def create_infrastructure_project(data: ProjectInput, org=Depends(organization)):
+    return proposal_operation(lambda: create_design_project(data, org=org))
+
+
+@app.get('/api/projects', response_model=list[DesignProjectRecord])
+def read_infrastructure_projects(site_id: str | None = None,
+                                 org=Depends(organization)):
+    return proposal_operation(
+        lambda: list_design_projects(org=org, site_id=site_id)
+    )
+
+
+@app.get('/api/projects/{id}', response_model=DesignProjectRecord)
+def read_infrastructure_project(id: str, org=Depends(organization)):
+    return proposal_operation(lambda: get_design_project(id, org=org))
+
+
+@app.post('/api/projects/{id}/alternatives', response_model=AlternativeRecord)
+def create_design_alternative(id: str, data: AlternativeInput,
+                              org=Depends(organization)):
+    return proposal_operation(lambda: create_alternative(id, data, org=org))
+
+
+@app.get('/api/projects/{id}/alternatives', response_model=list[AlternativeRecord])
+def read_design_alternatives(id: str, org=Depends(organization)):
+    return proposal_operation(lambda: list_alternatives(id, org=org))
+
+
+@app.get('/api/alternatives/{id}', response_model=AlternativeRecord)
+def read_design_alternative(id: str, org=Depends(organization)):
+    return proposal_operation(lambda: get_alternative(id, org=org))
+
+
+@app.post('/api/alternatives/{id}/revisions', response_model=RevisionRecord)
+def create_design_revision(id: str, data: RevisionInput,
+                           org=Depends(organization)):
+    return proposal_operation(lambda: create_revision(id, data, org=org))
+
+
+@app.get('/api/alternatives/{id}/revisions', response_model=list[RevisionRecord])
+def read_design_revisions(id: str, org=Depends(organization)):
+    return proposal_operation(lambda: list_revisions(id, org=org))
+
+
+@app.get('/api/design-revisions/{id}', response_model=RevisionRecord)
+def read_design_revision(id: str, org=Depends(organization)):
+    return proposal_operation(lambda: get_revision(id, org=org))

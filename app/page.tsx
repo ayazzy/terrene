@@ -15,6 +15,7 @@ import {
 } from './site-evidence';
 import OverlayFindings from './overlay-findings';
 import ScreeningContextPanel from './screening-context-panel';
+import MapFeatureInspector from './map-feature-inspector';
 import { useSiteWorkspaceState } from './site-workspace-state';
 import type { OverlayFinding } from './site-evidence';
 import SiteMap from './map';
@@ -174,7 +175,7 @@ export default function Home() {
   const workspace = useSiteWorkspaceState(current, history);
   const { assessment, selectedAssessmentId: selectedAssessment, tab, setTab,
     wetlandSection, setWetlandSection, panelOpen, setPanelOpen, mapFocus,
-    finding, setFinding, showOnMap } = workspace;
+    finding, setFinding, showOnMap, mapEvidence } = workspace;
   const result = assessment?.result,
     viewingHistorical = !!assessment && assessment.id !== current?.assessment?.id,
     stale = current && assessment && current.version !== assessment.version,
@@ -207,7 +208,7 @@ export default function Home() {
   const showRefreshNotice = refreshFailures.length > 0 && !criticalRead;
   useEffect(() => {
     analysisPanel.current?.scrollTo({ top: 0 });
-  }, [tab, assessment?.id]);
+  }, [tab, assessment?.id, mapEvidence.selectedObjectId]);
   const reload = useCallback(async () => {
     setRefreshing(true);
     const [siteRead, datasetRead, healthRead] = await Promise.all([
@@ -894,6 +895,13 @@ export default function Home() {
                     showOnMap(f.key);
                     setFinding(f);
                   }}
+                  screeningFeatures={mapEvidence.features}
+                  screeningFeaturesState={mapEvidence.state}
+                  screeningFeaturesError={mapEvidence.error}
+                  selectedMapObject={mapEvidence.selectedObjectId}
+                  mapObjectFocusRequest={mapEvidence.focusRequest}
+                  onInspectMapObject={mapEvidence.selectObject}
+                  onClearMapObject={mapEvidence.clearSelection}
                 />
                 {!panelOpen && (
                   <button
@@ -922,6 +930,17 @@ export default function Home() {
                     <PanelLeftClose size={17} />
                   </button>
                 </div>
+                {mapEvidence.selectedObject && mapEvidence.features && (
+                  <MapFeatureInspector
+                    feature={mapEvidence.selectedObject}
+                    layer={mapEvidence.features.layers.find(
+                      (layer) => layer.id === mapEvidence.selectedObject?.properties.layer_id,
+                    )}
+                    limitations={mapEvidence.features.limitations}
+                    onLocate={() => mapEvidence.locateObject(mapEvidence.selectedObject!.id)}
+                    onClose={mapEvidence.clearSelection}
+                  />
+                )}
                 {refreshNotice}
                 <Tabs value={tab} onValueChange={setTab}>
                   <TabsList
@@ -935,14 +954,14 @@ export default function Home() {
                   </TabsList>
                   <TabsContent value="overview">
                     {assessment ? <ScreeningContextPanel key={assessment.id + ':overview'} assessment={assessment} hasResult={!!result}
-                      mode="overview" context={workspace.context} onEvidence={() => setTab('evidence')} /> :
+                      mode="overview" context={workspace.context} mapEvidence={mapEvidence} onEvidence={() => setTab('evidence')} /> :
                       <div className="pad"><h2>No saved assessment</h2><p>Create a new assessment to establish an immutable boundary and evidence record.</p></div>}
                     <div className="team-review"><p><strong>Team decision</strong> · kept separate from Earth facts and model interpretations.</p>
                       <details><summary>Site notes</summary><p>{current.notes || 'No notes added. Use Edit boundary / site to add notes.'}</p></details></div>
                   </TabsContent>
                   <TabsContent value="evidence">
                     {assessment && <ScreeningContextPanel key={assessment.id + ':evidence'} assessment={assessment} hasResult={!!result}
-                      mode="evidence" context={workspace.context} onEvidence={() => setTab('evidence')} />}
+                      mode="evidence" context={workspace.context} mapEvidence={mapEvidence} onEvidence={() => setTab('evidence')} />}
                     <details className="module-evidence"><summary>Wetland module input evidence</summary>
                       <NaturePanel
                         key={(assessment?.id || current.id) + ':evidence'}

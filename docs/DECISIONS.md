@@ -93,3 +93,19 @@ Terrene Earth continues to represent reality and evidence; Terrene Reasoning int
 Infrastructure project intelligence remains an application hypothesis. Implementing its reusable evidence input does not constitute customer validation or a decision that this is Terrene's chosen market.
 
 **References:** [Project Evidence v1](PROJECT-EVIDENCE-V1.md), [Architecture](ARCHITECTURE.md), [Customer Discovery](CUSTOMER-DISCOVERY.md), [North Star](TERRENE-NORTH-STAR.md).
+
+## 2026-09-13 — Proposed designs are versioned state, not Earth evidence
+
+**Decision:** Represent proposed infrastructure through an organisation-scoped
+Project, named Alternative and immutable Revision hierarchy. Pin each Project
+and every Revision to one explicit committed Evidence Snapshot and historical
+Site boundary. Use explicit parent-head matching for stale-write protection and
+scoped idempotency keys for retry safety.
+
+**Rationale:** A proposal describes a possible change to reality, not an observed
+fact or model result. Immutable proposal lineage and a fixed evidence baseline
+are prerequisites for later reproducible Scenario calculations; selecting the
+latest evidence or overwriting an alternative would make historical comparisons
+unreliable.
+
+**References:** [Architecture](ARCHITECTURE.md), [Sprint 001](sprints/001-design-proposals.md).

@@ -6,11 +6,12 @@ if engine.dialect.name!='postgresql':raise SystemExit('Set DATABASE_URL to the t
 init()
 source=create_engine('sqlite:///data/crc.db')
 source_tables=set(inspect(source).get_table_names())
-copied=[datasets,features,sites,projects,assessments,land_evidence_snapshots,
+copied=[datasets,features,sites,assessments,land_evidence_snapshots,
         land_evidence_snapshot_members,land_evidence_snapshot_links,
-        land_evidence_snapshot_origins,project_evidence_bundles,
-        project_evidence_bundle_members,project_evidence_sources,
-        project_evidence_claims,module_runs]
+        land_evidence_snapshot_origins,module_runs,project_subjects,
+        project_evidence_bundles,project_evidence_bundle_members,
+        project_evidence_sources,project_evidence_claims,
+        infrastructure_projects,design_alternatives,design_revisions]
 with engine.connect() as c:
     if any(c.execute(select(func.count()).select_from(t)).scalar() for t in copied):raise SystemExit('Target must be empty; no data changed.')
 if 'land_evidence_snapshots' in source_tables:

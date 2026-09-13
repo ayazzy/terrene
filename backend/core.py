@@ -3,7 +3,7 @@ import os, json, uuid, time
 from pathlib import Path
 from datetime import datetime, timezone
 from sqlalchemy import (
-    create_engine, MetaData, Table, Column, String, Integer, Float, JSON, Text,
+    create_engine, MetaData, Table, Column, String, Integer, Float, JSON, Text, Boolean,
     Index, UniqueConstraint, select, text, inspect,
 )
 from shapely.geometry import shape, mapping, box
@@ -65,8 +65,8 @@ module_runs=Table(
         'input_binding_version','model_signature',name='uq_module_run_execution',
     ),
 )
-projects=Table(
-    'projects',meta,
+project_subjects=Table(
+    'project_subjects',meta,
     Column('id',String,primary_key=True),Column('org',String,index=True,nullable=False),
     Column('name',String,nullable=False),Column('project_type',String,nullable=False),
     Column('site_id',String,index=True),Column('content_hash',String,nullable=False),
@@ -75,12 +75,12 @@ projects=Table(
 project_evidence_bundles=Table(
     'project_evidence_bundles',meta,
     Column('id',String,primary_key=True),Column('org',String,index=True,nullable=False),
-    Column('project_id',String,index=True,nullable=False),
+    Column('project_subject_id',String,index=True,nullable=False),
     Column('schema_version',String,nullable=False),Column('content_hash',String,nullable=False),
     Column('manifest_sha256',String,nullable=False),Column('manifest_key',Text,nullable=False),
     Column('source_count',Integer,nullable=False),Column('claim_count',Integer,nullable=False),
     Column('land_evidence_snapshot_id',String,index=True),Column('created',String,nullable=False),
-    UniqueConstraint('org','project_id','schema_version','content_hash',
+    UniqueConstraint('org','project_subject_id','schema_version','content_hash',
                      name='uq_project_evidence_bundle_content'),
 )
 project_evidence_bundle_members=Table(
@@ -91,17 +91,62 @@ project_evidence_bundle_members=Table(
 )
 project_evidence_claims=Table(
     'project_evidence_claims',meta,
-    Column('project_id',String,primary_key=True),Column('claim_id',String,primary_key=True),
+    Column('project_subject_id',String,primary_key=True),Column('claim_id',String,primary_key=True),
     Column('org',String,index=True,nullable=False),Column('predicate',String,nullable=False),
     Column('claim_hash',String,nullable=False),
     Column('first_bundle_id',String,nullable=False),Column('created',String,nullable=False),
 )
 project_evidence_sources=Table(
     'project_evidence_sources',meta,
-    Column('project_id',String,primary_key=True),Column('source_id',String,primary_key=True),
+    Column('project_subject_id',String,primary_key=True),Column('source_id',String,primary_key=True),
     Column('source_version',String,primary_key=True),Column('org',String,index=True,nullable=False),
     Column('source_hash',String,nullable=False),Column('first_bundle_id',String,nullable=False),
     Column('created',String,nullable=False),
+)
+infrastructure_projects=Table(
+    'infrastructure_projects',meta,
+    Column('id',String,primary_key=True),Column('org',String,index=True,nullable=False),
+    Column('name',String,nullable=False),Column('project_type',String,nullable=False),
+    Column('site_id',String,index=True,nullable=False),
+    Column('evidence_snapshot_id',String,index=True,nullable=False),
+    Column('evidence_content_hash',String,nullable=False),
+    Column('evidence_schema_version',String,nullable=False),
+    Column('evidence_registry_version',String,nullable=False),
+    Column('evidence_snapshot_created',String,nullable=False),
+    Column('boundary_version',Integer,nullable=False),
+    Column('boundary_geometry_fingerprint',String,nullable=False),
+    Column('created',String,nullable=False),
+)
+design_alternatives=Table(
+    'design_alternatives',meta,
+    Column('id',String,primary_key=True),Column('org',String,index=True,nullable=False),
+    Column('project_id',String,index=True,nullable=False),Column('name',String,nullable=False),
+    Column('name_key',String,nullable=False),Column('created',String,nullable=False),
+    UniqueConstraint('org','project_id','name_key',name='uq_design_alternative_name'),
+)
+design_revisions=Table(
+    'design_revisions',meta,
+    Column('id',String,primary_key=True),Column('org',String,index=True,nullable=False),
+    Column('project_id',String,index=True,nullable=False),
+    Column('site_id',String,index=True,nullable=False),
+    Column('alternative_id',String,index=True,nullable=False),
+    Column('revision_number',Integer,nullable=False),
+    Column('parent_revision_id',String,index=True),
+    Column('evidence_snapshot_id',String,index=True,nullable=False),
+    Column('evidence_content_hash',String,nullable=False),
+    Column('evidence_schema_version',String,nullable=False),
+    Column('evidence_registry_version',String,nullable=False),
+    Column('evidence_snapshot_created',String,nullable=False),
+    Column('boundary_version',Integer,nullable=False),
+    Column('boundary_geometry_fingerprint',String,nullable=False),
+    Column('geometry',JSON,nullable=False),Column('geometry_fingerprint',String,nullable=False),
+    Column('source_provenance',JSON,nullable=False),
+    Column('extends_beyond_baseline',Boolean,nullable=False),
+    Column('content_fingerprint',String,nullable=False),
+    Column('idempotency_key',String,nullable=False),
+    Column('request_fingerprint',String,nullable=False),Column('created',String,nullable=False),
+    UniqueConstraint('org','alternative_id','revision_number',name='uq_design_revision_number'),
+    UniqueConstraint('org','alternative_id','idempotency_key',name='uq_design_revision_idempotency'),
 )
 Index('land_evidence_snapshot_boundary',land_evidence_snapshots.c.org,
       land_evidence_snapshots.c.site_id,land_evidence_snapshots.c.boundary_version)
@@ -111,11 +156,17 @@ Index('land_evidence_link_reference',land_evidence_snapshot_links.c.relationship
       land_evidence_snapshot_links.c.reference_id)
 Index('module_run_site',module_runs.c.org,module_runs.c.site_id,
       module_runs.c.boundary_version)
-Index('project_lookup',projects.c.org,projects.c.created)
+Index('project_subject_lookup',project_subjects.c.org,project_subjects.c.created)
 Index('project_evidence_lookup',project_evidence_bundles.c.org,
-      project_evidence_bundles.c.project_id,project_evidence_bundles.c.created)
+      project_evidence_bundles.c.project_subject_id,project_evidence_bundles.c.created)
 Index('project_evidence_member_lookup',project_evidence_bundle_members.c.kind,
       project_evidence_bundle_members.c.member_id)
+Index('infrastructure_project_site',infrastructure_projects.c.org,
+      infrastructure_projects.c.site_id)
+Index('design_alternative_project',design_alternatives.c.org,
+      design_alternatives.c.project_id)
+Index('design_revision_history',design_revisions.c.org,
+      design_revisions.c.alternative_id,design_revisions.c.revision_number)
 forward=Transformer.from_crs(4326,27700,always_xy=True).transform
 backward=Transformer.from_crs(27700,4326,always_xy=True).transform
 PILOT=[-1.65,51.5,-0.85,52.05]

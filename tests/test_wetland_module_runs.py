@@ -45,7 +45,9 @@ def module_database(tmp_path, monkeypatch):
     monkeypatch.delenv('R2_BUCKET', raising=False)
     core.init()
     tables = (
-        core.module_runs, core.land_evidence_snapshot_origins,
+        core.design_revisions, core.design_alternatives,
+        core.infrastructure_projects, core.module_runs,
+        core.land_evidence_snapshot_origins,
         core.land_evidence_snapshot_links, core.land_evidence_snapshot_members,
         core.land_evidence_snapshots, core.assessments, core.sites,
     )

@@ -30,7 +30,7 @@
   "claims": [
     {
       "id": "synthetic-claim-target-a",
-      "project_id": "PROJECT_ID",
+      "project_subject_id": "PROJECT_SUBJECT_ID",
       "phase": "planning",
       "predicate": "target_grid_connection_date",
       "value": {
@@ -51,7 +51,7 @@
     },
     {
       "id": "synthetic-claim-target-b",
-      "project_id": "PROJECT_ID",
+      "project_subject_id": "PROJECT_SUBJECT_ID",
       "phase": "pre_construction",
       "predicate": "target_grid_connection_date",
       "value": {

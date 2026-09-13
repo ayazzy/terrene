@@ -19,6 +19,8 @@ from sqlalchemy.exc import IntegrityError
 from backend import core
 from backend.earth import fingerprint
 from backend.land_evidence_store import (
+    LandEvidenceSnapshotError,
+    LandEvidenceSnapshotNotFound,
     get_land_evidence_snapshot,
     load_land_evidence_snapshot,
 )
@@ -52,7 +54,7 @@ class ProjectEvidenceError(RuntimeError):
     """Base class for Project Evidence persistence failures."""
 
 
-class ProjectNotFound(ProjectEvidenceError):
+class ProjectSubjectNotFound(ProjectEvidenceError):
     """The project is absent or belongs to another organisation."""
 
 
@@ -72,7 +74,7 @@ class Record(BaseModel):
     model_config = ConfigDict(extra='forbid', allow_inf_nan=False, frozen=True)
 
 
-class ProjectCreate(Record):
+class ProjectSubjectCreate(Record):
     name: str = Field(min_length=1, max_length=160)
     project_type: ProjectType
     site_id: str | None = Field(default=None, pattern=IDENTIFIER_PATTERN)
@@ -86,7 +88,7 @@ class ProjectCreate(Record):
         return value
 
 
-class ProjectRecord(Record):
+class ProjectSubjectRecord(Record):
     id: str = Field(pattern=IDENTIFIER_PATTERN)
     org: str = Field(min_length=1, max_length=160)
     name: str = Field(min_length=1, max_length=160)
@@ -96,7 +98,7 @@ class ProjectRecord(Record):
     created: datetime
 
 
-class ProjectIdentity(Record):
+class ProjectSubjectIdentity(Record):
     id: str = Field(pattern=IDENTIFIER_PATTERN)
     org: str = Field(min_length=1, max_length=160)
     name: str = Field(min_length=1, max_length=160)
@@ -159,7 +161,7 @@ class ClaimTime(Record):
 
 class ClaimBase(Record):
     id: str = Field(pattern=IDENTIFIER_PATTERN)
-    project_id: str = Field(pattern=IDENTIFIER_PATTERN)
+    project_subject_id: str = Field(pattern=IDENTIFIER_PATTERN)
     phase: ProjectPhase | None = None
     source_record_id: str = Field(pattern=IDENTIFIER_PATTERN)
     locator: EvidenceLocator
@@ -249,13 +251,17 @@ class LandEvidenceSnapshotLink(Record):
 
 class ProjectEvidenceBundle(Record):
     schema_version: Literal['project_evidence_v1'] = SCHEMA_VERSION
-    project: ProjectIdentity
+    project_subject: ProjectSubjectIdentity
     land_evidence_snapshot: LandEvidenceSnapshotLink | None = None
     sources: list[SourceRecord] = Field(min_length=1, max_length=100)
     claims: list[ProjectClaim] = Field(min_length=1, max_length=500)
 
     @model_validator(mode='after')
     def references_resolve(self):
+        if (self.land_evidence_snapshot is not None
+                and self.land_evidence_snapshot.site_id
+                != self.project_subject.site_id):
+            raise ValueError('Land evidence must identify the Project Subject Site')
         source_by_id = {item.id: item for item in self.sources}
         if len(source_by_id) != len(self.sources):
             raise ValueError('Source record IDs must be unique within a bundle')
@@ -263,8 +269,8 @@ class ProjectEvidenceBundle(Record):
         if len(claim_by_id) != len(self.claims):
             raise ValueError('Claim IDs must be unique within a bundle')
         for claim in self.claims:
-            if claim.project_id != self.project.id:
-                raise ValueError('Every claim must identify the owning project')
+            if claim.project_subject_id != self.project_subject.id:
+                raise ValueError('Every claim must identify the owning Project Subject')
             source = source_by_id.get(claim.source_record_id)
             if source is None:
                 raise ValueError('Every claim must reference a source record in its bundle')
@@ -289,7 +295,7 @@ class ProjectEvidenceBundle(Record):
 class ProjectEvidenceBundleRecord(Record):
     id: str = Field(pattern=IDENTIFIER_PATTERN)
     org: str = Field(min_length=1, max_length=160)
-    project_id: str = Field(pattern=IDENTIFIER_PATTERN)
+    project_subject_id: str = Field(pattern=IDENTIFIER_PATTERN)
     schema_version: Literal['project_evidence_v1']
     content_hash: str = Field(pattern=SHA256_FIELD_PATTERN)
     manifest_sha256: str = Field(pattern=SHA256_FIELD_PATTERN)
@@ -320,15 +326,18 @@ def _project_content(row: dict[str, Any]) -> dict[str, Any]:
     return {key: row[key] for key in ('id', 'org', 'name', 'project_type', 'site_id')}
 
 
-def _project_record(row: dict[str, Any]) -> ProjectRecord:
-    record = ProjectRecord.model_validate(row)
+def _project_record(row: dict[str, Any]) -> ProjectSubjectRecord:
+    record = ProjectSubjectRecord.model_validate(row)
     if record.content_hash != _hash(_project_content(dict(row))):
         raise ProjectEvidenceConflict('Stored Project content hash mismatch')
     return record
 
 
-def create_project(value: ProjectCreate | dict[str, Any], *, org: str) -> ProjectRecord:
-    data = value if isinstance(value, ProjectCreate) else ProjectCreate.model_validate(value)
+def create_project_subject(
+    value: ProjectSubjectCreate | dict[str, Any], *, org: str,
+) -> ProjectSubjectRecord:
+    data = (value if isinstance(value, ProjectSubjectCreate)
+            else ProjectSubjectCreate.model_validate(value))
     if data.site_id is not None:
         with core.engine.connect() as connection:
             site = connection.execute(select(core.sites.c.id).where(
@@ -343,25 +352,37 @@ def create_project(value: ProjectCreate | dict[str, Any], *, org: str) -> Projec
     }
     row['content_hash'] = _hash(_project_content(row))
     with core.engine.begin() as connection:
-        connection.execute(insert(core.projects).values(**row))
+        connection.execute(insert(core.project_subjects).values(**row))
     return _project_record(row)
 
 
-def get_project(project_id: str, *, org: str) -> ProjectRecord:
+def get_project_subject(project_subject_id: str, *, org: str) -> ProjectSubjectRecord:
     with core.engine.connect() as connection:
-        row = connection.execute(select(core.projects).where(
-            core.projects.c.id == project_id, core.projects.c.org == org,
+        row = connection.execute(select(core.project_subjects).where(
+            core.project_subjects.c.id == project_subject_id,
+            core.project_subjects.c.org == org,
         )).mappings().first()
     if row is None:
-        raise ProjectNotFound('Project not found')
+        raise ProjectSubjectNotFound('Project Subject not found')
     return _project_record(dict(row))
 
 
-def _project_identity(project: ProjectRecord) -> ProjectIdentity:
-    return ProjectIdentity(**project.model_dump(exclude={'created'}))
+def list_project_subjects(*, org: str) -> list[ProjectSubjectRecord]:
+    with core.engine.connect() as connection:
+        rows = connection.execute(select(core.project_subjects).where(
+            core.project_subjects.c.org == org,
+        ).order_by(
+            core.project_subjects.c.created.desc(),
+            core.project_subjects.c.id,
+        )).mappings().all()
+    return [_project_record(dict(row)) for row in rows]
 
 
-def _snapshot_link(snapshot_id: str | None, project: ProjectRecord,
+def _project_identity(project: ProjectSubjectRecord) -> ProjectSubjectIdentity:
+    return ProjectSubjectIdentity(**project.model_dump(exclude={'created'}))
+
+
+def _snapshot_link(snapshot_id: str | None, project: ProjectSubjectRecord,
                    *, org: str) -> LandEvidenceSnapshotLink | None:
     if snapshot_id is None:
         return None
@@ -372,13 +393,10 @@ def _snapshot_link(snapshot_id: str | None, project: ProjectRecord,
     try:
         snapshot = get_land_evidence_snapshot(snapshot_id, org=org)
         load_land_evidence_snapshot(snapshot_id, org=org)
-    except Exception as error:
-        from backend.land_evidence_store import LandEvidenceSnapshotNotFound
-        if isinstance(error, LandEvidenceSnapshotNotFound):
-            raise ProjectEvidenceValidationError(
-                'Evidence Snapshot does not resolve in this organisation'
-            ) from error
-        raise
+    except LandEvidenceSnapshotNotFound as error:
+        raise ProjectEvidenceValidationError(
+            'Evidence Snapshot does not resolve in this organisation'
+        ) from error
     if snapshot.site_id != project.site_id:
         raise ProjectEvidenceValidationError(
             'Evidence Snapshot does not belong to the Project Site'
@@ -391,11 +409,11 @@ def _snapshot_link(snapshot_id: str | None, project: ProjectRecord,
 
 
 def build_bundle(value: ProjectEvidenceSubmission | dict[str, Any], *,
-                 project: ProjectRecord, org: str) -> ProjectEvidenceBundle:
+                 project: ProjectSubjectRecord, org: str) -> ProjectEvidenceBundle:
     submission = (value if isinstance(value, ProjectEvidenceSubmission)
                   else ProjectEvidenceSubmission.model_validate(value))
     return ProjectEvidenceBundle(
-        project=_project_identity(project),
+        project_subject=_project_identity(project),
         land_evidence_snapshot=_snapshot_link(
             submission.land_evidence_snapshot_id, project, org=org,
         ),
@@ -410,9 +428,9 @@ def bundle_content_hash(bundle: ProjectEvidenceBundle | dict[str, Any]) -> str:
     return _hash(value.model_dump(mode='json'))
 
 
-def bundle_identity(*, org: str, project_id: str, content_hash: str) -> str:
+def bundle_identity(*, org: str, project_subject_id: str, content_hash: str) -> str:
     return 'project-evidence-bundle:' + fingerprint([
-        org, project_id, SCHEMA_VERSION, content_hash,
+        org, project_subject_id, SCHEMA_VERSION, content_hash,
     ])
 
 
@@ -439,47 +457,52 @@ def _record(row: dict[str, Any]) -> ProjectEvidenceBundleRecord:
 
 
 def _get_row(bundle_id: str, *, org: str,
-             project_id: str | None = None) -> dict[str, Any] | None:
+             project_subject_id: str | None = None) -> dict[str, Any] | None:
     query = select(core.project_evidence_bundles).where(
         core.project_evidence_bundles.c.id == bundle_id,
         core.project_evidence_bundles.c.org == org,
     )
-    if project_id is not None:
-        query = query.where(core.project_evidence_bundles.c.project_id == project_id)
+    if project_subject_id is not None:
+        query = query.where(
+            core.project_evidence_bundles.c.project_subject_id
+            == project_subject_id
+        )
     with core.engine.connect() as connection:
         row = connection.execute(query).mappings().first()
     return dict(row) if row else None
 
 
-def _find_content_row(*, org: str, project_id: str,
+def _find_content_row(*, org: str, project_subject_id: str,
                       content_hash: str) -> dict[str, Any] | None:
     with core.engine.connect() as connection:
         row = connection.execute(select(core.project_evidence_bundles).where(
             core.project_evidence_bundles.c.org == org,
-            core.project_evidence_bundles.c.project_id == project_id,
+            core.project_evidence_bundles.c.project_subject_id
+            == project_subject_id,
             core.project_evidence_bundles.c.schema_version == SCHEMA_VERSION,
             core.project_evidence_bundles.c.content_hash == content_hash,
         )).mappings().first()
     return dict(row) if row else None
 
 
-def _historical_claim_hashes(project_id: str, org: str,
+def _historical_claim_hashes(project_subject_id: str, org: str,
                              claim_ids: set[str]) -> dict[str, str]:
     return {
         claim_id: row['claim_hash']
         for claim_id, row in _historical_claim_records(
-            project_id, org, claim_ids,
+            project_subject_id, org, claim_ids,
         ).items()
     }
 
 
-def _historical_claim_records(project_id: str, org: str,
+def _historical_claim_records(project_subject_id: str, org: str,
                               claim_ids: set[str]) -> dict[str, dict[str, Any]]:
     if not claim_ids:
         return {}
     with core.engine.connect() as connection:
         rows = connection.execute(select(core.project_evidence_claims).where(
-            core.project_evidence_claims.c.project_id == project_id,
+            core.project_evidence_claims.c.project_subject_id
+            == project_subject_id,
             core.project_evidence_claims.c.org == org,
             core.project_evidence_claims.c.claim_id.in_(claim_ids),
         )).mappings()
@@ -487,13 +510,14 @@ def _historical_claim_records(project_id: str, org: str,
 
 
 def _historical_source_hashes(
-    project_id: str, org: str, source_keys: set[tuple[str, str]],
+    project_subject_id: str, org: str, source_keys: set[tuple[str, str]],
 ) -> dict[tuple[str, str], str]:
     if not source_keys:
         return {}
     with core.engine.connect() as connection:
         rows = connection.execute(select(core.project_evidence_sources).where(
-            core.project_evidence_sources.c.project_id == project_id,
+            core.project_evidence_sources.c.project_subject_id
+            == project_subject_id,
             core.project_evidence_sources.c.org == org,
         )).mappings()
         return {
@@ -517,7 +541,9 @@ def _validate_historical_references(bundle: ProjectEvidenceBundle, *, org: str) 
         if claim.supersedes_claim_id is not None
         and claim.supersedes_claim_id not in current_ids
     }
-    historical = _historical_claim_records(bundle.project.id, org, external)
+    historical = _historical_claim_records(
+        bundle.project_subject.id, org, external,
+    )
     if set(historical) != external:
         raise ProjectEvidenceValidationError(
             'Superseded claim does not resolve in this project and organisation'
@@ -528,7 +554,8 @@ def _validate_historical_references(bundle: ProjectEvidenceBundle, *, org: str) 
             continue
         target = historical[target_id]
         target_bundle_row = _get_row(
-            target['first_bundle_id'], org=org, project_id=bundle.project.id,
+            target['first_bundle_id'], org=org,
+            project_subject_id=bundle.project_subject.id,
         )
         if target_bundle_row is None:
             raise ProjectEvidenceConflict(
@@ -565,7 +592,7 @@ def _verify_catalogue(row: dict[str, Any], bundle: ProjectEvidenceBundle) -> Non
         claim.id: _hash(claim.model_dump(mode='json')) for claim in bundle.claims
     }
     claim_records = _historical_claim_records(
-        bundle.project.id, row['org'], set(claim_hashes),
+        bundle.project_subject.id, row['org'], set(claim_hashes),
     )
     if (set(claim_records) != set(claim_hashes)
             or any(claim_records[claim.id]['claim_hash'] != claim_hashes[claim.id]
@@ -577,9 +604,28 @@ def _verify_catalogue(row: dict[str, Any], bundle: ProjectEvidenceBundle) -> Non
         for source in bundle.sources
     }
     if _historical_source_hashes(
-        bundle.project.id, row['org'], set(source_hashes),
+        bundle.project_subject.id, row['org'], set(source_hashes),
     ) != source_hashes:
         raise ProjectEvidenceConflict('Committed Project Evidence source catalogue mismatch')
+
+
+def _verify_land_snapshot_link(bundle: ProjectEvidenceBundle, *, org: str) -> None:
+    link = bundle.land_evidence_snapshot
+    if link is None:
+        return
+    try:
+        snapshot = get_land_evidence_snapshot(link.snapshot_id, org=org)
+        load_land_evidence_snapshot(link.snapshot_id, org=org)
+    except LandEvidenceSnapshotError as error:
+        raise ProjectEvidenceConflict(
+            'Linked Evidence Snapshot is missing or invalid'
+        ) from error
+    if (snapshot.site_id != link.site_id
+            or snapshot.boundary_version != link.boundary_version
+            or snapshot.content_hash != link.content_hash):
+        raise ProjectEvidenceConflict(
+            'Linked Evidence Snapshot contradicts the committed Project Evidence link'
+        )
 
 
 def _load_and_verify(row: dict[str, Any]) -> ProjectEvidenceBundleRead:
@@ -594,10 +640,12 @@ def _load_and_verify(row: dict[str, Any]) -> ProjectEvidenceBundleRead:
         raise ProjectEvidenceConflict('Committed Project Evidence manifest is invalid') from error
     calculated_hash = bundle_content_hash(bundle)
     expected_id = bundle_identity(
-        org=row['org'], project_id=row['project_id'], content_hash=calculated_hash,
+        org=row['org'], project_subject_id=row['project_subject_id'],
+        content_hash=calculated_hash,
     )
-    if (row['id'] != expected_id or row['project_id'] != bundle.project.id
-            or row['org'] != bundle.project.org
+    if (row['id'] != expected_id
+            or row['project_subject_id'] != bundle.project_subject.id
+            or row['org'] != bundle.project_subject.org
             or row['schema_version'] != bundle.schema_version
             or row['content_hash'] != calculated_hash
             or row['source_count'] != len(bundle.sources)
@@ -608,29 +656,38 @@ def _load_and_verify(row: dict[str, Any]) -> ProjectEvidenceBundleRead:
             )):
         raise ProjectEvidenceConflict('Committed Project Evidence identity mismatch')
     _verify_catalogue(row, bundle)
+    _verify_land_snapshot_link(bundle, org=row['org'])
     _validate_historical_references(bundle, org=row['org'])
     record = _record(row)
     return ProjectEvidenceBundleRead(**record.model_dump(), evidence=bundle)
 
 
 def persist_project_evidence(
-    project_id: str, value: ProjectEvidenceSubmission | dict[str, Any], *, org: str,
+    project_subject_id: str, value: ProjectEvidenceSubmission | dict[str, Any],
+    *, org: str,
 ) -> ProjectEvidenceBundleRead:
     """Validate and publish one immutable source-assertion bundle idempotently."""
-    project = get_project(project_id, org=org)
+    project = get_project_subject(project_subject_id, org=org)
     bundle = build_bundle(value, project=project, org=org)
     _validate_historical_references(bundle, org=org)
     content_hash = bundle_content_hash(bundle)
-    bundle_id = bundle_identity(org=org, project_id=project_id, content_hash=content_hash)
+    bundle_id = bundle_identity(
+        org=org, project_subject_id=project_subject_id,
+        content_hash=content_hash,
+    )
 
-    existing = _get_row(bundle_id, org=org, project_id=project_id)
+    existing = _get_row(
+        bundle_id, org=org, project_subject_id=project_subject_id,
+    )
     if existing is not None:
         return _load_and_verify(existing)
 
     claim_hashes = {
         claim.id: _hash(claim.model_dump(mode='json')) for claim in bundle.claims
     }
-    historical = _historical_claim_hashes(project_id, org, set(claim_hashes))
+    historical = _historical_claim_hashes(
+        project_subject_id, org, set(claim_hashes),
+    )
     if any(historical[claim_id] != claim_hashes[claim_id] for claim_id in historical):
         raise ProjectEvidenceConflict(
             'A stable claim ID is already committed with different content'
@@ -640,7 +697,7 @@ def persist_project_evidence(
         for source in bundle.sources
     }
     historical_sources = _historical_source_hashes(
-        project_id, org, set(source_hashes),
+        project_subject_id, org, set(source_hashes),
     )
     if any(historical_sources[key] != source_hashes[key]
            for key in historical_sources):
@@ -651,7 +708,7 @@ def persist_project_evidence(
     manifest = _canonical_bytes(bundle.model_dump(mode='json'))
     manifest_sha256 = sha256(manifest).hexdigest()
     manifest_key = (
-        f'project-evidence/{fingerprint(org)}/{fingerprint(project_id)}/'
+        f'project-evidence/{fingerprint(org)}/{fingerprint(project_subject_id)}/'
         f'{content_hash}/{manifest_sha256}.json'
     )
     core.store_object_immutable(manifest_key, manifest)
@@ -661,7 +718,8 @@ def persist_project_evidence(
 
     created = core.now()
     row = {
-        'id': bundle_id, 'org': org, 'project_id': project_id,
+        'id': bundle_id, 'org': org,
+        'project_subject_id': project_subject_id,
         'schema_version': SCHEMA_VERSION, 'content_hash': content_hash,
         'manifest_sha256': manifest_sha256, 'manifest_key': manifest_key,
         'source_count': len(bundle.sources), 'claim_count': len(bundle.claims),
@@ -680,7 +738,8 @@ def persist_project_evidence(
             for claim in bundle.claims:
                 if claim.id not in historical:
                     connection.execute(insert(core.project_evidence_claims).values(
-                        project_id=project_id, claim_id=claim.id, org=org,
+                        project_subject_id=project_subject_id,
+                        claim_id=claim.id, org=org,
                         predicate=claim.predicate,
                         claim_hash=claim_hashes[claim.id], first_bundle_id=bundle_id,
                         created=created,
@@ -689,14 +748,16 @@ def persist_project_evidence(
                 source_key = (source.id, source.source_version)
                 if source_key not in historical_sources:
                     connection.execute(insert(core.project_evidence_sources).values(
-                        project_id=project_id, source_id=source.id,
+                        project_subject_id=project_subject_id,
+                        source_id=source.id,
                         source_version=source.source_version, org=org,
                         source_hash=source_hashes[source_key],
                         first_bundle_id=bundle_id, created=created,
                     ))
     except IntegrityError:
         existing = _find_content_row(
-            org=org, project_id=project_id, content_hash=content_hash,
+            org=org, project_subject_id=project_subject_id,
+            content_hash=content_hash,
         )
         if existing is None:
             raise
@@ -704,24 +765,27 @@ def persist_project_evidence(
     return _load_and_verify(row)
 
 
-def get_project_evidence(project_id: str, bundle_id: str, *,
+def get_project_evidence(project_subject_id: str, bundle_id: str, *,
                          org: str) -> ProjectEvidenceBundleRead:
-    get_project(project_id, org=org)
-    row = _get_row(bundle_id, org=org, project_id=project_id)
+    get_project_subject(project_subject_id, org=org)
+    row = _get_row(
+        bundle_id, org=org, project_subject_id=project_subject_id,
+    )
     if row is None:
         raise ProjectEvidenceNotFound('Project Evidence bundle not found')
     return _load_and_verify(row)
 
 
-def list_project_evidence(project_id: str, *,
+def list_project_evidence(project_subject_id: str, *,
                           org: str) -> list[ProjectEvidenceBundleRecord]:
-    get_project(project_id, org=org)
+    get_project_subject(project_subject_id, org=org)
     with core.engine.connect() as connection:
         rows = [dict(row) for row in connection.execute(select(
             core.project_evidence_bundles,
         ).where(
             core.project_evidence_bundles.c.org == org,
-            core.project_evidence_bundles.c.project_id == project_id,
+            core.project_evidence_bundles.c.project_subject_id
+            == project_subject_id,
         ).order_by(
             core.project_evidence_bundles.c.created.desc(),
             core.project_evidence_bundles.c.id,

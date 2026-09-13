@@ -42,7 +42,7 @@ def project_database(tmp_path, monkeypatch):
     tables = (
         core.module_runs, core.project_evidence_bundle_members,
         core.project_evidence_sources, core.project_evidence_claims,
-        core.project_evidence_bundles, core.projects,
+        core.project_evidence_bundles, core.project_subjects,
         core.land_evidence_snapshot_origins, core.land_evidence_snapshot_links,
         core.land_evidence_snapshot_members, core.land_evidence_snapshots,
         core.assessments, core.sites,
@@ -67,15 +67,15 @@ def client(project_database):
         yield value
 
 
-def packet(project_id: str) -> dict:
+def packet(project_subject_id: str) -> dict:
     value = json.loads(FIXTURE.read_text())
     for claim in value['claims']:
-        claim['project_id'] = project_id
+        claim['project_subject_id'] = project_subject_id
     return value
 
 
 def create_project(*, org='org-a', name='Synthetic Interconnector', site_id=None):
-    return evidence.create_project({
+    return evidence.create_project_subject({
         'name': name, 'project_type': 'energy_infrastructure', 'site_id': site_id,
     }, org=org)
 
@@ -87,7 +87,7 @@ def count(database, table) -> int:
 
 def counts(database) -> dict[str, int]:
     return {table.name: count(database, table) for table in (
-        core.projects, core.project_evidence_bundles,
+        core.project_subjects, core.project_evidence_bundles,
         core.project_evidence_bundle_members, core.project_evidence_sources,
         core.project_evidence_claims,
         core.land_evidence_snapshots, core.land_evidence_snapshot_members,
@@ -98,7 +98,7 @@ def counts(database) -> dict[str, int]:
 
 def test_synthetic_packet_round_trips_and_conflicting_claims_coexist(
         project_database, client, monkeypatch):
-    project_response = client.post('/api/projects', json={
+    project_response = client.post('/api/project-subjects', json={
         'name': 'Synthetic Interconnector',
         'project_type': 'energy_infrastructure',
         'site_id': None,
@@ -106,13 +106,13 @@ def test_synthetic_packet_round_trips_and_conflicting_claims_coexist(
     assert project_response.status_code == 200, project_response.text
     project = project_response.json()
     response = client.post(
-        f'/api/projects/{project["id"]}/evidence-bundles',
+        f'/api/project-subjects/{project["id"]}/evidence-bundles',
         json=packet(project['id']),
     )
     assert response.status_code == 200, response.text
     committed = response.json()
     assert committed['evidence']['schema_version'] == 'project_evidence_v1'
-    assert committed['evidence']['project']['id'] == project['id']
+    assert committed['evidence']['project_subject']['id'] == project['id']
     assert committed['source_count'] == 2 and committed['claim_count'] == 2
     claims = committed['evidence']['claims']
     assert [claim['value']['date'] for claim in claims] == [
@@ -134,13 +134,15 @@ def test_synthetic_packet_round_trips_and_conflicting_claims_coexist(
             AssertionError('A read attempted immutable publication')
         ),
     )
-    listed = client.get(f'/api/projects/{project["id"]}/evidence-bundles')
+    listed = client.get(
+        f'/api/project-subjects/{project["id"]}/evidence-bundles'
+    )
     read = client.get(
-        f'/api/projects/{project["id"]}/evidence-bundles/{committed["id"]}'
+        f'/api/project-subjects/{project["id"]}/evidence-bundles/{committed["id"]}'
     )
     assert listed.status_code == read.status_code == 200
     assert listed.json() == [{key: committed[key] for key in (
-        'id', 'org', 'project_id', 'schema_version', 'content_hash',
+        'id', 'org', 'project_subject_id', 'schema_version', 'content_hash',
         'manifest_sha256', 'source_count', 'claim_count',
         'land_evidence_snapshot_id', 'created',
     )}]
@@ -153,11 +155,13 @@ def test_project_identity_is_minimal_immutable_and_names_are_not_keys(project_da
     second = create_project(name='Same display name')
     assert first.id != second.id
     assert first.site_id is None and first.name == second.name
-    assert evidence.get_project(first.id, org='org-a') == first
-    with pytest.raises(evidence.ProjectNotFound):
-        evidence.get_project(first.id, org='org-b')
+    assert evidence.get_project_subject(first.id, org='org-a') == first
+    with pytest.raises(evidence.ProjectSubjectNotFound):
+        evidence.get_project_subject(first.id, org='org-b')
     with pytest.raises(ValidationError):
-        evidence.ProjectCreate(name='x', project_type='bess', site_id=None)
+        evidence.ProjectSubjectCreate(
+            name='x', project_type='bess', site_id=None,
+        )
     with pytest.raises(evidence.ProjectEvidenceValidationError):
         create_project(site_id='missing-site')
 
@@ -196,14 +200,14 @@ def test_invalid_values_references_locators_and_time_are_rejected_before_write(
 
 
 def test_api_maps_cross_record_contract_failures_to_422(client):
-    project = client.post('/api/projects', json={
+    project = client.post('/api/project-subjects', json={
         'name': 'Synthetic validation project',
         'project_type': 'other_infrastructure',
     }).json()
     broken = packet(project['id'])
     broken['claims'][0]['source_record_id'] = 'missing-source'
     response = client.post(
-        f'/api/projects/{project["id"]}/evidence-bundles', json=broken,
+        f'/api/project-subjects/{project["id"]}/evidence-bundles', json=broken,
     )
     assert response.status_code == 422
 
@@ -446,28 +450,39 @@ def test_optional_land_snapshot_is_exact_site_scoped_and_does_not_change_snapsho
             tenant_b_project.id, tenant_b_value, org='org-b',
         )
 
+    with project_database.begin() as connection:
+        connection.execute(update(core.land_evidence_snapshots).where(
+            core.land_evidence_snapshots.c.id == snapshot.id,
+        ).values(content_hash='0' * 64))
+    with pytest.raises(evidence.ProjectEvidenceConflict, match='Snapshot'):
+        evidence.get_project_evidence(project.id, committed.id, org='org-a')
+
 
 def test_api_project_and_bundle_tenant_and_project_isolation(client):
-    first = client.post('/api/projects', json={
+    first = client.post('/api/project-subjects', json={
         'name': 'Private A', 'project_type': 'transport_infrastructure',
     }).json()
-    second = client.post('/api/projects', json={
+    second = client.post('/api/project-subjects', json={
         'name': 'Private B', 'project_type': 'water_infrastructure',
     }).json()
     committed = client.post(
-        f'/api/projects/{first["id"]}/evidence-bundles', json=packet(first['id']),
+        f'/api/project-subjects/{first["id"]}/evidence-bundles',
+        json=packet(first['id']),
     ).json()
     assert client.get(
-        f'/api/projects/{second["id"]}/evidence-bundles/{committed["id"]}'
+        f'/api/project-subjects/{second["id"]}/evidence-bundles/{committed["id"]}'
     ).status_code == 404
 
     api.app.dependency_overrides[api.organization] = lambda: 'org-b'
-    assert client.get(f'/api/projects/{first["id"]}').status_code == 404
     assert client.get(
-        f'/api/projects/{first["id"]}/evidence-bundles'
+        f'/api/project-subjects/{first["id"]}'
+    ).status_code == 404
+    assert client.get(
+        f'/api/project-subjects/{first["id"]}/evidence-bundles'
     ).status_code == 404
     assert client.post(
-        f'/api/projects/{first["id"]}/evidence-bundles', json=packet(first['id']),
+        f'/api/project-subjects/{first["id"]}/evidence-bundles',
+        json=packet(first['id']),
     ).status_code == 404
 
 
@@ -491,7 +506,7 @@ def test_stable_claim_identity_and_catalogue_tampering_fail_closed(project_datab
 
     with project_database.begin() as connection:
         connection.execute(update(core.project_evidence_claims).where(
-            core.project_evidence_claims.c.project_id == project.id,
+            core.project_evidence_claims.c.project_subject_id == project.id,
             core.project_evidence_claims.c.claim_id == 'synthetic-claim-target-a',
         ).values(predicate='planning_status'))
     with pytest.raises(evidence.ProjectEvidenceConflict, match='claim catalogue'):
@@ -511,7 +526,7 @@ def test_stable_claim_identity_and_catalogue_tampering_fail_closed(project_datab
         )
     with project_database.begin() as connection:
         connection.execute(update(core.project_evidence_claims).where(
-            core.project_evidence_claims.c.project_id == project.id,
+            core.project_evidence_claims.c.project_subject_id == project.id,
             core.project_evidence_claims.c.claim_id == 'synthetic-claim-target-a',
         ).values(predicate='target_grid_connection_date'))
 
