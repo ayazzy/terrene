@@ -1,0 +1,74 @@
+{
+  "schema_version": "project_evidence_v1",
+  "land_evidence_snapshot_id": null,
+  "sources": [
+    {
+      "id": "synthetic-source-a-v1",
+      "source_version": "synthetic-release-a-1",
+      "publisher": "Synthetic Planning Bulletin",
+      "title": "Synthetic project notice A",
+      "reference": "https://example.invalid/project-notice-a",
+      "published_at": "2030-01-12T09:00:00Z",
+      "recorded_at": "2030-01-13T10:30:00Z",
+      "retained_excerpt": "The project remains under review. Grid connection is targeted for 30 June 2031.",
+      "content_hash": "c541717f4d7eec2b14d4dc3c70157b46f111469b8ccca94f4e15da57afb22a3b",
+      "entry_method": "human_submitted_structured"
+    },
+    {
+      "id": "synthetic-source-b-v1",
+      "source_version": "synthetic-release-b-1",
+      "publisher": "Synthetic Delivery Update",
+      "title": "Synthetic project notice B",
+      "reference": "SYNTHETIC-REFERENCE-B-001",
+      "published_at": null,
+      "recorded_at": "2030-02-02T11:00:00Z",
+      "retained_excerpt": "Construction has not started. The target grid-connection date is 15 September 2032.",
+      "content_hash": "3518b6d455b6f272e124730076a54db5f7205ad6772cba2f5d48d04a20a68788",
+      "entry_method": "human_submitted_structured"
+    }
+  ],
+  "claims": [
+    {
+      "id": "synthetic-claim-target-a",
+      "project_subject_id": "PROJECT_SUBJECT_ID",
+      "phase": "planning",
+      "predicate": "target_grid_connection_date",
+      "value": {
+        "state": "known",
+        "date": "2031-06-30"
+      },
+      "source_record_id": "synthetic-source-a-v1",
+      "locator": {
+        "start": 66,
+        "end": 78,
+        "exact_passage": "30 June 2031"
+      },
+      "time": {
+        "kind": "future_target",
+        "effective_or_event_date": "2031-06-30"
+      },
+      "supersedes_claim_id": null
+    },
+    {
+      "id": "synthetic-claim-target-b",
+      "project_subject_id": "PROJECT_SUBJECT_ID",
+      "phase": "pre_construction",
+      "predicate": "target_grid_connection_date",
+      "value": {
+        "state": "known",
+        "date": "2032-09-15"
+      },
+      "source_record_id": "synthetic-source-b-v1",
+      "locator": {
+        "start": 65,
+        "end": 82,
+        "exact_passage": "15 September 2032"
+      },
+      "time": {
+        "kind": "future_target",
+        "effective_or_event_date": "2032-09-15"
+      },
+      "supersedes_claim_id": null
+    }
+  ]
+}

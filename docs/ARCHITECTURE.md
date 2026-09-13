@@ -32,15 +32,19 @@ Terrene Earth
 
 ### Terrene Earth
 
-Today, Terrene Earth is implemented principally by the existing CRC Earth records plus the validated `land_evidence_v1` projection. The projection has versioned definitions and retains boundary identity, observations, gaps, capabilities, source/raw references, selections and lineage.
+Today, Terrene Earth is implemented principally by the existing CRC Earth records, the validated `land_evidence_v1` projection and immutable `project_evidence_v1` source-assertion bundles. The land projection has versioned definitions and retains boundary identity, observations, gaps, capabilities, source/raw references, selections and lineage.
 
 Registry v3 additionally carries a narrow typed union of OpenMap Local `MappedBuildingObject`, `FunctionalSiteObject`, `RailwayTrackObject` and `RailwayStationObject` records and `ParcelObjectRelationship` records. Priority Habitat evidence retains source-feature relationships and mapped habitat classification. This is intentionally not a universal ontology or graph database.
+
+`project_evidence_v1` represents human-submitted, source-backed assertions about an infrastructure project. A minimal immutable Project has organization ownership, a stable ID, display name, bounded project type and an optional Site relationship; no parcel boundary is fabricated when the Site is unknown. Each bundle retains exact source versions, publication and recording times, excerpts, locators, a small typed claim vocabulary, explicit event/target time semantics and correction lineage. Conflicting claims coexist. Attribution does not establish truth, and no Project Evidence route fetches source URLs or creates a derived conclusion.
 
 ### Immutable Evidence Snapshots
 
 A saved legacy assessment may be projected into an independently identified snapshot. The canonical validated manifest is stored immutably in private object storage; relational tables index identity, membership, links and origin associations. Semantic content and exact manifest bytes have separate hashes. Reuse is content-addressed, publication is compare-and-set, and a changed boundary/source/observation/selection/gap produces a new identity.
 
 The legacy assessment is never updated by projection. Earlier manifests remain byte-identical when later registry/source evidence is added.
+
+Project Evidence uses the same publication discipline in a separate contract rather than forcing project claims into parcel observations. A canonical bundle manifest is published through immutable object storage before one transaction records the bundle, exact ordered membership and stable source-version/claim identity catalogues. Organization and Project identity are part of deterministic bundle identity. Identical retries reuse the first committed bundle, including under concurrent submission; changed evidence creates a new bundle. An optional land relationship pins one specific committed Evidence Snapshot ID, content hash, Site and boundary version—never “latest”.
 
 ### Versioned module bindings
 
@@ -67,6 +71,8 @@ The Overview panel is keyed to the selected assessment. Stored facts and rule-ge
 ## Existing application records
 
 Sites have mutable presentation fields and point to a current immutable boundary version. Assessments snapshot the boundary, dataset/model configuration and evidence at submission. Dataset releases/features and content-addressed raw artifacts retain source provenance. HTML reports render saved assessment evidence; current team review state is shown separately.
+
+Projects are intentionally not a general project-management model. Project Evidence v1 exposes only Project create/read and immutable bundle submit/list/read. It has no editable stage, score, recommendation, task, assignee, pipeline or decision field. A future reasoning module must consume explicitly bound bundle identities and publish its findings as versioned Terrene Reasoning output rather than update evidence.
 
 The current review status is operational state, not yet an append-only Decision record. A future decision architecture should add records rather than recast existing status as historical evidence.
 
@@ -118,4 +124,4 @@ The current UI implements early screening, portfolio navigation and evidence rev
 - Add new entities, versions and bindings when meaning changes; do not silently mutate historical records.
 - Do not optimize the current architecture around 3D visualization.
 
-Detailed implementation references: [Land Intelligence Foundation](LAND-INTELLIGENCE-FOUNDATION.md), [Evidence Snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [wetland binding and ModuleRuns](WETLAND-SNAPSHOT-MODULE-RUN.md), [Priority Habitats](PRIORITY-HABITATS-EVIDENCE.md), [OpenMap Local built world](OPENMAP-LOCAL-BUILT-WORLD.md), and [Screening Context v1](SCREENING-CONTEXT-V1.md).
+Detailed implementation references: [Land Intelligence Foundation](LAND-INTELLIGENCE-FOUNDATION.md), [Evidence Snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [wetland binding and ModuleRuns](WETLAND-SNAPSHOT-MODULE-RUN.md), [Priority Habitats](PRIORITY-HABITATS-EVIDENCE.md), [OpenMap Local built world](OPENMAP-LOCAL-BUILT-WORLD.md), [Screening Context v1](SCREENING-CONTEXT-V1.md), and [Project Evidence v1](PROJECT-EVIDENCE-V1.md).

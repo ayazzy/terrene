@@ -84,6 +84,16 @@ Terrene Earth continues to represent reality and evidence; Terrene Reasoning int
 
 **References:** [Screening Context v1](SCREENING-CONTEXT-V1.md), [Architecture](ARCHITECTURE.md).
 
+## 2026-09-13 — Project source assertions are Earth evidence, not Terrene findings
+
+**Decision:** Store attributed infrastructure-project source assertions as immutable `project_evidence_v1` evidence in Terrene Earth. Terrene-derived findings such as stage, progress, delay, risk, confidence, commercial opportunity or recommendation belong in a separately versioned Terrene Reasoning module and must not be editable fields on the evidence record.
+
+**Rationale:** A citation establishes who asserted something, not that the assertion is true. Source claims can conflict, target dates can pass without becoming completed events, and corrections must preserve what was originally recorded. Keeping those assertions separate from derived findings makes future reasoning inspectable and reproducible.
+
+Infrastructure project intelligence remains an application hypothesis. Implementing its reusable evidence input does not constitute customer validation or a decision that this is Terrene's chosen market.
+
+**References:** [Project Evidence v1](PROJECT-EVIDENCE-V1.md), [Architecture](ARCHITECTURE.md), [Customer Discovery](CUSTOMER-DISCOVERY.md), [North Star](TERRENE-NORTH-STAR.md).
+
 ## 2026-09-13 — Proposed designs are versioned state, not Earth evidence
 
 **Decision:** Represent proposed infrastructure through an organisation-scoped

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, Header, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select,insert,update
 from sqlalchemy.exc import IntegrityError
 from backend.core import *
@@ -166,12 +166,23 @@ from backend.screening_context_report import screening_context_report
 from backend.screening_context_map import (
     ScreeningMapFeatureCollection, build_screening_map_features,
 )
+from backend.project_evidence import (
+    ProjectSubjectCreate, ProjectEvidenceBundleRead, ProjectEvidenceBundleRecord,
+    ProjectEvidenceConflict, ProjectEvidenceNotFound,
+    ProjectEvidenceSubmission, ProjectEvidenceValidationError,
+    ProjectSubjectNotFound, ProjectSubjectRecord,
+    create_project_subject, get_project_subject, get_project_evidence,
+    list_project_evidence, list_project_subjects, persist_project_evidence,
+)
 from backend.design_proposals import (
-    AlternativeInput, AlternativeRecord, ProjectInput, ProjectRecord,
+    AlternativeInput, AlternativeRecord, ProjectInput,
+    ProjectRecord as DesignProjectRecord,
     ProposalConflict, ProposalIntegrityError, ProposalNotFound,
-    RevisionInput, RevisionRecord, create_alternative, create_project,
-    create_revision, get_alternative, get_project, get_revision,
-    list_alternatives, list_projects, list_revisions,
+    RevisionInput, RevisionRecord, create_alternative,
+    create_project as create_design_project,
+    create_revision, get_alternative, get_project as get_design_project,
+    get_revision, list_alternatives, list_projects as list_design_projects,
+    list_revisions,
 )
 
 
@@ -230,6 +241,77 @@ def context_report(id: str, org=Depends(organization)):
                 'Cache-Control': 'no-store'})
 
 
+# Project Evidence stores attributed source claims only. No route in this
+# surface edits a Project Subject, fetches a source URL, or creates Reasoning output.
+def project_evidence_operation(operation):
+    try:
+        return operation()
+    except (ProjectSubjectNotFound, ProjectEvidenceNotFound):
+        raise HTTPException(404, 'Record not found')
+    except ProjectEvidenceValidationError as error:
+        raise HTTPException(422, str(error))
+    except ValidationError:
+        raise HTTPException(422, 'Project Evidence references or locators are invalid.')
+    except ProjectEvidenceConflict:
+        # Avoid exposing private object keys or cross-record integrity details.
+        raise HTTPException(409, 'Project Evidence conflicts with committed immutable history.')
+    except (LandEvidenceSnapshotError, ImmutableObjectConflict):
+        raise HTTPException(500, 'Project Evidence integrity check failed; history has not been overwritten.')
+
+
+@app.post('/api/project-subjects', response_model=ProjectSubjectRecord)
+def create_evidence_project_subject(
+    data: ProjectSubjectCreate, org=Depends(organization),
+):
+    return project_evidence_operation(
+        lambda: create_project_subject(data, org=org)
+    )
+
+
+@app.get('/api/project-subjects', response_model=list[ProjectSubjectRecord])
+def read_project_subjects(org=Depends(organization)):
+    return project_evidence_operation(lambda: list_project_subjects(org=org))
+
+
+@app.get('/api/project-subjects/{id}', response_model=ProjectSubjectRecord)
+def read_project_subject(id: str, org=Depends(organization)):
+    return project_evidence_operation(
+        lambda: get_project_subject(id, org=org)
+    )
+
+
+@app.post(
+    '/api/project-subjects/{id}/evidence-bundles',
+    response_model=ProjectEvidenceBundleRead,
+)
+def submit_project_evidence(
+    id: str, data: ProjectEvidenceSubmission, org=Depends(organization),
+):
+    return project_evidence_operation(
+        lambda: persist_project_evidence(id, data, org=org)
+    )
+
+
+@app.get(
+    '/api/project-subjects/{id}/evidence-bundles',
+    response_model=list[ProjectEvidenceBundleRecord],
+)
+def read_project_evidence_list(id: str, org=Depends(organization)):
+    return project_evidence_operation(
+        lambda: list_project_evidence(id, org=org)
+    )
+
+
+@app.get(
+    '/api/project-subjects/{id}/evidence-bundles/{bundle_id}',
+    response_model=ProjectEvidenceBundleRead,
+)
+def read_project_evidence_bundle(
+    id: str, bundle_id: str, org=Depends(organization),
+):
+    return project_evidence_operation(
+        lambda: get_project_evidence(id, bundle_id, org=org)
+    )
 def proposal_operation(operation):
     try:
         return operation()
@@ -246,20 +328,22 @@ def proposal_operation(operation):
         raise HTTPException(422, str(error))
 
 
-@app.post('/api/projects', response_model=ProjectRecord)
+@app.post('/api/projects', response_model=DesignProjectRecord)
 def create_infrastructure_project(data: ProjectInput, org=Depends(organization)):
-    return proposal_operation(lambda: create_project(data, org=org))
+    return proposal_operation(lambda: create_design_project(data, org=org))
 
 
-@app.get('/api/projects', response_model=list[ProjectRecord])
+@app.get('/api/projects', response_model=list[DesignProjectRecord])
 def read_infrastructure_projects(site_id: str | None = None,
                                  org=Depends(organization)):
-    return proposal_operation(lambda: list_projects(org=org, site_id=site_id))
+    return proposal_operation(
+        lambda: list_design_projects(org=org, site_id=site_id)
+    )
 
 
-@app.get('/api/projects/{id}', response_model=ProjectRecord)
+@app.get('/api/projects/{id}', response_model=DesignProjectRecord)
 def read_infrastructure_project(id: str, org=Depends(organization)):
-    return proposal_operation(lambda: get_project(id, org=org))
+    return proposal_operation(lambda: get_design_project(id, org=org))
 
 
 @app.post('/api/projects/{id}/alternatives', response_model=AlternativeRecord)
