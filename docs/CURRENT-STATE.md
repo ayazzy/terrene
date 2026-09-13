@@ -2,7 +2,7 @@
 
 > Repository implementation is authoritative where this document is stale.
 
-This is an operational map of what exists on 10 September 2026. Inspect the relevant code, tests and linked implementation reports before changing it.
+This is an operational map of what exists on 13 September 2026. Inspect the relevant code, tests and linked implementation reports before changing it.
 
 ## Product architecture
 
@@ -24,6 +24,7 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 - Bind a committed snapshot through `wetland_input_binding_v1`, execute the unchanged wetland model, and persist an immutable ModuleRun.
 - Intentionally prepare or reuse Screening Context v1 for a selected saved assessment, inspect its non-scoring facts/gaps/provenance in Overview, and download a self-contained HTML review artifact.
 - Read the built-world objects attached to an immutable Screening Context run through an authenticated, organization-scoped WGS84 GeoJSON presentation contract without changing their authoritative EPSG:27700 evidence.
+- Create/read minimal organization-owned infrastructure Projects without requiring a Site, and submit/list/read immutable human-structured `project_evidence_v1` source-assertion bundles.
 
 Implementation reports: [snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [snapshot-driven wetland runs](WETLAND-SNAPSHOT-MODULE-RUN.md), [evidence-aware site analysis](UI-STAGE-2.md), and [map-first home](UI-STAGE-3-MAP-HOME.md).
 
@@ -51,6 +52,8 @@ Environment Agency Working with Natural Processes floodplain-reconnection data i
 - `RailwayStationObject`
 
 `ParcelObjectRelationship` records explicit topology such as `contained_within`, `overlaps`, `touches`, `crosses`, `intersects` and `minimum_distance`, with source and processing provenance. Derived observations include mapped building and functional-site overlap, mapped railway length within a parcel, and minimum track/station distance when search coverage is complete.
+
+`project_evidence_v1` is a separate Terrene Earth contract for attributed project assertions. It retains exact source versions, excerpts and locators; publication, recording and effective/target dates; a bounded planning/construction/grid-target vocabulary; explicit correction lineage; and an optional pin to one committed land Evidence Snapshot. Contradictory claims coexist and no claim is promoted to a Terrene conclusion.
 
 Priority Habitat Inventory observations preserve contributing source features and mapped habitat classes. Known mapped zero is represented separately from missing, partial, outside-coverage or failed evidence.
 
@@ -105,8 +108,8 @@ Screening Context map-feature verification: **183 backend tests passed on SQLite
 
 ## Latest meaningful implementation
 
-The Screening Context map-feature read contract was completed after Site Analysis Workspace v2A on 10 September 2026. It adds an authenticated, deterministic WGS84 presentation of the selected immutable run's persisted built-world evidence for the workspace without changing acquisition, evidence projection, Screening Context rules, wetland bindings/calculations, authoritative EPSG:27700 geometry, retained snapshots or pre-existing ModuleRuns.
+Project Evidence v1 was completed on 13 September 2026. It adds an authenticated backend contract and immutable persistence for minimal Projects and human-submitted, source-backed project evidence without changing land evidence, existing assessments, Screening Context, wetland bindings/calculations, retained snapshots or pre-existing ModuleRuns.
 
 ## Current recommended engineering question
 
-Use the Screening Context pilot with a prospective reviewer to establish which source distinctions and unresolved evidence questions matter in an actual diligence workflow before expanding its rules or datasets.
+Before building Project Reasoning, decide and version how a run binds one or more explicit Project Evidence bundle IDs and how it treats corrections and unresolved contradictions; it must never silently consume “latest” evidence. Customer discovery must still test whether infrastructure project intelligence is a valuable workflow.

@@ -65,6 +65,44 @@ module_runs=Table(
         'input_binding_version','model_signature',name='uq_module_run_execution',
     ),
 )
+projects=Table(
+    'projects',meta,
+    Column('id',String,primary_key=True),Column('org',String,index=True,nullable=False),
+    Column('name',String,nullable=False),Column('project_type',String,nullable=False),
+    Column('site_id',String,index=True),Column('content_hash',String,nullable=False),
+    Column('created',String,nullable=False),
+)
+project_evidence_bundles=Table(
+    'project_evidence_bundles',meta,
+    Column('id',String,primary_key=True),Column('org',String,index=True,nullable=False),
+    Column('project_id',String,index=True,nullable=False),
+    Column('schema_version',String,nullable=False),Column('content_hash',String,nullable=False),
+    Column('manifest_sha256',String,nullable=False),Column('manifest_key',Text,nullable=False),
+    Column('source_count',Integer,nullable=False),Column('claim_count',Integer,nullable=False),
+    Column('land_evidence_snapshot_id',String,index=True),Column('created',String,nullable=False),
+    UniqueConstraint('org','project_id','schema_version','content_hash',
+                     name='uq_project_evidence_bundle_content'),
+)
+project_evidence_bundle_members=Table(
+    'project_evidence_bundle_members',meta,
+    Column('bundle_id',String,primary_key=True),Column('kind',String,primary_key=True),
+    Column('member_id',String,primary_key=True),Column('position',Integer,nullable=False),
+    Column('content_hash',String,nullable=False),
+)
+project_evidence_claims=Table(
+    'project_evidence_claims',meta,
+    Column('project_id',String,primary_key=True),Column('claim_id',String,primary_key=True),
+    Column('org',String,index=True,nullable=False),Column('predicate',String,nullable=False),
+    Column('claim_hash',String,nullable=False),
+    Column('first_bundle_id',String,nullable=False),Column('created',String,nullable=False),
+)
+project_evidence_sources=Table(
+    'project_evidence_sources',meta,
+    Column('project_id',String,primary_key=True),Column('source_id',String,primary_key=True),
+    Column('source_version',String,primary_key=True),Column('org',String,index=True,nullable=False),
+    Column('source_hash',String,nullable=False),Column('first_bundle_id',String,nullable=False),
+    Column('created',String,nullable=False),
+)
 Index('land_evidence_snapshot_boundary',land_evidence_snapshots.c.org,
       land_evidence_snapshots.c.site_id,land_evidence_snapshots.c.boundary_version)
 Index('land_evidence_member_lookup',land_evidence_snapshot_members.c.kind,
@@ -73,6 +111,11 @@ Index('land_evidence_link_reference',land_evidence_snapshot_links.c.relationship
       land_evidence_snapshot_links.c.reference_id)
 Index('module_run_site',module_runs.c.org,module_runs.c.site_id,
       module_runs.c.boundary_version)
+Index('project_lookup',projects.c.org,projects.c.created)
+Index('project_evidence_lookup',project_evidence_bundles.c.org,
+      project_evidence_bundles.c.project_id,project_evidence_bundles.c.created)
+Index('project_evidence_member_lookup',project_evidence_bundle_members.c.kind,
+      project_evidence_bundle_members.c.member_id)
 forward=Transformer.from_crs(4326,27700,always_xy=True).transform
 backward=Transformer.from_crs(27700,4326,always_xy=True).transform
 PILOT=[-1.65,51.5,-0.85,52.05]
@@ -144,11 +187,11 @@ def store_object_immutable(key,content,content_type='application/json'):
     local development uses exclusive file creation.
     """
     payload=content if isinstance(content,bytes) else content.encode()
-    existing=load_object(key)
-    if existing is not None:
-        if existing!=payload:raise ImmutableObjectConflict('Immutable object already exists with different content: '+key)
-        return False
     if os.getenv('R2_BUCKET'):
+        existing=load_object(key)
+        if existing is not None:
+            if existing!=payload:raise ImmutableObjectConflict('Immutable object already exists with different content: '+key)
+            return False
         import boto3
         from botocore.exceptions import ClientError
         client=boto3.client('s3',endpoint_url=os.environ['R2_ENDPOINT'],aws_access_key_id=os.environ['R2_ACCESS_KEY_ID'],aws_secret_access_key=os.environ['R2_SECRET_ACCESS_KEY'],region_name='auto')
@@ -164,12 +207,23 @@ def store_object_immutable(key,content,content_type='application/json'):
         return True
     if os.getenv('CRC_ENV')!='development':raise RuntimeError('Hosted mode requires R2 storage.')
     p=ROOT/'objects'/key;p.parent.mkdir(parents=True,exist_ok=True)
-    try:
-        with p.open('xb') as handle:handle.write(payload)
-        return True
-    except FileExistsError:
+    if p.is_file():
         if p.read_bytes()!=payload:raise ImmutableObjectConflict('Immutable object already exists with different content: '+key)
         return False
+    # Publish only fully written bytes. Writing directly with ``xb`` makes the
+    # destination visible before the payload is complete, so an identical
+    # concurrent writer can otherwise observe a partial file as a conflict.
+    temporary=p.with_name(p.name+'.'+str(uuid.uuid4())+'.tmp')
+    try:
+        with temporary.open('xb') as handle:handle.write(payload)
+        try:
+            os.link(temporary,p)
+            return True
+        except FileExistsError:
+            if p.read_bytes()!=payload:raise ImmutableObjectConflict('Immutable object already exists with different content: '+key)
+            return False
+    finally:
+        temporary.unlink(missing_ok=True)
 
 def load_object(key):
     """Read a server-generated private evidence key; absence is explicit."""

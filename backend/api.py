@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, Header, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select,insert,update
 from sqlalchemy.exc import IntegrityError
 from backend.core import *
@@ -166,6 +166,14 @@ from backend.screening_context_report import screening_context_report
 from backend.screening_context_map import (
     ScreeningMapFeatureCollection, build_screening_map_features,
 )
+from backend.project_evidence import (
+    ProjectCreate, ProjectEvidenceBundleRead, ProjectEvidenceBundleRecord,
+    ProjectEvidenceConflict, ProjectEvidenceNotFound,
+    ProjectEvidenceSubmission, ProjectEvidenceValidationError, ProjectNotFound,
+    ProjectRecord, create_project as create_project_record,
+    get_project as get_project_record, get_project_evidence,
+    list_project_evidence, persist_project_evidence,
+)
 
 
 def screening_operation(operation):
@@ -221,3 +229,69 @@ def context_report(id: str, org=Depends(organization)):
         review_status=site['status'], current_version=site['version'],
     ), headers={'Content-Disposition': 'attachment; filename="terrene-screening-context.html"',
                 'Cache-Control': 'no-store'})
+
+
+# Project Evidence stores attributed source claims only. No route in this
+# surface edits a Project, fetches a source URL, or creates Reasoning output.
+def project_evidence_operation(operation):
+    try:
+        return operation()
+    except (ProjectNotFound, ProjectEvidenceNotFound):
+        raise HTTPException(404, 'Record not found')
+    except ProjectEvidenceValidationError as error:
+        raise HTTPException(422, str(error))
+    except ValidationError:
+        raise HTTPException(422, 'Project Evidence references or locators are invalid.')
+    except ProjectEvidenceConflict:
+        # Avoid exposing private object keys or cross-record integrity details.
+        raise HTTPException(409, 'Project Evidence conflicts with committed immutable history.')
+    except (LandEvidenceSnapshotError, ImmutableObjectConflict):
+        raise HTTPException(500, 'Project Evidence integrity check failed; history has not been overwritten.')
+
+
+@app.post('/api/projects', response_model=ProjectRecord)
+def create_project(data: ProjectCreate, org=Depends(organization)):
+    return project_evidence_operation(
+        lambda: create_project_record(data, org=org)
+    )
+
+
+@app.get('/api/projects/{id}', response_model=ProjectRecord)
+def read_project(id: str, org=Depends(organization)):
+    return project_evidence_operation(
+        lambda: get_project_record(id, org=org)
+    )
+
+
+@app.post(
+    '/api/projects/{id}/evidence-bundles',
+    response_model=ProjectEvidenceBundleRead,
+)
+def submit_project_evidence(
+    id: str, data: ProjectEvidenceSubmission, org=Depends(organization),
+):
+    return project_evidence_operation(
+        lambda: persist_project_evidence(id, data, org=org)
+    )
+
+
+@app.get(
+    '/api/projects/{id}/evidence-bundles',
+    response_model=list[ProjectEvidenceBundleRecord],
+)
+def read_project_evidence_list(id: str, org=Depends(organization)):
+    return project_evidence_operation(
+        lambda: list_project_evidence(id, org=org)
+    )
+
+
+@app.get(
+    '/api/projects/{id}/evidence-bundles/{bundle_id}',
+    response_model=ProjectEvidenceBundleRead,
+)
+def read_project_evidence_bundle(
+    id: str, bundle_id: str, org=Depends(organization),
+):
+    return project_evidence_operation(
+        lambda: get_project_evidence(id, bundle_id, org=org)
+    )
