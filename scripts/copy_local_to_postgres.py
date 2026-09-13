@@ -11,6 +11,7 @@ copied=[datasets,features,sites,assessments,land_evidence_snapshots,
         land_evidence_snapshot_origins,module_runs,project_subjects,
         project_evidence_bundles,project_evidence_bundle_members,
         project_evidence_sources,project_evidence_claims,
+        project_intelligence_runs,
         infrastructure_projects,design_alternatives,design_revisions]
 with engine.connect() as c:
     if any(c.execute(select(func.count()).select_from(t)).scalar() for t in copied):raise SystemExit('Target must be empty; no data changed.')

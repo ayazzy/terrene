@@ -18,7 +18,7 @@ def setup():
     init()
     with engine.begin() as c:
         for t in [design_revisions,design_alternatives,infrastructure_projects,
-                  module_runs,project_evidence_bundle_members,
+                  project_intelligence_runs,module_runs,project_evidence_bundle_members,
                   project_evidence_sources,project_evidence_claims,
                   project_evidence_bundles,project_subjects,
                   land_evidence_snapshot_origins,

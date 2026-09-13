@@ -2,7 +2,6 @@
 from copy import deepcopy
 import json
 import os
-from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -13,10 +12,7 @@ from backend import api, core
 from backend import land_evidence_store as evidence_store
 from backend.land_evidence import project_land_evidence
 from test_wetland_module_runs import insert_assessment, legacy_observation
-
-
-FIXTURE = (Path(__file__).parents[1] / 'data' / 'verification' /
-           'england-real-v1-final' / 'port-meadow-after.json')
+from synthetic_assessment import synthetic_assessment
 
 
 @pytest.fixture
@@ -53,7 +49,7 @@ def proposal_api(tmp_path, monkeypatch):
 
 
 def saved():
-    return json.loads(FIXTURE.read_text())
+    return synthetic_assessment()
 
 
 def commit_baseline(database, *, org='org-a', site_id=None, assessment_id='assessment-1'):

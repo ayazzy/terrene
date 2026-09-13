@@ -1,4 +1,4 @@
-"""Additive schema migrations; v6 proposals, v7 Project Evidence subjects."""
+"""Additive schema migrations through v8 Project Intelligence runs."""
 from backend.core import *
 if __name__=='__main__':
     init()
@@ -11,7 +11,7 @@ if __name__=='__main__':
                 'infrastructure_projects', 'design_alternatives',
                 'design_revisions', 'project_subjects',
                 'project_evidence_bundles', 'project_evidence_claims',
-                'project_evidence_sources',
+                'project_evidence_sources', 'project_intelligence_runs',
             ]:
                 c.execute(text(f'ALTER TABLE {table} ENABLE ROW LEVEL SECURITY'))
                 # Browser roles get no direct table privileges: all mutations/downloads use authenticated API.
@@ -27,4 +27,5 @@ if __name__=='__main__':
             c.execute(text('INSERT INTO crc_schema_migrations(version) VALUES (5) ON CONFLICT DO NOTHING'))
             c.execute(text('INSERT INTO crc_schema_migrations(version) VALUES (6) ON CONFLICT DO NOTHING'))
             c.execute(text('INSERT INTO crc_schema_migrations(version) VALUES (7) ON CONFLICT DO NOTHING'))
-    print('CRC schema migrations 1–7 applied')
+            c.execute(text('INSERT INTO crc_schema_migrations(version) VALUES (8) ON CONFLICT DO NOTHING'))
+    print('CRC schema migrations 1–8 applied')

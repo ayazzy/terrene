@@ -9,17 +9,16 @@ from threading import Barrier
 import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
-from sqlalchemy import create_engine, delete, func, insert, select, update
+from sqlalchemy import create_engine, delete, func, inspect, insert, select, text, update
 
 from backend import api, core
 from backend.land_evidence import project_land_evidence
 from backend import land_evidence_store
 from backend import project_evidence as evidence
+from synthetic_assessment import synthetic_assessment
 
 
 FIXTURE = Path(__file__).parent / 'fixtures' / 'project_evidence_v1' / 'synthetic_packet.json'
-REAL_FIXTURE = (Path(__file__).parents[1] / 'data' / 'verification'
-                / 'england-real-v1-final' / 'port-meadow-after.json')
 
 
 @pytest.fixture
@@ -40,7 +39,8 @@ def project_database(tmp_path, monkeypatch):
     monkeypatch.delenv('R2_BUCKET', raising=False)
     core.init()
     tables = (
-        core.module_runs, core.project_evidence_bundle_members,
+        core.project_intelligence_runs, core.module_runs,
+        core.project_evidence_bundle_members,
         core.project_evidence_sources, core.project_evidence_claims,
         core.project_evidence_bundles, core.project_subjects,
         core.land_evidence_snapshot_origins, core.land_evidence_snapshot_links,
@@ -164,6 +164,63 @@ def test_project_identity_is_minimal_immutable_and_names_are_not_keys(project_da
         )
     with pytest.raises(evidence.ProjectEvidenceValidationError):
         create_project(site_id='missing-site')
+
+
+def test_project_subject_collection_is_tenant_scoped_and_read_only(
+        project_database, client):
+    first = create_project(name='First subject')
+    second = create_project(name='Second subject')
+    create_project(org='org-b', name='Other tenant subject')
+    before = counts(project_database)
+    response = client.get('/api/project-subjects')
+    assert response.status_code == 200
+    assert {item['id'] for item in response.json()} == {first.id, second.id}
+    assert counts(project_database) == before
+
+
+def test_legacy_project_tables_reconcile_in_place_without_losing_rows(
+        tmp_path, monkeypatch):
+    database = create_engine('sqlite:///' + str(tmp_path / 'legacy-projects.db'))
+    core.meta.create_all(database)
+    legacy = {
+        'id': 'legacy-project', 'org': 'org-a', 'name': 'Legacy subject',
+        'project_type': 'energy_infrastructure', 'site_id': None,
+        'created': '2030-01-01T00:00:00+00:00',
+    }
+    legacy['content_hash'] = evidence._hash(evidence._project_content(legacy))
+    with database.begin() as connection:
+        connection.execute(insert(core.project_subjects).values(**legacy))
+        connection.execute(insert(core.project_evidence_bundles).values(
+            id='legacy-bundle', org='org-a', project_subject_id=legacy['id'],
+            schema_version='project_evidence_v1', content_hash='a' * 64,
+            manifest_sha256='b' * 64, manifest_key='legacy/manifest.json',
+            source_count=1, claim_count=1, land_evidence_snapshot_id=None,
+            created=legacy['created'],
+        ))
+        connection.execute(text('ALTER TABLE project_subjects RENAME TO projects'))
+        for table_name in (
+            'project_evidence_bundles', 'project_evidence_claims',
+            'project_evidence_sources',
+        ):
+            connection.execute(text(
+                f'ALTER TABLE {table_name} '
+                'RENAME COLUMN project_subject_id TO project_id'
+            ))
+    monkeypatch.setattr(core, 'engine', database)
+    core.init()
+    inspector = inspect(database)
+    assert 'projects' not in inspector.get_table_names()
+    assert 'project_subjects' in inspector.get_table_names()
+    for table_name in (
+        'project_evidence_bundles', 'project_evidence_claims',
+        'project_evidence_sources',
+    ):
+        columns = {column['name'] for column in inspector.get_columns(table_name)}
+        assert 'project_subject_id' in columns and 'project_id' not in columns
+    assert evidence.get_project_subject(legacy['id'], org='org-a').name == 'Legacy subject'
+    with database.connect() as connection:
+        assert connection.execute(select(core.project_evidence_bundles.c.project_subject_id)).scalar_one() == legacy['id']
+    database.dispose()
 
 
 def test_invalid_values_references_locators_and_time_are_rejected_before_write(
@@ -387,7 +444,7 @@ def test_explicit_correction_preserves_original_and_rejects_broken_boundaries(
 
 def test_optional_land_snapshot_is_exact_site_scoped_and_does_not_change_snapshot(
         project_database):
-    payload = json.loads(REAL_FIXTURE.read_text())
+    payload = synthetic_assessment()
     projection = project_land_evidence(payload)
     with project_database.begin() as connection:
         connection.execute(insert(core.sites).values(

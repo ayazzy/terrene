@@ -184,6 +184,13 @@ from backend.design_proposals import (
     get_revision, list_alternatives, list_projects as list_design_projects,
     list_revisions,
 )
+from backend.project_evidence_binding import ProjectEvidenceBindingError
+from backend.project_intelligence_store import (
+    ProjectIntelligenceConflict, ProjectIntelligenceNotFound,
+    ProjectIntelligenceRunRecord, ProjectIntelligenceRunRequest,
+    ProjectIntelligenceRunSummary, get_project_intelligence_run,
+    list_project_intelligence_runs, run_project_intelligence,
+)
 
 
 def screening_operation(operation):
@@ -311,6 +318,56 @@ def read_project_evidence_bundle(
 ):
     return project_evidence_operation(
         lambda: get_project_evidence(id, bundle_id, org=org)
+    )
+
+
+def project_intelligence_operation(operation):
+    try:
+        return operation()
+    except (ProjectSubjectNotFound, ProjectEvidenceNotFound,
+            ProjectIntelligenceNotFound):
+        raise HTTPException(404, 'Record not found')
+    except (ProjectEvidenceBindingError, ProjectEvidenceValidationError,
+            ValidationError, ValueError) as error:
+        raise HTTPException(422, str(error))
+    except (ProjectEvidenceConflict, ProjectIntelligenceConflict,
+            LandEvidenceSnapshotError, ImmutableObjectConflict):
+        raise HTTPException(
+            409,
+            'Project Intelligence integrity check failed; immutable history was not changed.',
+        )
+
+
+@app.post(
+    '/api/project-subjects/{id}/intelligence-runs',
+    response_model=ProjectIntelligenceRunRecord,
+)
+def create_project_intelligence_run(
+    id: str, data: ProjectIntelligenceRunRequest,
+    org=Depends(organization),
+):
+    return project_intelligence_operation(
+        lambda: run_project_intelligence(id, data, org=org)
+    )
+
+
+@app.get(
+    '/api/project-subjects/{id}/intelligence-runs',
+    response_model=list[ProjectIntelligenceRunSummary],
+)
+def read_project_intelligence_runs(id: str, org=Depends(organization)):
+    return project_intelligence_operation(
+        lambda: list_project_intelligence_runs(id, org=org)
+    )
+
+
+@app.get(
+    '/api/project-intelligence-runs/{id}',
+    response_model=ProjectIntelligenceRunRecord,
+)
+def read_project_intelligence_run(id: str, org=Depends(organization)):
+    return project_intelligence_operation(
+        lambda: get_project_intelligence_run(id, org=org)
     )
 def proposal_operation(operation):
     try:
