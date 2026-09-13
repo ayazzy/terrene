@@ -109,3 +109,19 @@ latest evidence or overwriting an alternative would make historical comparisons
 unreliable.
 
 **References:** [Architecture](ARCHITECTURE.md), [Sprint 001](sprints/001-design-proposals.md).
+
+## 2026-09-13 — Project Subjects and Design Studies are separate contracts
+
+**Decision:** Use `project_subjects` and `/api/project-subjects` for monitored real-world projects that own Project Evidence. Preserve `infrastructure_projects` and `/api/projects` as the compatibility contract for Site- and Evidence-Snapshot-pinned Design Studies containing Alternatives and Revisions.
+
+**Rationale:** A real-world project may be investigated before Terrene knows its Site. A Design Study is a proposed-state container whose meaning depends on one exact parcel baseline. Combining them would either fabricate spatial identity for source intelligence or weaken Design Revision reproducibility.
+
+**References:** [Project Intelligence v1](PROJECT-INTELLIGENCE-V1.md), [Architecture](ARCHITECTURE.md).
+
+## 2026-09-13 — Project reasoning binds explicit evidence and preserves conflict
+
+**Decision:** `project_intelligence_v1` consumes only `project_evidence_binding_v1`, created from explicit bundle IDs. It keeps active conflicts visible, applies only explicit corrections, evaluates targets against the binding evidence-as-of time, and persists complete results in dedicated immutable Project Intelligence runs.
+
+**Rationale:** “Latest” selection and publication recency would make results non-reproducible and could turn an attributed assertion into an unsupported conclusion. Dedicated runs support non-spatial Project Subjects without weakening the Site-bound ModuleRun contract.
+
+**References:** [Project Intelligence v1](PROJECT-INTELLIGENCE-V1.md), [Architecture](ARCHITECTURE.md).

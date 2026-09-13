@@ -26,6 +26,8 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 - Read the built-world objects attached to an immutable Screening Context run through an authenticated, organization-scoped WGS84 GeoJSON presentation contract without changing their authoritative EPSG:27700 evidence.
 - View and select persisted buildings, functional sites, railway tracks and railway stations on the Site Analysis Workspace map, with truthful per-layer availability and one shared parcel-relationship/source inspector.
 - Create/read minimal organization-owned Project Subjects without requiring a Site, and submit/list/read immutable human-structured `project_evidence_v1` source-assertion bundles.
+- Bind explicit Project Evidence bundles through `project_evidence_binding_v1`, run deterministic `project_intelligence_v1`, and list/read immutable project-specific runs.
+- Inspect Project Subjects, exact source assertions, Terrene conclusions, conflicts, unresolved questions and historical runs in a separate read-only Project Intelligence workspace.
 
 Implementation reports: [snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [snapshot-driven wetland runs](WETLAND-SNAPSHOT-MODULE-RUN.md), [evidence-aware site analysis](UI-STAGE-2.md), and [map-first home](UI-STAGE-3-MAP-HOME.md).
 
@@ -66,6 +68,8 @@ The 12 retained Oxford verification locations have inspectable physical and hydr
 
 `site_screening_context_v1` adds deterministic, offline human-review context over a committed snapshot through `screening_context_binding_v1`. It preserves source-bounded facts and gaps, qualifies mapped zeros, presents fixed source-semantic comparisons and asks unresolved review questions. It produces no score or progression decision. These are pilot rules, not customer-validated requirements.
 
+`project_intelligence_v1` is deterministic reasoning over one explicit `project_evidence_binding_v1`. It reports bounded lifecycle stage, separate planning/construction findings, grid target states, conflicts and evidence-grounded questions. Explicit corrections supersede active use without erasing history; recency alone never resolves conflict, and elapsed targets do not establish outcomes. Results include exact claim/source-version/passage references and no score or recommendation.
+
 ## Application/UI state
 
 The current home is a map-first portfolio view with a preserved list workflow. Site Analysis Workspace v2A leads with source-bounded Screening Context, places detailed facts/gaps/provenance under Evidence, places the unchanged wetland assessment under Models, and keeps immutable assessment selection under History. Site-level actions explicitly distinguish creating an assessment, preparing/reusing or exporting Screening Context, exporting the wetland model report and changing the current team review status.
@@ -80,8 +84,9 @@ Screening Context is an explicit assessment action: POST creates/reuses a snapsh
 
 The Screening Context read lifecycle is finite: stored, absent, unsupported, authentication/authorization and server/network outcomes are distinct; unresolved reads recover to Retry after 15 seconds. Routine workspace refreshes do not restart an unchanged assessment read, and cancelled or stale assessment responses cannot replace the selected assessment's context.
 
-Versioned infrastructure proposals are currently API-only. The frontend has no
-project list, alternative editor, design map tools or revision-history UI.
+The read-only Project Intelligence workspace is isolated from the Site map. It lazily reads Project Subjects and immutable run history, allows explicit historical selection, and visually separates source assertions from Terrene conclusions. It provides no evidence/project editor or workflow action.
+
+Versioned Design Studies remain API-only. The frontend has no Alternative editor, design map tools or Design Revision history UI.
 
 ## Verification baseline
 
@@ -107,6 +112,8 @@ Screening Context map-feature verification: **183 backend tests passed on SQLite
 
 Sprint 001 design-proposal verification: **197 backend tests passed on SQLite and PostgreSQL/PostGIS**, including the focused **14-test** Project/Alternative/Revision suite after independent-review fixes. Persistence is verified across a database/engine reload; regressions cover missing/corrupt baselines and lineage plus malformed geometry/boundary inputs. The additive v6 migration passed against the disposable PostgreSQL database.
 
+Sprint 002 verification: the combined Project Evidence, Design Study and Project Intelligence suite passed **43 tests on SQLite** and **43 tests on disposable PostgreSQL/PostGIS**. The default fresh-clone path passed **163 tests with 63 retained-data checks explicitly skipped**; the retained-data opt-in passed **226 tests**. All **36 frontend Node tests**, TypeScript, focused lint and the production build passed. Browser QA covered the complete four-run synthetic history, exact evidence/correction inspection, desktop and narrow layouts, no horizontal overflow, and no browser errors. The existing large-chunk build advisory remains. See [Project Intelligence v1](PROJECT-INTELLIGENCE-V1.md).
+
 ## Known limitations
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
@@ -119,8 +126,8 @@ Sprint 001 design-proposal verification: **197 backend tests passed on SQLite an
 
 ## Latest meaningful implementation
 
-Project Evidence v1 was completed on 13 September 2026. It adds an authenticated backend contract and immutable persistence for minimal Project Subjects and human-submitted, source-backed project evidence without changing land evidence, Design Studies, existing assessments, Screening Context, wetland bindings/calculations, retained snapshots or pre-existing ModuleRuns.
+Project Intelligence v1 was completed on 13 September 2026. It reconciles Project Subjects with the retained Design Study contract, binds exact Project Evidence, produces deterministic stage/status/target findings and exposes immutable history through API and a thin read-only UI. It does not imply a real-project claim, validated customer workflow, commercial recommendation or Scenario capability.
 
 ## Current recommended engineering question
 
-Before building Project Reasoning, decide and version how a run binds one or more explicit Project Evidence bundle IDs and how it treats corrections and unresolved contradictions; it must never silently consume “latest” evidence. Customer discovery must still test whether infrastructure project intelligence is a valuable workflow.
+Use a real-project research engagement and customer discovery to test whether these inspectable findings materially improve a recurring project decision. Do not add automated research, scoring or workflow actions before that evidence exists.

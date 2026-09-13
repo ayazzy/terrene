@@ -126,6 +126,6 @@ No live URL, external service, hosted R2 bucket or production customer data is u
 
 Project Evidence v1 does not calculate project stage, progress, delay/risk, confidence, commercial opportunity, recommendation or pursue/monitor/dismiss decisions. Existing Site team-review status is neither copied into the bundle nor interpreted as Project stage.
 
-Before implementing the next reasoning module, resolve one architectural question in its versioned input binding: does a run consume one bundle or an explicit ordered set of bundle IDs, and what declared policy exposes corrections and contradictory claims to the module? The binding must pin every bundle ID/content hash and must not silently select the newest claim or bundle.
+Sprint 002 resolved the next binding boundary with `project_evidence_binding_v1`: a run consumes an explicit non-empty set of bundle IDs, canonicalizes their order, pins their complete content/source/claim membership, requires complete acyclic correction ancestry and leaves contradictory active claims visible. It never selects a newest bundle or lets publication recency win. See [Project Intelligence v1](PROJECT-INTELLIGENCE-V1.md).
 
 Infrastructure project intelligence remains a customer hypothesis, not a validated market decision.
