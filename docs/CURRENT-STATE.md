@@ -2,7 +2,7 @@
 
 > Repository implementation is authoritative where this document is stale.
 
-This is an operational map of what exists on 10 September 2026. Inspect the relevant code, tests and linked implementation reports before changing it.
+This is an operational map of what exists on 13 September 2026. Inspect the relevant code, tests and linked implementation reports before changing it.
 
 ## Product architecture
 
@@ -24,6 +24,7 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 - Bind a committed snapshot through `wetland_input_binding_v1`, execute the unchanged wetland model, and persist an immutable ModuleRun.
 - Intentionally prepare or reuse Screening Context v1 for a selected saved assessment, inspect its non-scoring facts/gaps/provenance in Overview, and download a self-contained HTML review artifact.
 - Read the built-world objects attached to an immutable Screening Context run through an authenticated, organization-scoped WGS84 GeoJSON presentation contract without changing their authoritative EPSG:27700 evidence.
+- Create an organisation-scoped solar infrastructure Project linked to an existing Site and one explicitly pinned committed Evidence Snapshot; add named design alternatives and immutable polygonal WGS84 revisions with exact history, deterministic identities, retry safety, stale-edit rejection and truthful outside-boundary flags.
 
 Implementation reports: [snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [snapshot-driven wetland runs](WETLAND-SNAPSHOT-MODULE-RUN.md), [evidence-aware site analysis](UI-STAGE-2.md), and [map-first home](UI-STAGE-3-MAP-HOME.md).
 
@@ -74,6 +75,9 @@ Screening Context is an explicit assessment action: POST creates/reuses a snapsh
 
 The Screening Context read lifecycle is finite: stored, absent, unsupported, authentication/authorization and server/network outcomes are distinct; unresolved reads recover to Retry after 15 seconds. Routine workspace refreshes do not restart an unchanged assessment read, and cancelled or stale assessment responses cannot replace the selected assessment's context.
 
+Versioned infrastructure proposals are currently API-only. The frontend has no
+project list, alternative editor, design map tools or revision-history UI.
+
 ## Verification baseline
 
 Housekeeping verification on 10 September 2026:
@@ -94,6 +98,8 @@ Site Analysis Workspace v2A verification: **28 frontend regression tests passed*
 
 Screening Context map-feature verification: **183 backend tests passed on SQLite** and the focused **23-test Screening Context suite passed on PostgreSQL/PostGIS**. Retained real-data checks cover Westgate, Oxford station, Port Meadow and Redbridge; they verify deterministic WGS84 geometry, organization isolation, historical selection, integrity failures, no-write behavior, availability semantics and unchanged persisted measurements.
 
+Sprint 001 design-proposal verification: **194 backend tests passed on SQLite and PostgreSQL/PostGIS**, including the focused **11-test** Project/Alternative/Revision suite and a process-level persistence reload. The additive v6 migration also passed against the disposable PostgreSQL database.
+
 ## Known limitations
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
@@ -102,11 +108,12 @@ Screening Context map-feature verification: **183 backend tests passed on SQLite
 - Hosted Supabase/Render/R2 credentials and end-to-end tenant acceptance have not been configured or verified; the reserved Sites frontend is not a deployed product.
 - Team review status is not yet an immutable historical Decision record.
 - Scenario modelling is not implemented. Broader Terrene Applications remain hypotheses, not completed architecture.
+- Proposed design revisions accept bounded Polygon/MultiPolygon GeoJSON only; there is no CAD/PDF ingestion, centreline buffering, layout generation, environmental intersection, impact calculation or A/B consequence comparison.
 
 ## Latest meaningful implementation
 
-The Screening Context map-feature read contract was completed after Site Analysis Workspace v2A on 10 September 2026. It adds an authenticated, deterministic WGS84 presentation of the selected immutable run's persisted built-world evidence for the workspace without changing acquisition, evidence projection, Screening Context rules, wetland bindings/calculations, authoritative EPSG:27700 geometry, retained snapshots or pre-existing ModuleRuns.
+Sprint 001 adds authenticated Project, Alternative and immutable Design Revision persistence and APIs. Projects pin one integrity-checked Evidence Snapshot and exact historical Site boundary. Revisions preserve exact accepted proposal geometry and copied baseline identity, reject stale lineage, and remain explicitly separate from Earth evidence and ModuleRuns. No frontend or environmental calculation changed.
 
 ## Current recommended engineering question
 
-Use the Screening Context pilot with a prospective reviewer to establish which source distinctions and unresolved evidence questions matter in an actual diligence workflow before expanding its rules or datasets.
+Define and verify the first read-only, versioned Scenario calculation that binds one Design Revision to its already-pinned Evidence Snapshot and reports source-qualified geometric intersections without scoring or mutating either input.
