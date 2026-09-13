@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'CRC — Earth Intelligence',
+  title: 'Terrene — Earth Intelligence',
   description:
     'Geospatial evidence and decision support for understanding land.',
 };

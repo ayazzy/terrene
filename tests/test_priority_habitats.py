@@ -29,6 +29,7 @@ from backend.priority_habitats import (
 )
 from backend.wetland import run_wetland
 from backend.wetland_binding import bind_wetland_input
+from synthetic_assessment import synthetic_assessment
 
 
 REAL_ROOT = Path(__file__).parents[1] / 'data' / 'verification' / 'england-real-v1-final'
@@ -148,7 +149,7 @@ def test_multiple_main_habitats_overlap_and_union_exactly_once():
 
 def test_native_projection_retains_measurements_release_and_feature_lineage():
     _, summary = synthetic_summary()
-    projection = project_land_evidence(with_phi(retained_payload(), summary))
+    projection = project_land_evidence(with_phi(synthetic_assessment(), summary))
     assert projection.identity.registry_version == PHI_REGISTRY_VERSION
     observations = phi_observations(projection)
     assert {item.dimensions.get('habitat_code') for item in observations
@@ -177,7 +178,7 @@ def test_known_mapped_zero_is_not_unknown_or_ecological_absence():
                     additional='LMEAD')]
     summary = summarize_intersections(parcel, rows, FORWARD, BACKWARD)
     summary.pop('union_geometry')
-    projection = project_land_evidence(with_phi(retained_payload(), summary))
+    projection = project_land_evidence(with_phi(synthetic_assessment(), summary))
     union = next(item for item in phi_observations(projection)
                  if item.definition_id.endswith('any_mapped_overlap_fraction'))
     assert union.value.value == 0 and union.known_zero
@@ -200,7 +201,7 @@ def test_known_mapped_zero_is_not_unknown_or_ecological_absence():
 def test_unavailable_outside_and_partial_coverage_are_not_mapped_zero(
         coverage, storage, state, reason_code):
     projection = project_land_evidence(with_phi(
-        retained_payload(), coverage=coverage, storage=storage,
+        synthetic_assessment(), coverage=coverage, storage=storage,
     ))
     assert not phi_observations(projection)
     gap = next(item for item in projection.gaps
@@ -238,7 +239,7 @@ def test_invalid_source_code_and_changed_service_schema_are_rejected():
 
 
 def test_unrelated_phi_does_not_rename_a_legacy_unavailable_placeholder():
-    payload = retained_payload()
+    payload = synthetic_assessment()
     slope = legacy_observation(payload, 'terrain.slope_deg')
     slope.update(
         value=None,

@@ -195,7 +195,142 @@ PILOT=[-1.65,51.5,-0.85,52.05]
 LIMIT='Desk screening only. Boundaries and inventories have positional and temporal uncertainty. No habitat condition, BNG units, legal clearance or restoration suitability is established. Confirm through fieldwork and qualified advice.'
 def now(): return datetime.now(timezone.utc).isoformat()
 def uid(): return str(uuid.uuid4())
+def reconcile_project_subject_schema():
+    """Upgrade the unreleased Project Evidence table names without losing rows."""
+    inspector = inspect(engine)
+    tables = set(inspector.get_table_names())
+    if 'projects' in tables:
+        legacy_columns = {
+            column['name'] for column in inspector.get_columns('projects')
+        }
+        expected = {
+            'id', 'org', 'name', 'project_type', 'site_id', 'content_hash', 'created',
+        }
+        if legacy_columns != expected:
+            raise RuntimeError(
+                'Cannot reconcile legacy projects table with unknown columns: '
+                + ', '.join(sorted(legacy_columns))
+            )
+        with engine.begin() as connection:
+            if 'project_subjects' not in tables:
+                connection.execute(text(
+                    'ALTER TABLE projects RENAME TO project_subjects'
+                ))
+            else:
+                conflict = connection.execute(text(
+                    "SELECT 1 FROM projects p JOIN project_subjects s ON s.id=p.id "
+                    "WHERE s.org<>p.org OR s.name<>p.name OR s.project_type<>p.project_type "
+                    "OR COALESCE(s.site_id,'')<>COALESCE(p.site_id,'') "
+                    "OR s.content_hash<>p.content_hash OR s.created<>p.created LIMIT 1"
+                )).first()
+                if conflict:
+                    raise RuntimeError(
+                        'Legacy Project and Project Subject rows conflict; no data changed'
+                    )
+                if engine.dialect.name == 'postgresql':
+                    connection.execute(text(
+                        'INSERT INTO project_subjects '
+                        '(id,org,name,project_type,site_id,content_hash,created) '
+                        'SELECT id,org,name,project_type,site_id,content_hash,created '
+                        'FROM projects ON CONFLICT (id) DO NOTHING'
+                    ))
+                else:
+                    connection.execute(text(
+                        'INSERT OR IGNORE INTO project_subjects '
+                        '(id,org,name,project_type,site_id,content_hash,created) '
+                        'SELECT id,org,name,project_type,site_id,content_hash,created '
+                        'FROM projects'
+                    ))
+                missing = connection.execute(text(
+                    'SELECT 1 FROM projects p LEFT JOIN project_subjects s ON s.id=p.id '
+                    'WHERE s.id IS NULL LIMIT 1'
+                )).first()
+                if missing:
+                    raise RuntimeError('Legacy Project migration did not preserve every row')
+                connection.execute(text('DROP TABLE projects'))
+
+    inspector = inspect(engine)
+    for table_name in (
+        'project_evidence_bundles', 'project_evidence_claims',
+        'project_evidence_sources',
+    ):
+        if table_name not in inspector.get_table_names():
+            continue
+        columns = {column['name'] for column in inspector.get_columns(table_name)}
+        if 'project_id' in columns and 'project_subject_id' not in columns:
+            with engine.begin() as connection:
+                connection.execute(text(
+                    f'ALTER TABLE {table_name} '
+                    'RENAME COLUMN project_id TO project_subject_id'
+                ))
+        elif 'project_id' in columns and 'project_subject_id' in columns:
+            raise RuntimeError(
+                f'{table_name} has ambiguous Project owner columns; no data changed'
+            )
+
+    inspector = inspect(engine)
+    if 'project_evidence_claims' in inspector.get_table_names():
+        claim_columns = {
+            column['name']
+            for column in inspector.get_columns('project_evidence_claims')
+        }
+        if 'predicate' not in claim_columns:
+            with engine.begin() as connection:
+                connection.execute(text(
+                    'ALTER TABLE project_evidence_claims ADD COLUMN predicate VARCHAR'
+                ))
+        with engine.connect() as connection:
+            missing_predicates = [dict(row) for row in connection.execute(text(
+                'SELECT c.project_subject_id,c.claim_id,c.org,b.manifest_key '
+                'FROM project_evidence_claims c '
+                'JOIN project_evidence_bundles b ON b.id=c.first_bundle_id '
+                'WHERE c.predicate IS NULL'
+            )).mappings()]
+        predicates = []
+        for row in missing_predicates:
+            manifest = load_object(row['manifest_key'])
+            if manifest is None:
+                raise RuntimeError(
+                    'Cannot backfill Project Evidence claim predicate; '
+                    'the immutable bundle manifest is unavailable'
+                )
+            payload = json.loads(manifest)
+            claim = next(
+                (item for item in payload.get('claims', [])
+                 if item.get('id') == row['claim_id']),
+                None,
+            )
+            predicate = claim.get('predicate') if claim else None
+            if predicate not in {
+                'planning_status', 'construction_status',
+                'target_grid_connection_date',
+            }:
+                raise RuntimeError(
+                    'Cannot backfill Project Evidence claim predicate from '
+                    'its immutable bundle manifest'
+                )
+            predicates.append((row, predicate))
+        if predicates:
+            with engine.begin() as connection:
+                for row, predicate in predicates:
+                    connection.execute(text(
+                        'UPDATE project_evidence_claims SET predicate=:predicate '
+                        'WHERE project_subject_id=:subject AND claim_id=:claim '
+                        'AND org=:org AND predicate IS NULL'
+                    ), {
+                        'predicate': predicate, 'subject': row['project_subject_id'],
+                        'claim': row['claim_id'], 'org': row['org'],
+                    })
+        if engine.dialect.name == 'postgresql':
+            with engine.begin() as connection:
+                connection.execute(text(
+                    'ALTER TABLE project_evidence_claims '
+                    'ALTER COLUMN predicate SET NOT NULL'
+                ))
+
+
 def init():
+    reconcile_project_subject_schema()
     meta.create_all(engine)
     # Additive migration: saved V0 evidence remains unchanged and readable.
     if 'model_spec' not in {col['name'] for col in inspect(engine).get_columns('assessments')}:

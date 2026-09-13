@@ -35,6 +35,7 @@ from backend.openmap_local import (
 )
 from backend.wetland import run_wetland
 from backend.wetland_binding import bind_wetland_input
+from synthetic_assessment import synthetic_assessment
 
 
 REAL_ROOT = Path(__file__).parents[1] / 'data' / 'verification' / 'england-real-phi-v1'
@@ -191,7 +192,7 @@ def test_line_crossing_containment_touch_and_union_length_remain_lines():
 
 def test_projection_retains_typed_objects_relationships_and_derived_measurements():
     _, summary = synthetic_summary()
-    payload = with_built_world(retained_payload(), summary)
+    payload = with_built_world(synthetic_assessment(), summary)
     projection = project_land_evidence(payload)
     assert projection.identity.registry_version == BUILT_WORLD_REGISTRY_VERSION
     assert len(projection.objects) == 8
@@ -214,7 +215,7 @@ def test_projection_retains_typed_objects_relationships_and_derived_measurements
 
 def test_known_mapped_zero_is_not_unknown_or_real_world_absence():
     parcel, summary = synthetic_summary(empty=True)
-    projection = project_land_evidence(with_built_world(retained_payload(), summary))
+    projection = project_land_evidence(with_built_world(synthetic_assessment(), summary))
     values = {item.definition_id: item for item in built_observations(projection)}
     for definition_id in (
         'built.building.mapped_overlap_fraction',
@@ -243,7 +244,7 @@ def test_incomplete_tile_halo_withholds_minimum_distance_but_not_parcel_observat
     definitions = {item['definition_id'] for item in summary['observations']}
     assert 'built.building.mapped_overlap_fraction' in definitions
     assert 'transport.railway_station.distance_min' not in definitions
-    projection = project_land_evidence(with_built_world(retained_payload(), summary))
+    projection = project_land_evidence(with_built_world(synthetic_assessment(), summary))
     gap = next(item for item in projection.gaps
                if item.definition_id == 'transport.railway_station.distance_min')
     assert gap.state == 'partial_coverage'
@@ -265,7 +266,7 @@ def test_unavailable_partial_and_outside_are_not_mapped_zero(
     failure_type = coverage if coverage.endswith('_failure') else None
     effective_coverage = 'unknown' if failure_type else coverage
     projection = project_land_evidence(with_built_world(
-        retained_payload(), coverage=effective_coverage, storage=storage,
+        synthetic_assessment(), coverage=effective_coverage, storage=storage,
         failure_type=failure_type,
     ))
     assert not projection.objects and not projection.relationships

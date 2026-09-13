@@ -142,6 +142,12 @@ def verify_project_evidence_binding(
     claims = {item.claim.id: item for item in binding.claims}
     sources = {(item.source.id, item.source.source_version): item
                for item in binding.sources}
+    bundle_by_id = {item.id: item for item in binding.bundles}
+    for item in binding.sources:
+        if (_hash(item.source.model_dump(mode='json')) != item.record_hash
+                or not item.bundle_ids
+                or not set(item.bundle_ids) <= set(bundle_ids)):
+            raise ProjectEvidenceBindingError('Bound source membership or content is invalid')
     targets: set[str] = set()
     for item in binding.claims:
         claim = item.claim
@@ -161,7 +167,34 @@ def verify_project_evidence_binding(
                 raise ProjectEvidenceBindingError(
                     'Selected bundles do not include complete correction ancestry'
                 )
+            if claims[target].claim.predicate != claim.predicate:
+                raise ProjectEvidenceBindingError(
+                    'A correction must preserve the superseded claim predicate'
+                )
             targets.add(target)
+
+    for bundle_id, bundle in bundle_by_id.items():
+        expected_claim_ids = sorted(
+            item.claim.id for item in binding.claims
+            if bundle_id in item.bundle_ids
+        )
+        if bundle.claim_ids != expected_claim_ids:
+            raise ProjectEvidenceBindingError('Bound bundle claim membership is invalid')
+        source_versions = [(item.id, item.source_version)
+                           for item in bundle.source_versions]
+        if source_versions != sorted(source_versions) or len(set(source_versions)) != len(source_versions):
+            raise ProjectEvidenceBindingError('Bound bundle source membership is not canonical')
+        expected_sources = sorted(
+            (item.source.id, item.source.source_version)
+            for item in binding.sources if bundle_id in item.bundle_ids
+        )
+        if source_versions != expected_sources:
+            raise ProjectEvidenceBindingError('Bound bundle source membership is invalid')
+        for source_ref in bundle.source_versions:
+            source = sources[(source_ref.id, source_ref.source_version)]
+            if (source_ref.content_hash != source.source.content_hash
+                    or source_ref.record_hash != source.record_hash):
+                raise ProjectEvidenceBindingError('Bound bundle source identity is invalid')
 
     visiting: set[str] = set()
     visited: set[str] = set()
@@ -299,16 +332,20 @@ def build_project_evidence_binding(
         'claims': [item.model_dump(mode='json') for item in claims],
         'active_claim_ids': active,
         'superseded_claim_ids': targets,
-        'evidence_as_of': max(item.source.recorded_at for item in sources).isoformat(),
+        'evidence_as_of': max(item.source.recorded_at for item in sources),
     }
-    content_hash = _hash(body)
-    binding = ProjectEvidenceBinding.model_validate({
+    normalized = ProjectEvidenceBinding.model_validate({
+        'id': 'pending',
+        'content_hash': 'pending',
+        **body,
+    })
+    content_hash = _hash(_content_document(normalized))
+    binding = normalized.model_copy(update={
         'id': binding_identity(
             org=subject.org, project_subject_id=subject.id,
             content_hash=content_hash,
         ),
         'content_hash': content_hash,
-        **body,
     })
     return verify_project_evidence_binding(binding)
 

@@ -449,7 +449,7 @@ export default function SiteMap({
                   onCheckedChange={(value) => setBoundaryVisible(!!value)}
                 />
                 <i className="layer-swatch boundary" />
-                <span>
+                <span className="layer-row-copy">
                   Site boundary
                   <small>{geometry ? boundaryLabel : 'Unavailable'}</small>
                 </span>
@@ -485,7 +485,7 @@ export default function SiteMap({
                             className="layer-swatch"
                             style={{ background: layerColor(f.key) }}
                           />
-                          <span>
+                          <span className="layer-row-copy">
                             {f.dataset}
                             <small>
                               {f.measured === null
@@ -568,7 +568,7 @@ export default function SiteMap({
                           className="layer-swatch terrene-layer-swatch"
                           style={{ background: builtLayerColor(layer.id) }}
                         />
-                        <span>
+                        <span className="layer-row-copy">
                           {mapLayerLabel(layer.id)}
                           <small className={`layer-state state-${layer.state}`}>
                             {mapLayerStatus(layer)}

@@ -56,7 +56,7 @@ For a first real reference workflow, upload `docs/port-meadow-reference.geojson`
 - React + TypeScript, Vite through the environment-mandated **Vinext Sites scaffold**, Tailwind and the generated shadcn/Base UI components. This is the documented deviation from plain Vite React. There is no additional frontend service.
 - MapLibre interactive raster basemap with configurable `NEXT_PUBLIC_BASEMAP_URL`; bounded vector evidence uses exact MapLibre-projected SVG paths, including holes and MultiPolygons. This avoids a browser blob-worker rendering issue observed in verification. It is geographic data rendering, not a static mock map.
 - One FastAPI API and one Python worker, sharing `backend/core.py` and SQLAlchemy models. Shapely/pyproj implement the narrow geometry pipeline; GeoPandas was unnecessary for these bounded GeoJSON features.
-- Supabase-compatible Postgres/PostGIS: queryable geometry columns, GiST indexes, server-side candidate queries. `python -m backend.migrate` applies six idempotent additive migrations (including pinned model specifications, immutable evidence snapshots/ModuleRuns, retained source-feature attributes and Project Evidence v1) and RLS hardening.
+- Supabase-compatible Postgres/PostGIS: queryable geometry columns, GiST indexes, server-side candidate queries. `python -m backend.migrate` applies eight idempotent additive migrations (including pinned model specifications, immutable evidence snapshots/ModuleRuns, retained source-feature attributes, Design Studies, Project Evidence and Project Intelligence runs) and RLS hardening.
 - The assessments table also acts as the jobs table. A unique submission fingerprint covers organization, site, boundary version, pinned dataset versions and model-configuration signature. Workers use `FOR UPDATE SKIP LOCKED`, 120-second leases, fencing tokens, maximum three attempts and exponential retry delays. Expired final attempts terminate as failed. SQLite uses conditional atomic updates for local testing.
 - `land_evidence_v1` snapshots are an additive, independently identified projection of saved assessments. Their validated manifests live in private content-addressed object storage; relational tables index parcel/boundary membership, observations, gaps/capabilities, source/raw references and lineage. Legacy assessment execution remains preserved, while a parity-verified snapshot path uses `wetland_input_binding_v1` and persists immutable ModuleRuns without changing historical assessment behavior or results. See [snapshot persistence](docs/LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md) and [snapshot-driven wetland execution](docs/WETLAND-SNAPSHOT-MODULE-RUN.md).
 - Registry v3 also carries a narrow typed union of OpenMap Local Building, FunctionalSite, RailwayTrack and RailwayStation objects plus deterministic parcel relationships. Derived building/site unions and rail length/distance observations preserve object lineage; WorldCover and PHI remain separate. The wetland binding and ModuleRuns do not consume these objects.
@@ -82,6 +82,14 @@ Live Supabase, Render and R2 credentials were not supplied. Their live provision
 npx tsc --noEmit
 npm run build
 ```
+
+The default Python suite is synthetic/captured-data reproducible from a fresh clone. Ignored retained Oxford verification assets are explicit opt-in:
+
+```bash
+.venv/bin/python -m pytest -q --retained-data
+```
+
+That command exits with a prerequisite error when either retained-data directory is absent. To create the isolated synthetic Project Intelligence history in a disposable or local development database, run `CRC_ENV=development .venv/bin/python -m scripts.seed_project_intelligence_demo`.
 
 To repeat tests on PostGIS, create a **disposable** database named `crc_test` (the test runner refuses any other Postgres test database name):
 

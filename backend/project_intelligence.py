@@ -219,6 +219,11 @@ def _reported_stage(
         CONSTRUCTION_STAGE_MAP[value] for value in construction_values
         if value in CONSTRUCTION_STAGE_MAP
     }
+    unmapped_construction = construction_values - set(CONSTRUCTION_STAGE_MAP)
+    if unmapped_construction and construction_classes:
+        return ReportedStage(
+            value='unclear', evidence_state='conflicting', references=references,
+        )
     if len(construction_classes) > 1:
         return ReportedStage(
             value='unclear', evidence_state='conflicting', references=references,
