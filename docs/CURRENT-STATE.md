@@ -143,4 +143,4 @@ Beacon Fen Sprint 003 Task 2 was completed on 13 September 2026. It exercises Pr
 
 ## Current recommended engineering question
 
-Use the Beacon Fen evidence and intelligence result in a bounded practitioner walkthrough, then test whether these inspectable findings materially improve a recurring project decision. Do not add automated research, scoring or workflow actions before that evidence exists.
+Implement Sprint 004 Task 1: establish one URL-addressable Infrastructure Operating Picture state contract and turn the current map/workspace discontinuities into executable regressions. Do not add 3D terrain, simulated telemetry, automated research, scoring or workflow recommendations as part of the interface work.

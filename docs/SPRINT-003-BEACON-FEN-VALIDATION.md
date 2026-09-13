@@ -2,7 +2,15 @@
 
 ## Status
 
-Started 13 September 2026. Tasks 1 and 2 are complete. One bounded official consent assertion is now reproducibly committed through the existing immutable Project Evidence and Project Intelligence contracts. No customer evidence has yet been collected.
+Closed early on 13 September 2026 after Tasks 1 and 2. One bounded official consent assertion is reproducibly committed through the existing immutable Project Evidence and Project Intelligence contracts. Tasks 3–5 were deliberately cancelled so the next sprint can address the infrastructure-intelligence interface. No customer evidence was collected, so this sprint did not validate the workflow or commercial hypothesis.
+
+## Closure decision
+
+The technical experiment achieved its bounded proof: Terrene can retain an exact real-project source assertion, bind it immutably and produce a truthful partial intelligence result without inventing construction or grid facts.
+
+The sprint stopped before practitioner walkthroughs or interviews. This is a product-priority decision, not positive or negative customer evidence. The untested workflow assumptions in `CUSTOMER-DISCOVERY.md` remain unvalidated.
+
+The next priority is [Sprint 004 — Infrastructure Operating Picture](SPRINT-004-INFRASTRUCTURE-OPERATING-PICTURE.md). It will make the spatial operating picture the continuous primary interaction surface while preserving the source, evidence, reasoning and history semantics proved here.
 
 ## Sprint goal
 
@@ -116,6 +124,8 @@ Prepare a concise review script and evidence dossier using the existing read-onl
 
 **Gate:** The walkthrough can be completed in 20 minutes and tests a named decision, current alternative, required evidence, trust conditions and next action.
 
+**Cancelled at sprint closure:** no walkthrough was produced.
+
 ### Task 4 — Run five workflow interviews
 
 **Allocation:** Days 6–9
@@ -123,6 +133,8 @@ Prepare a concise review script and evidence dossier using the existing read-onl
 Interview at least five relevant practitioners across development, investment/acquisition and diligence/advisory roles. Record observed workflow evidence, frequency, consequences, current artifacts, source distinctions that matter and whether the Terrene dossier changed or accelerated an action.
 
 **Gate:** At least three interviews concern a recurring live workflow rather than general market opinion. Polite interest does not count as validation.
+
+**Cancelled at sprint closure:** no interviews were run and no customer evidence was recorded.
 
 ### Task 5 — Decide the next product bet
 
@@ -132,7 +144,11 @@ Synthesize confirmed, weakened and disconfirmed assumptions. Decide whether to d
 
 **Gate:** The decision cites interview evidence, names the expensive recurring job and defines a measurable next experiment. If the evidence is weak, the outcome is a documented stop or pivot rather than more features.
 
+**Cancelled at sprint closure:** the required interview evidence does not exist, so no validated continue/change/stop decision is claimed.
+
 ## Sprint acceptance criteria
+
+**Closure result:** the first three technical criteria below were met by Task 2. The practitioner and product-decision criteria were not met because Tasks 3–5 were cancelled. Sprint 003 is closed incomplete rather than accepted.
 
 - One real Project Subject and immutable run are inspectable end to end.
 - Every admitted conclusion resolves to retained official source evidence.
