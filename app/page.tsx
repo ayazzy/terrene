@@ -16,8 +16,18 @@ import {
 import OverlayFindings from './overlay-findings';
 import ScreeningContextPanel from './screening-context-panel';
 import MapFeatureInspector from './map-feature-inspector';
-import { useSiteWorkspaceState } from './site-workspace-state';
+import {
+  useSiteWorkspaceState,
+  type WorkspaceTab,
+} from './site-workspace-state';
 import ProjectIntelligenceWorkspace from './project-intelligence-workspace';
+import { useOperatingPictureState } from './use-operating-picture-state';
+import {
+  createLatestRequestFence,
+  operatingPictureStatesEqual,
+  projectOperatingPictureState,
+  reconcileOperatingPictureState,
+} from './operating-picture-state';
 import type { OverlayFinding } from './site-evidence';
 import SiteMap from './map';
 import {
@@ -140,12 +150,11 @@ function Status({
 }
 export default function Home() {
   const analysisPanel = useRef<HTMLDivElement>(null);
+  const historyRequestFence = useRef(createLatestRequestFence());
+  const operatingPicture = useOperatingPictureState();
+  const operatingState = operatingPicture.state;
   const [sites, setSites] = useState<any[]>([]),
     [datasets, setDatasets] = useState<any[]>([]),
-    [active, setActive] = useState<string | null>(null),
-    [view, setView] = useState('workspace'),
-    [sitesView, setSitesView] = useState('map'),
-    [selectedMapSite, setSelectedMapSite] = useState<string | null>(null),
     [error, setError] = useState(''),
     [readErrors, setReadErrors] = useState<{
       sites?: ReadFailure | null;
@@ -178,8 +187,74 @@ export default function Home() {
     [rawGeometry, setRawGeometry] = useState<any>(null),
     [navigationCompact, setNavigationCompact] = useState(false),
     [mobileNavigation, setMobileNavigation] = useState(false);
+  const operatingProjection = projectOperatingPictureState(operatingState);
+  const {
+    view,
+    sitesView,
+    activeSiteId: active,
+    selectedMapSiteId: selectedMapSite,
+  } = operatingProjection;
+  function setView(next: string) {
+    if (next === 'workspace') {
+      operatingPicture.transition((currentState) => ({
+        ...currentState,
+        mode: 'map',
+        artifact: null,
+        section: 'overview',
+        dossierOpen: true,
+      }));
+    } else if (next === 'project-intelligence') {
+      operatingPicture.setMode('project');
+    } else if (next === 'compare' || next === 'data') {
+      operatingPicture.setMode(next);
+    }
+  }
+  function setSitesView(next: string) {
+    if (next === 'map' || next === 'list')
+      operatingPicture.transition((currentState) => ({
+        ...currentState,
+        mode: next,
+        artifact: null,
+        section: 'overview',
+      }));
+  }
+  function setSelectedMapSite(id: string | null) {
+    operatingPicture.selectEntity(
+      id ? { kind: 'site', id } : null,
+      sitesView,
+    );
+  }
+  const requestedSiteAssessmentId =
+    operatingState.artifact?.kind === 'site_assessment'
+      ? operatingState.artifact.id
+      : null;
+  const requestedProjectSubjectId =
+    operatingProjection.selectedProjectSubjectId;
+  const requestedProjectRunId = operatingProjection.selectedProjectRunId;
+  const requestedSiteSection = (
+    ['overview', 'evidence', 'models', 'history'] as const
+  ).includes(
+    operatingState.section as 'overview' | 'evidence' | 'models' | 'history',
+  )
+    ? (operatingState.section as 'overview' | 'evidence' | 'models' | 'history')
+    : 'overview';
   const current = sites.find((s) => s.id === active);
-  const workspace = useSiteWorkspaceState(current, history);
+  const workspace = useSiteWorkspaceState(current, history, {
+    selectedAssessmentId: requestedSiteAssessmentId,
+    tab: requestedSiteSection,
+    panelOpen: operatingState.dossierOpen,
+    onAssessmentChange: (id, method) =>
+      operatingPicture.transition(
+        {
+          artifact: id ? { kind: 'site_assessment', id } : null,
+        },
+        method,
+      ),
+    onTabChange: (section, method) =>
+      operatingPicture.transition({ section }, method),
+    onPanelOpenChange: (dossierOpen, method) =>
+      operatingPicture.transition({ dossierOpen }, method),
+  });
   const {
     assessment,
     selectedAssessmentId: selectedAssessment,
@@ -203,6 +278,16 @@ export default function Home() {
       result &&
       !readErrors.datasets &&
       datasets.some((d) => !assessment.dataset_ids?.includes(d.id));
+  function changeSiteSection(next: WorkspaceTab) {
+    setTab(next);
+  }
+  function changeSitePanel(next: boolean) {
+    setPanelOpen(next);
+  }
+  function selectSiteAssessment(id: string | null) {
+    if (id) workspace.selectAssessment(id);
+    else workspace.returnToLatest();
+  }
   const overlayFinding = finding;
   const historyFailure =
     historyRead.siteId === active ? historyRead.failure : null;
@@ -257,11 +342,12 @@ export default function Home() {
     void reload();
   }, [reload]);
   useEffect(() => {
+    const requestFence = historyRequestFence.current;
+    const request = requestFence.begin();
     if (!active) return;
-    let cancelled = false;
     void readResource(() => api('/sites/' + active + '/assessments')).then(
       (read) => {
-        if (cancelled) return;
+        if (!requestFence.isCurrent(request)) return;
         if (!read.failure && 'data' in read) setHistory(read.data);
         setHistoryRead({
           siteId: active,
@@ -271,9 +357,35 @@ export default function Home() {
       },
     );
     return () => {
-      cancelled = true;
+      requestFence.invalidate();
     };
   }, [active, sites, historyRetry]);
+  useEffect(() => {
+    if (!hasLoadedSites || !operatingState.selection) return;
+    const availability = {
+      siteIds: sites.map((site) => String(site.id)),
+      ...(historyRead.siteId === active && historyRead.loaded
+        ? {
+            siteAssessmentIds: history.map((item) => String(item.id)),
+          }
+        : {}),
+    };
+    const reconciled = reconcileOperatingPictureState(
+      operatingState,
+      availability,
+    );
+    if (!operatingPictureStatesEqual(operatingState, reconciled))
+      operatingPicture.transition(reconciled, 'replace');
+  }, [
+    active,
+    hasLoadedSites,
+    history,
+    historyRead.loaded,
+    historyRead.siteId,
+    operatingPicture,
+    operatingState,
+    sites,
+  ]);
   function retryReads() {
     setHistoryRetry((value) => value + 1);
     void reload();
@@ -362,9 +474,8 @@ export default function Home() {
   }
   function openSite(s: any) {
     workspace.resetForSite();
-    setActive(s.id);
     setHistory([]);
-    setView('site');
+    operatingPicture.selectEntity({ kind: 'site', id: s.id }, 'site');
   }
   function startNew() {
     setEditing(false);
@@ -388,9 +499,8 @@ export default function Home() {
       );
       setNewSite(false);
       setDrawing(false);
-      setActive(s.id);
-      setView('site');
       workspace.resetForSite();
+      operatingPicture.selectEntity({ kind: 'site', id: s.id }, 'site');
     });
   }
   async function upload(file?: File) {
@@ -583,7 +693,38 @@ export default function Home() {
           </div>
         )}
         {view !== 'site' && view !== 'project-intelligence' && refreshNotice}
-        <ProjectIntelligenceWorkspace enabled={view === 'project-intelligence'} />
+        <ProjectIntelligenceWorkspace
+          enabled={view === 'project-intelligence'}
+          selectedSubjectId={requestedProjectSubjectId}
+          selectedRunId={requestedProjectRunId}
+          section={operatingState.section}
+          onSubjectChange={(id, method) =>
+            operatingPicture.transition(
+              (currentState) => ({
+                ...currentState,
+                mode: 'project',
+                selection: id ? { kind: 'project_subject', id } : null,
+                artifact: null,
+                section: 'overview',
+                dossierOpen: true,
+              }),
+              method,
+            )
+          }
+          onRunChange={(id, method) =>
+            operatingPicture.transition(
+              (currentState) => ({
+                ...currentState,
+                artifact: id
+                  ? { kind: 'project_intelligence_run', id }
+                  : null,
+                section: id ? currentState.section : 'overview',
+              }),
+              method,
+            )
+          }
+          onSectionChange={operatingPicture.setSection}
+        />
         {view === 'workspace' && (
           <Tabs
             className="sites-views"
@@ -1010,7 +1151,7 @@ export default function Home() {
                   {new Date(assessment.created).toLocaleString('en-GB')}
                   <button
                     className="text-btn"
-                    onClick={workspace.returnToLatest}
+                    onClick={() => selectSiteAssessment(null)}
                   >
                     Return to latest
                   </button>
@@ -1047,13 +1188,18 @@ export default function Home() {
                   screeningFeaturesError={mapEvidence.error}
                   selectedMapObject={mapEvidence.selectedObjectId}
                   mapObjectFocusRequest={mapEvidence.focusRequest}
-                  onInspectMapObject={mapEvidence.selectObject}
+                  onInspectMapObject={(id) => {
+                    changeSitePanel(true);
+                    mapEvidence.selectObject(id);
+                  }}
                   onClearMapObject={mapEvidence.clearSelection}
+                  hiddenLayerIds={operatingState.hiddenLayers}
+                  onHiddenLayerIdsChange={operatingPicture.setHiddenLayers}
                 />
                 {!panelOpen && (
                   <button
                     className="reopen-analysis"
-                    onClick={() => setPanelOpen(true)}
+                    onClick={() => changeSitePanel(true)}
                   >
                     <PanelLeftOpen size={16} /> Open analysis
                   </button>
@@ -1074,7 +1220,7 @@ export default function Home() {
                   <button
                     className="icon-btn"
                     aria-label="Collapse analysis panel"
-                    onClick={() => setPanelOpen(false)}
+                    onClick={() => changeSitePanel(false)}
                   >
                     <PanelLeftClose size={17} />
                   </button>
@@ -1091,7 +1237,12 @@ export default function Home() {
                   />
                 )}
                 {refreshNotice}
-                <Tabs value={tab} onValueChange={setTab}>
+                <Tabs
+                  value={tab}
+                  onValueChange={(value) =>
+                    changeSiteSection(value as WorkspaceTab)
+                  }
+                >
                   <TabsList
                     className="panel-tabs analysis-tabs"
                     aria-label="Site analysis sections"
@@ -1110,9 +1261,9 @@ export default function Home() {
                         mode="overview"
                         context={workspace.context}
                         mapEvidence={mapEvidence}
-                        onEvidence={() => setTab('evidence')}
+                        onEvidence={() => changeSiteSection('evidence')}
                         onMap={(key) => {
-                          setPanelOpen(true);
+                          changeSitePanel(true);
                           showOnMap(key);
                         }}
                         mapTargets={[
@@ -1201,7 +1352,7 @@ export default function Home() {
                         mode="evidence"
                         context={workspace.context}
                         mapEvidence={mapEvidence}
-                        onEvidence={() => setTab('evidence')}
+                        onEvidence={() => changeSiteSection('evidence')}
                         site={{
                           name: current.name,
                           areaHa: result?.area_ha,
@@ -1213,7 +1364,7 @@ export default function Home() {
                       <NaturePanel
                         key={(assessment?.id || current.id) + ':evidence'}
                         section="evidence"
-                        onSection={() => setTab('models')}
+                        onSection={() => changeSiteSection('models')}
                         model={result?.wetland_model}
                         earth={result?.environmental_state}
                         assessmentState={assessment?.state}
@@ -1276,7 +1427,8 @@ export default function Home() {
                               key={(assessment?.id || current.id) + section}
                               section={section}
                               onSection={(next) => {
-                                if (next === 'evidence') setTab('evidence');
+                                if (next === 'evidence')
+                                  changeSiteSection('evidence');
                                 else
                                   setWetlandSection(
                                     next as typeof wetlandSection,
@@ -1341,7 +1493,7 @@ export default function Home() {
                           className={`history-row${a.id === assessment?.id ? ' is-selected' : ''}`}
                           aria-pressed={a.id === assessment?.id}
                           key={a.id}
-                          onClick={() => workspace.selectAssessment(a.id)}
+                          onClick={() => selectSiteAssessment(a.id)}
                         >
                           <b>
                             Boundary v{a.version} · {a.state}
@@ -1441,7 +1593,6 @@ export default function Home() {
               <button
                 onClick={() => {
                   setSitesView('list');
-                  setView('workspace');
                 }}
               >
                 Choose sites
@@ -1457,7 +1608,6 @@ export default function Home() {
                     <button
                       onClick={() => {
                         setSitesView('list');
-                        setView('workspace');
                       }}
                     >
                       Back to sites
@@ -1736,8 +1886,8 @@ export default function Home() {
                   </ul>
                   <button
                     onClick={() => {
-                      setTab('evidence');
-                      setPanelOpen(true);
+                      changeSiteSection('evidence');
+                      changeSitePanel(true);
                       setFinding(null);
                     }}
                   >

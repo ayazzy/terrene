@@ -12,6 +12,7 @@ import {
   type ProjectIntelligenceRun,
 } from './project-intelligence';
 import { useProjectIntelligenceState } from './use-project-intelligence-state';
+import type { OperatingDossierSection } from './operating-picture-state';
 
 function StatePill({ state }: { state: EvidenceState }) {
   return <span className={'intelligence-state state-' + state}>{evidenceStateLabel(state)}</span>;
@@ -154,8 +155,34 @@ function Conflicts({ run }: { run: ProjectIntelligenceRun }) {
   );
 }
 
-export default function ProjectIntelligenceWorkspace({ enabled }: { enabled: boolean }) {
-  const state = useProjectIntelligenceState(enabled);
+type ProjectIntelligenceWorkspaceProps = {
+  enabled: boolean;
+  selectedSubjectId: string | null;
+  selectedRunId: string | null;
+  section: OperatingDossierSection;
+  onSubjectChange: (
+    id: string | null,
+    method: 'push' | 'replace',
+  ) => void;
+  onRunChange: (id: string | null, method: 'push' | 'replace') => void;
+  onSectionChange: (section: OperatingDossierSection) => void;
+};
+
+export default function ProjectIntelligenceWorkspace({
+  enabled,
+  selectedSubjectId,
+  selectedRunId,
+  section,
+  onSubjectChange,
+  onRunChange,
+  onSectionChange,
+}: ProjectIntelligenceWorkspaceProps) {
+  const state = useProjectIntelligenceState(enabled, {
+    selectedSubjectId,
+    selectedRunId,
+    onSubjectChange,
+    onRunChange,
+  });
   if (!enabled) return null;
   return (
     <section className="project-intelligence-workspace" aria-label="Project intelligence workspace">
@@ -184,7 +211,13 @@ export default function ProjectIntelligenceWorkspace({ enabled }: { enabled: boo
         </aside>
         <main className="intelligence-content">
           {state.loading && !state.run ? <WorkspaceLoading /> : !state.selectedSubject ? (
-            <WorkspaceState kind="empty" title="No Project Subjects" description="Project Subjects are created through the authenticated evidence workflow. This interface is deliberately read-only." />
+            <WorkspaceState
+              kind="empty"
+              title={state.subjects.length ? 'Select a Project Subject' : 'No Project Subjects'}
+              description={state.subjects.length
+                ? 'Choose an authorized Project Subject to inspect its immutable intelligence history.'
+                : 'Project Subjects are created through the authenticated evidence workflow. This interface is deliberately read-only.'}
+            />
           ) : !state.runs.length ? (
             <WorkspaceState kind="empty" title="No intelligence runs" description="No immutable reasoning run has been created for this Project Subject." />
           ) : state.run ? (
@@ -193,7 +226,12 @@ export default function ProjectIntelligenceWorkspace({ enabled }: { enabled: boo
                 <div><p className="eyebrow">MONITORED REAL-WORLD PROJECT</p><h2>{state.selectedSubject.name}</h2><p>{humanize(state.selectedSubject.project_type)} · {state.run.evidence_binding.bundles.length} bound evidence bundles</p></div>
                 <code>{state.run.result.model_version}</code>
               </div>
-              <Tabs defaultValue="overview">
+              <Tabs
+                value={section}
+                onValueChange={(value) =>
+                  onSectionChange(value as OperatingDossierSection)
+                }
+              >
                 <TabsList className="intelligence-tabs" aria-label="Project intelligence sections">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
                   <TabsTrigger value="evidence">Evidence</TabsTrigger>

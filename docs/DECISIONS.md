@@ -125,3 +125,24 @@ unreliable.
 **Rationale:** “Latest” selection and publication recency would make results non-reproducible and could turn an attributed assertion into an unsupported conclusion. Dedicated runs support non-spatial Project Subjects without weakening the Site-bound ModuleRun contract.
 
 **References:** [Project Intelligence v1](PROJECT-INTELLIGENCE-V1.md), [Architecture](ARCHITECTURE.md).
+
+## 2026-09-14 — Operating-picture navigation has one URL-addressable state contract
+
+**Decision:** Represent the active Terrene investigation through one typed
+navigation contract containing operating mode, an exact Site or Project Subject
+selection, a compatible historical assessment or intelligence run, dossier
+section/visibility and meaningful layer visibility. Use browser history as the
+restorable presentation-state boundary; keep camera position session-local.
+
+Validate identifiers syntactically and then against authorized API results.
+Invalid, unavailable or mutually inconsistent selection/artifact combinations
+fail closed and may not expose data retained from a prior entity. Navigation
+reads and history transitions must not create or rewrite domain records.
+
+**Rationale:** Independent in-memory map, workspace, entity and history states
+can disagree and cannot survive reload or browser Back/Forward. One canonical
+contract makes later shell, map and dossier convergence testable while
+preserving the distinction between ephemeral interaction state and immutable
+Terrene evidence/reasoning history.
+
+**References:** [Sprint 004](SPRINT-004-INFRASTRUCTURE-OPERATING-PICTURE.md), [Sprint 004 Task 1](SPRINT-004-TASK-1-OPERATING-PICTURE-STATE.md).

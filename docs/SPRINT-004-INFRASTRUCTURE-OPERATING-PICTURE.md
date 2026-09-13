@@ -2,7 +2,7 @@
 
 ## Status
 
-Planned 13 September 2026. This sprint begins from GitHub `main` at `e40a9f4`, after the Beacon Fen Task 2 merge. Sprint 003 is closed incomplete; no practitioner or customer validation is implied.
+Active. Task 1 completed 14 September 2026. This sprint begins from GitHub `main` at `e40a9f4`, after the Beacon Fen Task 2 merge. Sprint 003 is closed incomplete; no practitioner or customer validation is implied.
 
 ## Repository basis
 
@@ -51,6 +51,8 @@ The map becomes the continuous primary interaction surface on desktop. Panels, l
 ## Task 1 — Establish the operating-picture state and bug contract
 
 **Allocation:** Days 1–2
+
+**Status:** Completed 14 September 2026. See [Task 1 operating-picture state and defect contract](SPRINT-004-TASK-1-OPERATING-PICTURE-STATE.md).
 
 Create the typed interaction foundation before changing the visual shell.
 

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -37,6 +37,8 @@ type Props = {
   mapObjectFocusRequest?: number;
   onInspectMapObject?: (id: string) => void;
   onClearMapObject?: () => void;
+  hiddenLayerIds?: string[];
+  onHiddenLayerIdsChange?: (ids: string[]) => void;
 };
 export default function SiteMap({
   geometry,
@@ -54,24 +56,20 @@ export default function SiteMap({
   mapObjectFocusRequest = 0,
   onInspectMapObject,
   onClearMapObject,
+  hiddenLayerIds,
+  onHiddenLayerIdsChange,
 }: Props) {
   const el = useRef<HTMLDivElement>(null),
     map = useRef<maplibregl.Map | null>(null);
   const [projection, setProjection] = useState<maplibregl.Map | null>(null),
     [points, setPoints] = useState<number[][]>([]),
     [revision, setRevision] = useState(0),
-    [base, setBase] = useState(true),
-    [boundaryVisible, setBoundaryVisible] = useState(true),
-    [hiddenLayers, setHiddenLayers] = useState<
-      Record<string, number | undefined>
-    >({}),
-    [hiddenBuiltLayers, setHiddenBuiltLayers] = useState<
-      Partial<Record<BuiltWorldLayerId, boolean>>
-    >({}),
+    [localHiddenLayerIds, setLocalHiddenLayerIds] = useState<string[]>([]),
     [layersOpen, setLayersOpen] = useState(false),
     [coordinates, setCoordinates] = useState(''),
     [error, setError] = useState('');
   const drawRef = useRef(draw);
+  const lastOverlayFocus = useRef('');
   const overlay = useRef<SVGSVGElement>(null);
   const inspectRef = useRef({ findings, onInspect });
   const builtWorldRef = useRef({
@@ -90,9 +88,23 @@ export default function SiteMap({
     };
   }, [screeningFeatures, onInspectMapObject, selectedMapObject]);
   const ready = !!projection;
+  const effectiveHiddenLayerIds = hiddenLayerIds ?? localHiddenLayerIds;
+  const hiddenLayerSet = useMemo(
+    () => new Set(effectiveHiddenLayerIds),
+    [effectiveHiddenLayerIds],
+  );
+  const setLayerHidden = useCallback(
+    (id: string, hidden: boolean) => {
+      const next = hidden
+        ? [...new Set([...effectiveHiddenLayerIds, id])]
+        : effectiveHiddenLayerIds.filter((item) => item !== id);
+      if (hiddenLayerIds === undefined) setLocalHiddenLayerIds(next);
+      onHiddenLayerIdsChange?.(next);
+    },
+    [effectiveHiddenLayerIds, hiddenLayerIds, onHiddenLayerIdsChange],
+  );
   const isVisible = (key: string) =>
-    !(key in hiddenLayers) ||
-    (selected === key && hiddenLayers[key] !== focusRequest);
+    !hiddenLayerSet.has(`environment:${key}`);
   const activeSelection =
     selected && isVisible(selected) ? selected : undefined;
   const repaint = () => setRevision((v) => v + 1);
@@ -205,12 +217,26 @@ export default function SiteMap({
   }, [geometry, ready, projection]);
   useEffect(() => {
     if (ready) {
+      const focusKey = `${selected ?? ''}:${focusRequest}`;
+      if (lastOverlayFocus.current === focusKey) return;
+      lastOverlayFocus.current = focusKey;
       const f = inspectRef.current.findings.find((f) => f.key === selected);
       if (f?.geometry) {
+        const layerId = `environment:${f.key}`;
+        if (hiddenLayerSet.has(layerId)) setLayerHidden(layerId, false);
         fit(f.geometry);
       }
     }
-  }, [selected, focusRequest, ready, projection]);
+    // A new focus request intentionally reveals the exact retained overlay.
+    // The external URL state is updated through setLayerHidden when controlled.
+  }, [
+    selected,
+    focusRequest,
+    ready,
+    projection,
+    hiddenLayerSet,
+    setLayerHidden,
+  ]);
   useEffect(() => {
     if (!ready || !mapObjectFocusRequest) return;
     const feature = builtWorldRef.current.screeningFeatures?.features.find(
@@ -223,9 +249,9 @@ export default function SiteMap({
       map.current.setLayoutProperty(
         'base',
         'visibility',
-        base ? 'visible' : 'none',
+        hiddenLayerSet.has('basemap') ? 'none' : 'visible',
       );
-  }, [base, ready, projection]);
+  }, [hiddenLayerSet, ready, projection]);
   // Exact bounded server geometries rendered in screen coordinates from MapLibre's
   // projection. SVG avoids blob-worker dependence and keeps overlays inspectable.
   function path(g: Geometry | null): string {
@@ -265,7 +291,7 @@ export default function SiteMap({
       railway_stations: '#304f47',
     })[layer];
   const builtLayerVisible = (layer: BuiltWorldLayerId) =>
-    !hiddenBuiltLayers[layer];
+    !hiddenLayerSet.has(`built:${layer}`);
   function renderBuiltFeature(feature: (typeof builtFeatures)[number]) {
     const layer = feature.properties.layer_id;
     if (!builtLayerVisible(layer)) return null;
@@ -352,7 +378,7 @@ export default function SiteMap({
             </path>
           ))}
         {builtFeatures.map(renderBuiltFeature)}
-        {geometry && boundaryVisible && (
+        {geometry && !hiddenLayerSet.has('site-boundary') && (
           <path
             data-layer="site"
             d={path(geometry)}
@@ -433,8 +459,8 @@ export default function SiteMap({
           <label className="base-layer" htmlFor="map-basemap">
             <Checkbox
               id="map-basemap"
-              checked={base}
-              onCheckedChange={(v) => setBase(!!v)}
+              checked={!hiddenLayerSet.has('basemap')}
+              onCheckedChange={(value) => setLayerHidden('basemap', !value)}
             />{' '}
             OpenStreetMap basemap
           </label>
@@ -444,9 +470,11 @@ export default function SiteMap({
               <label htmlFor="map-site-boundary">
                 <Checkbox
                   id="map-site-boundary"
-                  checked={boundaryVisible}
+                  checked={!hiddenLayerSet.has('site-boundary')}
                   disabled={!geometry}
-                  onCheckedChange={(value) => setBoundaryVisible(!!value)}
+                  onCheckedChange={(value) =>
+                    setLayerHidden('site-boundary', !value)
+                  }
                 />
                 <i className="layer-swatch boundary" />
                 <span className="layer-row-copy">
@@ -473,12 +501,7 @@ export default function SiteMap({
                             disabled={!f.geometry}
                             checked={!!f.geometry && isVisible(f.key)}
                             onCheckedChange={(value) =>
-                              setHiddenLayers((keys) => {
-                                const next = { ...keys };
-                                if (value) delete next[f.key];
-                                else next[f.key] = focusRequest;
-                                return next;
-                              })
+                              setLayerHidden(`environment:${f.key}`, !value)
                             }
                           />
                           <i
@@ -549,10 +572,7 @@ export default function SiteMap({
                           disabled={!enabled}
                           checked={enabled && builtLayerVisible(layer.id)}
                           onCheckedChange={(value) => {
-                            setHiddenBuiltLayers((hidden) => ({
-                              ...hidden,
-                              [layer.id]: !value,
-                            }));
+                            setLayerHidden(`built:${layer.id}`, !value);
                             if (
                               !value &&
                               builtFeatures.some(
