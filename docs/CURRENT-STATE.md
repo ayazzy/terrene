@@ -77,6 +77,9 @@ Screening Context is an explicit assessment action: POST creates/reuses a snapsh
 
 The Screening Context read lifecycle is finite: stored, absent, unsupported, authentication/authorization and server/network outcomes are distinct; unresolved reads recover to Retry after 15 seconds. Routine workspace refreshes do not restart an unchanged assessment read, and cancelled or stale assessment responses cannot replace the selected assessment's context.
 
+Versioned infrastructure proposals are currently API-only. The frontend has no
+project list, alternative editor, design map tools or revision-history UI.
+
 ## Verification baseline
 
 Housekeeping verification on 10 September 2026:
@@ -99,6 +102,8 @@ Site Analysis Workspace v2 verification: **32 frontend regression tests passed**
 
 Screening Context map-feature verification: **183 backend tests passed on SQLite** and the focused **23-test Screening Context suite passed on PostgreSQL/PostGIS**. Retained real-data checks cover Westgate, Oxford station, Port Meadow and Redbridge; they verify deterministic WGS84 geometry, organization isolation, historical selection, integrity failures, no-write behavior, availability semantics and unchanged persisted measurements.
 
+Sprint 001 design-proposal verification: **197 backend tests passed on SQLite and PostgreSQL/PostGIS**, including the focused **14-test** Project/Alternative/Revision suite after independent-review fixes. Persistence is verified across a database/engine reload; regressions cover missing/corrupt baselines and lineage plus malformed geometry/boundary inputs. The additive v6 migration passed against the disposable PostgreSQL database.
+
 ## Known limitations
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
@@ -107,6 +112,7 @@ Screening Context map-feature verification: **183 backend tests passed on SQLite
 - Hosted Supabase/Render/R2 credentials and end-to-end tenant acceptance have not been configured or verified; the reserved Sites frontend is not a deployed product.
 - Team review status is not yet an immutable historical Decision record.
 - Scenario modelling is not implemented. Broader Terrene Applications remain hypotheses, not completed architecture.
+- Proposed design revisions accept bounded Polygon/MultiPolygon GeoJSON only; there is no CAD/PDF ingestion, centreline buffering, layout generation, environmental intersection, impact calculation or A/B consequence comparison.
 
 ## Latest meaningful implementation
 
@@ -114,4 +120,4 @@ Site Analysis Workspace v2 was completed on 11 September 2026. It consumes the e
 
 ## Current recommended engineering question
 
-Use the Screening Context pilot with a prospective reviewer to establish which source distinctions and unresolved evidence questions matter in an actual diligence workflow before expanding its rules or datasets.
+Define and verify the first read-only, versioned Scenario calculation that binds one Design Revision to its already-pinned Evidence Snapshot and reports source-qualified geometric intersections without scoring or mutating either input.

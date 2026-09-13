@@ -70,11 +70,40 @@ Sites have mutable presentation fields and point to a current immutable boundary
 
 The current review status is operational state, not yet an append-only Decision record. A future decision architecture should add records rather than recast existing status as historical evidence.
 
+## Versioned proposed infrastructure state
+
+Terrene now persists the first narrow proposed-state contract alongside, but not
+inside, Terrene Earth:
+
+```text
+Site + one explicitly committed Evidence Snapshot
+  → Infrastructure Project (`solar` in v1)
+  → named Design Alternative
+  → immutable Design Revision history
+  → future versioned Scenario calculation (not yet implemented)
+```
+
+A Project copies the safe identity of one committed Evidence Snapshot and its
+exact historical Site boundary: snapshot/content/schema/registry identity,
+Site ID, boundary version and boundary geometry fingerprint. Project creation
+integrity-loads the private snapshot manifest and verifies the stored historical
+boundary object; it never selects “latest”, acquires evidence or triggers an
+assessment. Later snapshots therefore do not retarget an existing project.
+
+Each Design Revision retains its Project, Alternative, parent revision and full
+baseline identity together with the exact accepted WGS84 FeatureCollection,
+submission provenance, geometry/content fingerprints and whether any proposed
+geometry extends beyond the pinned boundary. Revisions append at the current
+alternative head. An explicit parent provides optimistic concurrency control;
+an idempotency key safely resolves identical retries and conflicts on changed
+payloads. Proposed footprints are not observations, Earth objects, assessments
+or ModuleRuns.
+
 ## Intended, not completed
 
 ### Terrene Scenario
 
-Scenario will represent a proposed intervention as an input and compute an alternative/future state against the same Earth and Reasoning foundations. No general intervention entity, alternative-state engine or scenario comparison contract is implemented today. Drawing a site boundary is not the same as modelling an intervention.
+Scenario will compute consequences or alternative/future state from a pinned Design Revision and Evidence Snapshot. The versioned proposal input now exists, but no scenario binding, evidence-intersection calculation, alternative comparison or impact interpretation is implemented. Drawing either a Site boundary or a proposed footprint is not itself a calculation.
 
 ### Terrene Applications
 

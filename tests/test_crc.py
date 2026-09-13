@@ -17,7 +17,8 @@ from backend import worker
 def setup():
     init()
     with engine.begin() as c:
-        for t in [module_runs,land_evidence_snapshot_origins,
+        for t in [design_revisions,design_alternatives,infrastructure_projects,
+                  module_runs,land_evidence_snapshot_origins,
                   land_evidence_snapshot_links,land_evidence_snapshot_members,
                   land_evidence_snapshots,sites,assessments,features,datasets]:
             c.execute(delete(t))

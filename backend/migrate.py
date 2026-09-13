@@ -1,11 +1,11 @@
-"""Additive schema migrations; v5 retains typed source-feature attributes."""
+"""Additive schema migrations; v6 adds immutable infrastructure proposals."""
 from backend.core import *
 if __name__=='__main__':
     init()
     if engine.dialect.name=='postgresql':
         with engine.begin() as c:
             c.execute(text('CREATE TABLE IF NOT EXISTS crc_schema_migrations (version integer PRIMARY KEY, applied_at timestamptz DEFAULT now())'))
-            for table in ['sites','assessments','land_evidence_snapshots','land_evidence_snapshot_origins','module_runs']:
+            for table in ['sites','assessments','land_evidence_snapshots','land_evidence_snapshot_origins','module_runs','infrastructure_projects','design_alternatives','design_revisions']:
                 c.execute(text(f'ALTER TABLE {table} ENABLE ROW LEVEL SECURITY'))
                 # Browser roles get no direct table privileges: all mutations/downloads use authenticated API.
                 for role in ['anon','authenticated']:
@@ -18,4 +18,5 @@ if __name__=='__main__':
             c.execute(text('INSERT INTO crc_schema_migrations(version) VALUES (3) ON CONFLICT DO NOTHING'))
             c.execute(text('INSERT INTO crc_schema_migrations(version) VALUES (4) ON CONFLICT DO NOTHING'))
             c.execute(text('INSERT INTO crc_schema_migrations(version) VALUES (5) ON CONFLICT DO NOTHING'))
-    print('CRC schema migrations 1–5 applied')
+            c.execute(text('INSERT INTO crc_schema_migrations(version) VALUES (6) ON CONFLICT DO NOTHING'))
+    print('CRC schema migrations 1–6 applied')

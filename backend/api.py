@@ -166,6 +166,13 @@ from backend.screening_context_report import screening_context_report
 from backend.screening_context_map import (
     ScreeningMapFeatureCollection, build_screening_map_features,
 )
+from backend.design_proposals import (
+    AlternativeInput, AlternativeRecord, ProjectInput, ProjectRecord,
+    ProposalConflict, ProposalIntegrityError, ProposalNotFound,
+    RevisionInput, RevisionRecord, create_alternative, create_project,
+    create_revision, get_alternative, get_project, get_revision,
+    list_alternatives, list_projects, list_revisions,
+)
 
 
 def screening_operation(operation):
@@ -221,3 +228,67 @@ def context_report(id: str, org=Depends(organization)):
         review_status=site['status'], current_version=site['version'],
     ), headers={'Content-Disposition': 'attachment; filename="terrene-screening-context.html"',
                 'Cache-Control': 'no-store'})
+
+
+def proposal_operation(operation):
+    try:
+        return operation()
+    except ProposalNotFound:
+        raise HTTPException(404, 'Record not found')
+    except ProposalConflict as error:
+        raise HTTPException(409, str(error))
+    except ProposalIntegrityError:
+        raise HTTPException(
+            409,
+            'Pinned evidence or boundary integrity check failed; no proposed design was changed.',
+        )
+    except ValueError as error:
+        raise HTTPException(422, str(error))
+
+
+@app.post('/api/projects', response_model=ProjectRecord)
+def create_infrastructure_project(data: ProjectInput, org=Depends(organization)):
+    return proposal_operation(lambda: create_project(data, org=org))
+
+
+@app.get('/api/projects', response_model=list[ProjectRecord])
+def read_infrastructure_projects(site_id: str | None = None,
+                                 org=Depends(organization)):
+    return proposal_operation(lambda: list_projects(org=org, site_id=site_id))
+
+
+@app.get('/api/projects/{id}', response_model=ProjectRecord)
+def read_infrastructure_project(id: str, org=Depends(organization)):
+    return proposal_operation(lambda: get_project(id, org=org))
+
+
+@app.post('/api/projects/{id}/alternatives', response_model=AlternativeRecord)
+def create_design_alternative(id: str, data: AlternativeInput,
+                              org=Depends(organization)):
+    return proposal_operation(lambda: create_alternative(id, data, org=org))
+
+
+@app.get('/api/projects/{id}/alternatives', response_model=list[AlternativeRecord])
+def read_design_alternatives(id: str, org=Depends(organization)):
+    return proposal_operation(lambda: list_alternatives(id, org=org))
+
+
+@app.get('/api/alternatives/{id}', response_model=AlternativeRecord)
+def read_design_alternative(id: str, org=Depends(organization)):
+    return proposal_operation(lambda: get_alternative(id, org=org))
+
+
+@app.post('/api/alternatives/{id}/revisions', response_model=RevisionRecord)
+def create_design_revision(id: str, data: RevisionInput,
+                           org=Depends(organization)):
+    return proposal_operation(lambda: create_revision(id, data, org=org))
+
+
+@app.get('/api/alternatives/{id}/revisions', response_model=list[RevisionRecord])
+def read_design_revisions(id: str, org=Depends(organization)):
+    return proposal_operation(lambda: list_revisions(id, org=org))
+
+
+@app.get('/api/design-revisions/{id}', response_model=RevisionRecord)
+def read_design_revision(id: str, org=Depends(organization)):
+    return proposal_operation(lambda: get_revision(id, org=org))
