@@ -1,0 +1,90 @@
+{
+  "packet_version": "beacon_fen_validation_v1",
+  "captured_at": "2026-09-13T22:10:23Z",
+  "capture_method": "human_submitted_structured",
+  "project_subject": {
+    "name": "Beacon Fen Energy Park",
+    "project_type": "energy_infrastructure",
+    "site_id": null
+  },
+  "source_metadata_notes": [
+    {
+      "source_id": "pins-beacon-fen-decision-announcement",
+      "field": "published_at",
+      "reported_value": "2026-08-21",
+      "stored_value": null,
+      "reason": "The official page reports a date but no clock time; SourceRecord v1 requires a timezone-aware datetime, so no time is fabricated."
+    }
+  ],
+  "submission": {
+    "schema_version": "project_evidence_v1",
+    "land_evidence_snapshot_id": null,
+    "sources": [
+      {
+        "id": "pins-beacon-fen-decision-announcement",
+        "source_version": "pins-news-2026-08-21-human-capture-2026-09-13T221023Z",
+        "publisher": "Planning Inspectorate",
+        "title": "Beacon Fen Energy Park development consent decision announced",
+        "reference": "https://www.gov.uk/government/news/beacon-fen-energy-park-development-consent-decision-announced",
+        "published_at": null,
+        "recorded_at": "2026-09-13T22:10:23Z",
+        "retained_excerpt": "The Beacon Fen Energy Park DCO application has today been granted development consent by the Department for Energy Security and Net Zero.",
+        "content_hash": "7604eb797c327fc3601c38ab9abcf0234170d5b4231f1ca2c9eea0344567e15a",
+        "entry_method": "human_submitted_structured"
+      }
+    ],
+    "claims": [
+      {
+        "id": "beacon-fen-dco-consent-2026-08-21",
+        "project_subject_id": "PROJECT_SUBJECT_ID",
+        "phase": "planning",
+        "predicate": "planning_status",
+        "value": "approved",
+        "unknown_reason": null,
+        "source_record_id": "pins-beacon-fen-decision-announcement",
+        "locator": {
+          "start": 43,
+          "end": 85,
+          "exact_passage": "has today been granted development consent"
+        },
+        "time": {
+          "kind": "reported_occurrence",
+          "effective_or_event_date": "2026-08-21"
+        },
+        "supersedes_claim_id": null
+      }
+    ]
+  },
+  "excluded_assertions": [
+    {
+      "source_id": "beacon-fen-promoter-live-page",
+      "reported_field": "construction_start_year",
+      "reported_value": "2027",
+      "reason": "A planned construction-start year is not a present construction-status observation."
+    },
+    {
+      "source_id": "beacon-fen-promoter-live-page",
+      "reported_field": "operation_year",
+      "reported_value": "2029",
+      "reason": "An operational target is not necessarily a grid-connection target."
+    },
+    {
+      "source_id": "london-gazette-notice-4889106",
+      "reported_field": "grid_connection_by_year",
+      "reported_value": "2030",
+      "reason": "Project Evidence v1 requires an exact grid-connection date; year precision must not be coerced."
+    },
+    {
+      "source_id": "beacon-fen-promoter-newsletter-summer-2023",
+      "reported_field": "construction_start_year",
+      "reported_value": "2026",
+      "reason": "This is a historical target, not a current construction-status observation or explicit correction ancestor."
+    },
+    {
+      "source_id": "beacon-fen-promoter-live-page",
+      "reported_field": "grid_connection_agreement",
+      "reported_value": "reported_secured",
+      "reason": "Connection-agreement state is outside the Project Evidence v1 predicate vocabulary."
+    }
+  ]
+}

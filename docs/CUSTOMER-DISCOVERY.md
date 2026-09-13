@@ -8,6 +8,12 @@ Early-stage site screening and diligence for land-intensive development, potenti
 
 This is a working go-to-market hypothesis, not a commitment to make renewables Terrene's permanent identity.
 
+## Active validation experiment
+
+Sprint 003 uses Beacon Fen Energy Park (Planning Inspectorate reference EN010151) as a real-project case study. The experiment asks whether a development, investment or diligence practitioner benefits from a source-separated account of what is officially established about consent, what a promoter reports about construction and operation timing, and what remains unresolved about grid delivery.
+
+The project was selected because development consent was granted on 21 August 2026 and its public record contains official, statutory and promoter sources with materially different milestone semantics. This is desk-research input to an experiment, not customer validation. See [Sprint 003 — Beacon Fen real-project validation](SPRINT-003-BEACON-FEN-VALIDATION.md).
+
 ## Why it appears plausible
 
 - Site selection and early diligence combine costly land, environmental, planning and infrastructure questions.
