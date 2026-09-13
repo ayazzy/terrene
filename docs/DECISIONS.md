@@ -146,3 +146,19 @@ preserving the distinction between ephemeral interaction state and immutable
 Terrene evidence/reasoning history.
 
 **References:** [Sprint 004](SPRINT-004-INFRASTRUCTURE-OPERATING-PICTURE.md), [Sprint 004 Task 1](SPRINT-004-TASK-1-OPERATING-PICTURE-STATE.md).
+
+## 2026-09-14 — Project geography requires an explicit Site relationship
+
+**Decision:** Use one persistent infrastructure-entity map for Site and Project
+Subject selection. Render a Project Subject spatially only when its authorized
+record has an explicit `site_id` relationship to an authorized Site with saved
+geometry. Derive the marker's display anchor from that Site envelope while
+retaining the Site boundary as the actual geographic object. Keep every other
+Project Subject in an explicitly unlocated roster and leave the camera unchanged
+when it is selected.
+
+**Rationale:** Names, promoter text and source references are not defensible
+spatial evidence. A shared map improves investigation continuity only if it does
+not turn missing geography into an approximate or fabricated location.
+
+**References:** [Sprint 004](SPRINT-004-INFRASTRUCTURE-OPERATING-PICTURE.md), [Sprint 004 Task 3](SPRINT-004-TASK-3-ENTITY-MAP.md), [Architecture](ARCHITECTURE.md).
