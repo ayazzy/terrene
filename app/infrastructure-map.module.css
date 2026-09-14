@@ -2,11 +2,135 @@
   min-height: 0;
   height: 100%;
   color: #e7ece8;
-  background: #202522;
+  background: #0a0f11;
+  isolation: isolate;
 }
 
-.operatingMap :global(.map-canvas .maplibregl-canvas) {
-  filter: grayscale(1) invert(1) brightness(0.7) contrast(0.6);
+.operatingMap :global(.maplibregl-ctrl-group),
+.operatingMap :global(.maplibregl-ctrl-attrib) {
+  border: 1px solid #34433d;
+  border-radius: 2px;
+  background: rgb(13 20 18 / 92%);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 32%);
+  color: #9eaaa4;
+}
+
+.operatingMap :global(.maplibregl-ctrl-group button) {
+  background-color: transparent;
+}
+
+.operatingMap :global(.maplibregl-ctrl-group button + button) {
+  border-top-color: #34433d;
+}
+
+.operatingMap :global(.maplibregl-ctrl-icon) {
+  filter: invert(0.88) sepia(0.08) saturate(0.5);
+}
+
+.operatingMap :global(.maplibregl-ctrl-attrib a) {
+  color: #b8c6bf;
+}
+
+.operatingMap :global(.maplibregl-canvas:focus-visible) {
+  outline: 2px solid #5fd8e6;
+  outline-offset: -3px;
+}
+
+.operatingMap :global(.map-toolbar) {
+  z-index: 22;
+}
+
+.operatingMap :global(.map-toolbar button),
+.operatingMap :global(.map-boundary-label),
+.operatingMap :global(.map-selection),
+.operatingMap :global(.layer-control) {
+  border-color: #34433d;
+  border-radius: 2px;
+  background: rgb(13 20 18 / 94%);
+  color: #dce7e1;
+  box-shadow: 0 10px 28px rgb(0 0 0 / 34%);
+  backdrop-filter: blur(12px);
+}
+
+.operatingMap :global(.map-toolbar button:hover),
+.operatingMap :global(.map-toolbar button[aria-expanded='true']),
+.operatingMap :global(.map-toolbar button[aria-pressed='true']) {
+  border-color: #5b7067;
+  background: #1d2a25;
+  color: #f1f6f3;
+}
+
+.operatingMap :global(.map-toolbar button[aria-pressed='true']) {
+  box-shadow:
+    inset 0 -2px 0 #f2b84b,
+    0 10px 28px rgb(0 0 0 / 34%);
+}
+
+.operatingMap :global(.layer-count),
+.operatingMap :global(.map-boundary-label small) {
+  color: #87978f;
+}
+
+.operatingMap :global(.map-boundary-label) {
+  border-left: 2px solid #45d6e8;
+}
+
+.operatingMap :global(.map-selection) {
+  border-left: 3px solid #f2b84b;
+}
+
+.operatingMap :global(.layer-control) {
+  z-index: 21;
+  width: min(22rem, calc(100% - 1.5rem));
+  max-height: calc(100% - 7.75rem);
+  padding: 0.875rem;
+}
+
+.operatingMap :global(.layer-control-title) {
+  min-height: 2rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #2d3a34;
+}
+
+.operatingMap :global(.layer-control-title strong),
+.operatingMap :global(.layer-group h3) {
+  color: #dfe8e3;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.operatingMap :global(.layer-control p),
+.operatingMap :global(.layer-row small),
+.operatingMap :global(.layer-subgroup h4) {
+  color: #84948c;
+}
+
+.operatingMap :global(.layer-group),
+.operatingMap :global(.layer-footnote) {
+  border-color: #2d3a34;
+}
+
+.operatingMap :global(.layer-row:hover) {
+  background: #15201c;
+}
+
+.operatingMap :global(.terrene-layer-swatch) {
+  border-color: #d8e2dc;
+  outline-color: #07100d;
+}
+
+.operatingMap :global(.terrene-map-hover .maplibregl-popup-content) {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #46574f;
+  border-radius: 2px;
+  background: #101815;
+  color: #eef4f0;
+  box-shadow: 0 8px 22px rgb(0 0 0 / 42%);
+  font-size: 0.75rem;
+}
+
+.operatingMap :global(.terrene-map-hover .maplibregl-popup-tip) {
+  border-top-color: #101815;
 }
 
 .projectMarkers {
@@ -62,16 +186,16 @@
   z-index: 20;
   top: 1rem;
   left: 1rem;
-  width: min(20rem, calc(100% - 7rem));
+  width: min(22rem, calc(100% - 7rem));
   max-height: calc(100% - 5rem);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid #4b5750;
+  border: 1px solid #34433d;
   border-radius: 2px;
-  background: #1c211ff2;
-  box-shadow: 0 12px 28px rgb(0 0 0 / 28%);
-  backdrop-filter: blur(8px);
+  background: rgb(13 20 18 / 94%);
+  box-shadow: 0 18px 48px rgb(0 0 0 / 42%);
+  backdrop-filter: blur(12px);
 }
 
 .operatingMap:has(:global(.layer-control)) .roster {
@@ -196,6 +320,231 @@
   white-space: nowrap;
 }
 
+.legendPanel {
+  position: absolute;
+  z-index: 21;
+  top: 3.5rem;
+  left: 0.75rem;
+  width: min(22rem, calc(100% - 7rem));
+  max-height: calc(100% - 7.75rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #34433d;
+  border-radius: 2px;
+  background: rgb(13 20 18 / 94%);
+  color: #dce7e1;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 42%);
+  backdrop-filter: blur(12px);
+}
+
+.legendPanel > header {
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.625rem 0.5rem 0.75rem;
+  border-bottom: 1px solid #2d3a34;
+}
+
+.legendPanel > header > span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.legendPanel > header strong,
+.legendBody h3 {
+  color: #e5ede8;
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.legendPanel > header small {
+  color: #84948c;
+  font-size: 0.75rem;
+}
+
+.legendPanel > header button {
+  width: 1.75rem;
+  min-height: 1.75rem;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+}
+
+.legendBody {
+  overflow-y: auto;
+  padding: 0.25rem 0.75rem 0.75rem;
+}
+
+.legendBody > section {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #2d3a34;
+}
+
+.legendBody > section:last-child {
+  border-bottom: 0;
+}
+
+.legendBody h3 {
+  margin: 0 0 0.6rem;
+  color: #899990;
+}
+
+.legendBody p {
+  margin: 0;
+  color: #92a199;
+  font-size: 0.8125rem;
+}
+
+.legendRow,
+.legendLayer > span,
+.railKey span {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.legendRow {
+  min-height: 2rem;
+  color: #cbd6d0;
+  font-size: 0.8125rem;
+}
+
+.legendLine,
+.legendPoint,
+.railKey i,
+.legendObjects i {
+  width: 0.75rem;
+  height: 0.2rem;
+  flex: 0 0 0.75rem;
+  display: inline-block;
+}
+
+.legendPoint {
+  width: 0.6rem;
+  height: 0.6rem;
+  flex-basis: 0.6rem;
+  border: 1px solid #071012;
+  border-radius: 50%;
+}
+
+.legendLayer {
+  padding: 0.45rem 0;
+}
+
+.legendLayer b {
+  color: #d8e2dc;
+  font-size: 0.8125rem;
+  font-weight: 570;
+}
+
+.legendLayer small {
+  display: block;
+  margin: 0.2rem 0 0 1.3rem;
+  color: #84948c;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.legendLayer[data-state='partial'] small {
+  color: #d3a75f;
+}
+
+.legendLayer[data-state='unavailable'],
+.legendLayer[data-state='unsupported'],
+.legendLayer[data-state='mapped_zero'] {
+  opacity: 0.66;
+}
+
+.railKey {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0 0 1.3rem;
+  border-top: 1px solid #24302b;
+}
+
+.railKey span {
+  gap: 0.35rem;
+  color: #92a199;
+  font-size: 0.75rem;
+}
+
+.railKey i {
+  width: 0.6rem;
+  flex-basis: 0.6rem;
+}
+
+.legendObjects {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.legendObjects button {
+  width: 100%;
+  min-height: 2rem;
+  justify-content: flex-start;
+  overflow: hidden;
+  padding: 0.35rem 0.45rem;
+  border-color: transparent;
+  background: transparent;
+  color: #c5d0ca;
+  font-size: 0.8125rem;
+  text-align: left;
+}
+
+.legendObjects button:hover,
+.legendObjects button[aria-pressed='true'] {
+  border-color: #46574f;
+  background: #1d2a25;
+}
+
+.legendObjects button[aria-pressed='true'] {
+  box-shadow: inset 2px 0 0 #f2b84b;
+}
+
+.legendObjects i {
+  height: 0.35rem;
+}
+
+.legendObjects span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sourceList {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sourceList li {
+  display: grid;
+  gap: 0.15rem;
+  padding-left: 0.65rem;
+  border-left: 2px solid #33443c;
+}
+
+.sourceList strong {
+  color: #cdd8d2;
+  font-size: 0.8125rem;
+}
+
+.sourceList span,
+.sourceList time {
+  color: #829188;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
 .rosterRows strong {
   color: #e7ede9;
   font-size: 0.75rem;
@@ -213,11 +562,34 @@
 }
 
 @media (max-width: 47.5rem) {
+  .operatingMap :global(.map-toolbar) {
+    max-width: calc(100% - 4.25rem);
+    flex-wrap: wrap;
+  }
+
+  .operatingMap :global(.map-toolbar button) {
+    width: 2.5rem;
+    min-height: 2.5rem;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .operatingMap :global(.map-toolbar .layer-count) {
+    display: none;
+  }
+
   .roster {
     top: 0.75rem;
     left: 0.75rem;
     width: calc(100% - 4.5rem);
     max-height: calc(100% - 1.5rem);
+  }
+
+  .legendPanel {
+    top: 3.75rem;
+    left: 0.75rem;
+    width: calc(100% - 4.5rem);
+    max-height: calc(100% - 5.25rem);
   }
 
   .projectMarker strong {

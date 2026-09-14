@@ -54,13 +54,31 @@ test('drawing map is part of the stable client module graph', () => {
   assert.match(page, /<SiteMap[\s\S]*?\bdraw\b[\s\S]*?onDraw=/);
 });
 
-test('infrastructure raster treatment stays scoped to the primary map', () => {
-  assert.match(map, /'raster-opacity': 0\.8/);
-  assert.match(
+test('the primary map prefers a dark vector style with a legacy raster fallback', () => {
+  assert.match(map, /NEXT_PUBLIC_BASEMAP_STYLE_URL/);
+  assert.match(map, /https:\/\/tiles\.openfreemap\.org\/styles\/dark/);
+  assert.match(map, /NEXT_PUBLIC_BASEMAP_URL/);
+  assert.match(map, /productionConfigurationMissing: true/);
+  assert.doesNotMatch(
     mapCss,
-    /\.operatingMap :global\(\.map-canvas \.maplibregl-canvas\)/,
+    /maplibregl-canvas[^}]*filter:\s*(?:grayscale|invert)/s,
   );
   assert.doesNotMatch(mapCss, /portfolio-canvas|portfolio-map/);
+});
+
+test('operator controls preserve 2D truth and mutually exclusive left surfaces', () => {
+  assert.match(
+    map,
+    /\[perspectiveSceneId, setPerspectiveSceneId\] = useState<string \| null>\(null\)/,
+  );
+  assert.match(map, /perspectiveSceneId === mapScene\?\.snapshot\.id/);
+  assert.match(map, /pitch: perspectiveActive \? 55 : 0/);
+  assert.match(map, /!perspectiveActive/);
+  assert.match(map, /heightAvailableCount > 0/);
+  assert.match(map, /id="map-legend"/);
+  assert.match(map, /Keyboard object index/);
+  assert.match(map, /Retrieved \{sourceDate\(source\.retrieved_at\)\}/);
+  assert.match(map, /className: 'terrene-map-hover'/);
 });
 
 test('saved entities expose identity, location and evidence state without hover', () => {

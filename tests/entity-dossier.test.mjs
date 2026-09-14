@@ -14,7 +14,10 @@ const [page, project, dossier, map, shell, mapCss] = await Promise.all([
     new URL('../app/operating-shell.module.css', import.meta.url),
     'utf8',
   ),
-  readFile(new URL('../app/infrastructure-map.module.css', import.meta.url), 'utf8'),
+  readFile(
+    new URL('../app/infrastructure-map.module.css', import.meta.url),
+    'utf8',
+  ),
 ]);
 
 test('Sites and Project Subjects use one docked entity dossier contract', () => {
@@ -41,8 +44,9 @@ test('both dossiers expose map layers while controlled layer state stays on the 
   assert.match(page, /onLayersOpenChange=\{setMapLayersOpen\}/);
   assert.match(page, /onOpenLayers=\{\(\) => setMapLayersOpen\(true\)\}/g);
   assert.match(map, /const layerPanelOpen = layersOpen \?\? localLayersOpen/);
-  assert.match(map, /if \(open\) setRosterOpen\(false\)/);
-  assert.match(mapCss, /:has\(:global\(\.layer-control\)\) \.roster/);
+  assert.match(map, /setRosterOpen\(false\);[\s\S]*setLegendOpen\(false\)/);
+  assert.match(map, /rosterOpen &&[\s\S]*!layerPanelOpen &&[\s\S]*!legendOpen/);
+  assert.match(mapCss, /\.legendPanel\s*\{/);
 });
 
 test('collapse preserves the entity and immutable artifact URL state', () => {

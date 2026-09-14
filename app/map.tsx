@@ -4,7 +4,9 @@ import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
+  Box,
   Layers,
+  ListTree,
   LocateFixed,
   ArrowUpRight,
   FileSearch,
@@ -107,6 +109,362 @@ const emptyFeatureCollection: FeatureCollection = {
   features: [],
 };
 
+const MAP_PALETTE = {
+  selection: '#f2b84b',
+  boundary: '#45d6e8',
+  boundaryFill: '#45d6e8',
+  building: '#7b8994',
+  buildingFlat: '#aeb8c0',
+  functionalSite: '#36a99a',
+  railwayMulti: '#c084fc',
+  railwaySingle: '#60a5fa',
+  railwayNarrow: '#fb7185',
+  station: '#f5f8f6',
+  project: '#f2b84b',
+} as const;
+
+const OPENFREEMAP_DARK_STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
+
+type BasemapConfiguration = {
+  style: maplibregl.StyleSpecification | string;
+  label: string;
+  productionConfigurationMissing: boolean;
+};
+
+function basemapConfiguration(): BasemapConfiguration {
+  const vectorStyleUrl = process.env.NEXT_PUBLIC_BASEMAP_STYLE_URL?.trim();
+  if (vectorStyleUrl)
+    return {
+      style: vectorStyleUrl,
+      label: 'Configured vector basemap',
+      productionConfigurationMissing: false,
+    };
+  const legacyRasterUrl = process.env.NEXT_PUBLIC_BASEMAP_URL?.trim();
+  if (legacyRasterUrl)
+    return {
+      style: {
+        version: 8,
+        sources: {
+          'legacy-basemap': {
+            type: 'raster',
+            tiles: [legacyRasterUrl],
+            tileSize: 256,
+            attribution: '© OpenStreetMap contributors',
+          },
+        },
+        layers: [
+          {
+            id: 'legacy-basemap',
+            type: 'raster',
+            source: 'legacy-basemap',
+            paint: { 'raster-saturation': -0.75, 'raster-opacity': 0.78 },
+          },
+        ],
+      },
+      label: 'Legacy raster basemap',
+      productionConfigurationMissing: false,
+    };
+  if (process.env.NODE_ENV === 'development')
+    return {
+      style: OPENFREEMAP_DARK_STYLE_URL,
+      label: 'OpenFreeMap Dark · local development',
+      productionConfigurationMissing: false,
+    };
+  return {
+    style: {
+      version: 8,
+      sources: {},
+      layers: [
+        {
+          id: 'unconfigured-basemap',
+          type: 'background',
+          paint: { 'background-color': '#0a0f11' },
+        },
+      ],
+    },
+    label: 'Basemap unavailable',
+    productionConfigurationMissing: true,
+  };
+}
+
+const BASEMAP = basemapConfiguration();
+
+const terreneLayerDefinitions = [
+  {
+    id: NATIVE_LAYER_IDS.sitesFill,
+    type: 'fill',
+    source: SOURCE_IDS.sites,
+    paint: {
+      'fill-color': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        MAP_PALETTE.selection,
+        MAP_PALETTE.boundaryFill,
+      ],
+      'fill-opacity': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        0.24,
+        0.08,
+      ],
+    },
+  },
+  {
+    id: NATIVE_LAYER_IDS.sitesLine,
+    type: 'line',
+    source: SOURCE_IDS.sites,
+    paint: {
+      'line-color': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        MAP_PALETTE.selection,
+        MAP_PALETTE.boundary,
+      ],
+      'line-width': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        3.5,
+        2,
+      ],
+    },
+  },
+  {
+    id: NATIVE_LAYER_IDS.environmentFill,
+    type: 'fill',
+    source: SOURCE_IDS.environment,
+    paint: {
+      'fill-color': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        MAP_PALETTE.selection,
+        ['get', 'color'],
+      ],
+      'fill-opacity': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        0.4,
+        0.22,
+      ],
+    },
+  },
+  {
+    id: NATIVE_LAYER_IDS.environmentLine,
+    type: 'line',
+    source: SOURCE_IDS.environment,
+    paint: {
+      'line-color': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        MAP_PALETTE.selection,
+        ['get', 'color'],
+      ],
+      'line-width': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        3.5,
+        1.5,
+      ],
+    },
+  },
+  {
+    id: NATIVE_LAYER_IDS.functionalFill,
+    type: 'fill',
+    source: SOURCE_IDS.infrastructure,
+    filter: ['==', ['get', 'layer_id'], 'functional_sites'],
+    paint: {
+      'fill-color': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        MAP_PALETTE.selection,
+        MAP_PALETTE.functionalSite,
+      ],
+      'fill-opacity': 0.38,
+    },
+  },
+  {
+    id: NATIVE_LAYER_IDS.functionalLine,
+    type: 'line',
+    source: SOURCE_IDS.infrastructure,
+    filter: ['==', ['get', 'layer_id'], 'functional_sites'],
+    paint: {
+      'line-color': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        MAP_PALETTE.selection,
+        MAP_PALETTE.functionalSite,
+      ],
+      'line-width': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        4,
+        2,
+      ],
+    },
+  },
+  {
+    id: NATIVE_LAYER_IDS.buildingFill,
+    type: 'fill',
+    source: SOURCE_IDS.infrastructure,
+    filter: ['==', ['get', 'layer_id'], 'buildings'],
+    paint: {
+      'fill-color': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        MAP_PALETTE.selection,
+        MAP_PALETTE.building,
+      ],
+      'fill-opacity': 0.38,
+    },
+  },
+  {
+    id: NATIVE_LAYER_IDS.buildingExtrusion,
+    type: 'fill-extrusion',
+    source: SOURCE_IDS.infrastructure,
+    filter: [
+      'all',
+      ['==', ['get', 'layer_id'], 'buildings'],
+      ['==', ['get', 'height_backed'], true],
+    ],
+    layout: { visibility: 'none' },
+    paint: {
+      'fill-extrusion-color': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        MAP_PALETTE.selection,
+        MAP_PALETTE.building,
+      ],
+      'fill-extrusion-height': ['get', 'extrusion_height_m'],
+      'fill-extrusion-opacity': 0.86,
+      'fill-extrusion-vertical-gradient': true,
+    },
+  },
+  {
+    id: NATIVE_LAYER_IDS.buildingLine,
+    type: 'line',
+    source: SOURCE_IDS.infrastructure,
+    filter: ['==', ['get', 'layer_id'], 'buildings'],
+    paint: {
+      'line-color': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        MAP_PALETTE.selection,
+        MAP_PALETTE.building,
+      ],
+      'line-width': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        4,
+        1.75,
+      ],
+    },
+  },
+  {
+    id: NATIVE_LAYER_IDS.buildingFlatLine,
+    type: 'line',
+    source: SOURCE_IDS.infrastructure,
+    filter: [
+      'all',
+      ['==', ['get', 'layer_id'], 'buildings'],
+      ['==', ['get', 'height_backed'], false],
+    ],
+    paint: {
+      'line-color': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        MAP_PALETTE.selection,
+        MAP_PALETTE.buildingFlat,
+      ],
+      'line-width': 2,
+      'line-dasharray': [2, 1],
+    },
+  },
+  {
+    id: NATIVE_LAYER_IDS.railwayTracks,
+    type: 'line',
+    source: SOURCE_IDS.infrastructure,
+    filter: ['==', ['get', 'layer_id'], 'railway_tracks'],
+    paint: {
+      'line-color': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        MAP_PALETTE.selection,
+        [
+          'match',
+          ['get', 'classification'],
+          'Multi Track',
+          MAP_PALETTE.railwayMulti,
+          'Single Track',
+          MAP_PALETTE.railwaySingle,
+          'Narrow Gauge',
+          MAP_PALETTE.railwayNarrow,
+          MAP_PALETTE.railwaySingle,
+        ],
+      ],
+      'line-width': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        4.5,
+        2.75,
+      ],
+      'line-dasharray': [2, 1.2],
+    },
+  },
+  {
+    id: NATIVE_LAYER_IDS.railwayStations,
+    type: 'circle',
+    source: SOURCE_IDS.infrastructure,
+    filter: ['==', ['get', 'layer_id'], 'railway_stations'],
+    paint: {
+      'circle-color': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        MAP_PALETTE.selection,
+        MAP_PALETTE.station,
+      ],
+      'circle-radius': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        8,
+        5.5,
+      ],
+      'circle-stroke-color': '#071012',
+      'circle-stroke-width': 2.5,
+    },
+  },
+  {
+    id: NATIVE_LAYER_IDS.projects,
+    type: 'circle',
+    source: SOURCE_IDS.projects,
+    paint: {
+      'circle-color': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        MAP_PALETTE.selection,
+        MAP_PALETTE.project,
+      ],
+      'circle-radius': [
+        'case',
+        ['boolean', ['feature-state', 'selected'], false],
+        8,
+        5.5,
+      ],
+      'circle-stroke-color': '#071012',
+      'circle-stroke-width': 2.5,
+    },
+  },
+] satisfies maplibregl.LayerSpecification[];
+
+function installTerreneLayers(currentMap: maplibregl.Map) {
+  for (const sourceId of Object.values(SOURCE_IDS))
+    if (!currentMap.getSource(sourceId))
+      currentMap.addSource(sourceId, {
+        type: 'geojson',
+        data: emptyFeatureCollection,
+      });
+  for (const layer of terreneLayerDefinitions)
+    if (!currentMap.getLayer(layer.id)) currentMap.addLayer(layer);
+}
+
 function setGeoJSONData(
   currentMap: maplibregl.Map,
   sourceId: string,
@@ -115,6 +473,31 @@ function setGeoJSONData(
   const source = currentMap.getSource(sourceId);
   if (source?.type === 'geojson')
     void (source as maplibregl.GeoJSONSource).setData(data);
+}
+
+function sourceDate(value: string) {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.valueOf())
+    ? 'Time not recorded'
+    : new Intl.DateTimeFormat('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }).format(parsed);
+}
+
+function hoverLabel(properties: Record<string, unknown>) {
+  const name = properties.name;
+  if (typeof name === 'string' && name) return name;
+  const classification = properties.classification;
+  if (typeof classification === 'string' && classification)
+    return classification;
+  const kind = properties.object_type;
+  if (typeof kind === 'string' && kind) return kind.replaceAll('_', ' ');
+  if (typeof properties.environment_key === 'string') return 'Saved evidence';
+  if (properties.entity_kind === 'site') return 'Site boundary';
+  if (properties.entity_kind === 'project_subject') return 'Project Subject';
+  return '';
 }
 
 type Props = {
@@ -179,6 +562,7 @@ export default function SiteMap({
 }: Props) {
   const el = useRef<HTMLDivElement>(null),
     map = useRef<maplibregl.Map | null>(null);
+  const basemapLayerIds = useRef<string[]>([]);
   const [projection, setProjection] = useState<maplibregl.Map | null>(null),
     [readyMs, setReadyMs] = useState<number | null>(null),
     [points, setPoints] = useState<number[][]>([]),
@@ -186,6 +570,8 @@ export default function SiteMap({
     [localHiddenLayerIds, setLocalHiddenLayerIds] = useState<string[]>([]),
     [localLayersOpen, setLocalLayersOpen] = useState(false),
     [rosterOpen, setRosterOpen] = useState(false),
+    [legendOpen, setLegendOpen] = useState(false),
+    [perspectiveSceneId, setPerspectiveSceneId] = useState<string | null>(null),
     [entityQuery, setEntityQuery] = useState(''),
     [coordinates, setCoordinates] = useState(''),
     [error, setError] = useState('');
@@ -216,7 +602,10 @@ export default function SiteMap({
   const ready = !!projection;
   const layerPanelOpen = layersOpen ?? localLayersOpen;
   const setLayerPanelOpen = (open: boolean) => {
-    if (open) setRosterOpen(false);
+    if (open) {
+      setRosterOpen(false);
+      setLegendOpen(false);
+    }
     if (layersOpen === undefined) setLocalLayersOpen(open);
     onLayersOpenChange?.(open);
   };
@@ -253,6 +642,19 @@ export default function SiteMap({
     (entity) =>
       entity.kind === selectedEntity?.kind && entity.id === selectedEntity.id,
   );
+  const heightAvailableCount =
+    mapScene?.layers.find((layer) => layer.id === 'buildings')
+      ?.height_available_count || 0;
+  const canPerspective = heightAvailableCount > 0;
+  const perspectiveActive =
+    canPerspective && perspectiveSceneId === mapScene?.snapshot.id;
+  useEffect(() => {
+    map.current?.easeTo({
+      pitch: perspectiveActive ? 55 : 0,
+      bearing: 0,
+      duration: 500,
+    });
+  }, [perspectiveActive]);
   const repaint = () => setRevision((v) => v + 1);
   const fit = useCallback((nextGeometry: Geometry | null) => {
     const currentMap = map.current;
@@ -270,251 +672,7 @@ export default function SiteMap({
     const startedAt = performance.now();
     const m = new maplibregl.Map({
       container: el.current,
-      style: {
-        version: 8,
-        sources: {
-          base: {
-            type: 'raster',
-            tiles: [
-              process.env.NEXT_PUBLIC_BASEMAP_URL ||
-                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            ],
-            tileSize: 256,
-            attribution: '© OpenStreetMap contributors',
-          },
-          [SOURCE_IDS.sites]: { type: 'geojson', data: emptyFeatureCollection },
-          [SOURCE_IDS.projects]: {
-            type: 'geojson',
-            data: emptyFeatureCollection,
-          },
-          [SOURCE_IDS.environment]: {
-            type: 'geojson',
-            data: emptyFeatureCollection,
-          },
-          [SOURCE_IDS.infrastructure]: {
-            type: 'geojson',
-            data: emptyFeatureCollection,
-          },
-        },
-        layers: [
-          {
-            id: 'background',
-            type: 'background',
-            paint: { 'background-color': '#e9efec' },
-          },
-          {
-            id: 'base',
-            type: 'raster',
-            source: 'base',
-            paint: { 'raster-saturation': -0.7, 'raster-opacity': 0.8 },
-          },
-          {
-            id: NATIVE_LAYER_IDS.sitesFill,
-            type: 'fill',
-            source: SOURCE_IDS.sites,
-            paint: {
-              'fill-color': '#a8c0ae',
-              'fill-opacity': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                0.2,
-                0.07,
-              ],
-            },
-          },
-          {
-            id: NATIVE_LAYER_IDS.sitesLine,
-            type: 'line',
-            source: SOURCE_IDS.sites,
-            paint: {
-              'line-color': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                '#b7d7c0',
-                '#8d9c92',
-              ],
-              'line-width': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                3,
-                1.5,
-              ],
-            },
-          },
-          {
-            id: NATIVE_LAYER_IDS.environmentFill,
-            type: 'fill',
-            source: SOURCE_IDS.environment,
-            paint: {
-              'fill-color': ['get', 'color'],
-              'fill-opacity': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                0.36,
-                0.2,
-              ],
-            },
-          },
-          {
-            id: NATIVE_LAYER_IDS.environmentLine,
-            type: 'line',
-            source: SOURCE_IDS.environment,
-            paint: {
-              'line-color': ['get', 'color'],
-              'line-width': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                3,
-                1.5,
-              ],
-            },
-          },
-          {
-            id: NATIVE_LAYER_IDS.functionalFill,
-            type: 'fill',
-            source: SOURCE_IDS.infrastructure,
-            filter: ['==', ['get', 'layer_id'], 'functional_sites'],
-            paint: {
-              'fill-color': '#65756b',
-              'fill-opacity': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                0.5,
-                0.3,
-              ],
-            },
-          },
-          {
-            id: NATIVE_LAYER_IDS.functionalLine,
-            type: 'line',
-            source: SOURCE_IDS.infrastructure,
-            filter: ['==', ['get', 'layer_id'], 'functional_sites'],
-            paint: {
-              'line-color': '#65756b',
-              'line-width': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                4,
-                1.75,
-              ],
-            },
-          },
-          {
-            id: NATIVE_LAYER_IDS.buildingFill,
-            type: 'fill',
-            source: SOURCE_IDS.infrastructure,
-            filter: ['==', ['get', 'layer_id'], 'buildings'],
-            paint: {
-              'fill-color': '#8a633e',
-              'fill-opacity': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                0.5,
-                0.24,
-              ],
-            },
-          },
-          {
-            id: NATIVE_LAYER_IDS.buildingExtrusion,
-            type: 'fill-extrusion',
-            source: SOURCE_IDS.infrastructure,
-            filter: [
-              'all',
-              ['==', ['get', 'layer_id'], 'buildings'],
-              ['==', ['get', 'height_backed'], true],
-            ],
-            paint: {
-              'fill-extrusion-color': '#8a633e',
-              'fill-extrusion-height': ['get', 'extrusion_height_m'],
-              'fill-extrusion-opacity': 0.72,
-            },
-          },
-          {
-            id: NATIVE_LAYER_IDS.buildingLine,
-            type: 'line',
-            source: SOURCE_IDS.infrastructure,
-            filter: ['==', ['get', 'layer_id'], 'buildings'],
-            paint: {
-              'line-color': '#8a633e',
-              'line-width': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                4,
-                1.75,
-              ],
-            },
-          },
-          {
-            id: NATIVE_LAYER_IDS.buildingFlatLine,
-            type: 'line',
-            source: SOURCE_IDS.infrastructure,
-            filter: [
-              'all',
-              ['==', ['get', 'layer_id'], 'buildings'],
-              ['==', ['get', 'height_backed'], false],
-            ],
-            paint: {
-              'line-color': '#d3a06d',
-              'line-width': 2,
-              'line-dasharray': [2, 1],
-            },
-          },
-          {
-            id: NATIVE_LAYER_IDS.railwayTracks,
-            type: 'line',
-            source: SOURCE_IDS.infrastructure,
-            filter: ['==', ['get', 'layer_id'], 'railway_tracks'],
-            paint: {
-              'line-color': '#7b4654',
-              'line-width': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                4,
-                2.5,
-              ],
-              'line-dasharray': [2, 1.2],
-            },
-          },
-          {
-            id: NATIVE_LAYER_IDS.railwayStations,
-            type: 'circle',
-            source: SOURCE_IDS.infrastructure,
-            filter: ['==', ['get', 'layer_id'], 'railway_stations'],
-            paint: {
-              'circle-color': '#304f47',
-              'circle-radius': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                7,
-                5,
-              ],
-              'circle-stroke-color': '#ffffff',
-              'circle-stroke-width': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                3,
-                2,
-              ],
-            },
-          },
-          {
-            id: NATIVE_LAYER_IDS.projects,
-            type: 'circle',
-            source: SOURCE_IDS.projects,
-            paint: {
-              'circle-color': '#c9a85a',
-              'circle-radius': [
-                'case',
-                ['boolean', ['feature-state', 'selected'], false],
-                7,
-                5,
-              ],
-              'circle-stroke-color': '#ffffff',
-              'circle-stroke-width': 2,
-            },
-          },
-        ],
-      } satisfies maplibregl.StyleSpecification,
+      style: BASEMAP.style,
       center: [-1.29, 51.78],
       zoom: 10,
     });
@@ -524,12 +682,43 @@ export default function SiteMap({
       new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }),
       'bottom-right',
     );
-    m.on('mousemove', (e) =>
+    const hoverPopup = new maplibregl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      offset: 12,
+      className: 'terrene-map-hover',
+    });
+    m.on('mousemove', (e) => {
       setCoordinates(
         `${Math.abs(e.lngLat.lat).toFixed(5)}° ${e.lngLat.lat >= 0 ? 'N' : 'S'} · ${Math.abs(e.lngLat.lng).toFixed(5)}° ${e.lngLat.lng >= 0 ? 'E' : 'W'}`,
-      ),
-    );
+      );
+      if (drawRef.current) {
+        hoverPopup.remove();
+        return;
+      }
+      const hit = m.queryRenderedFeatures(e.point, {
+        layers: [...HIT_LAYER_IDS],
+      })[0];
+      const label = hit ? hoverLabel(hit.properties) : '';
+      m.getCanvas().style.cursor = label ? 'pointer' : '';
+      if (!label) {
+        hoverPopup.remove();
+        return;
+      }
+      const content = document.createElement('span');
+      content.textContent = label;
+      hoverPopup.setLngLat(e.lngLat).setDOMContent(content).addTo(m);
+    });
+    m.on('mouseout', () => hoverPopup.remove());
     m.on('load', () => {
+      basemapLayerIds.current = (m.getStyle().layers || []).map(
+        (layer) => layer.id,
+      );
+      installTerreneLayers(m);
+      if (BASEMAP.productionConfigurationMissing)
+        setError(
+          'Basemap is not configured for production. Evidence geometry remains available.',
+        );
       setReadyMs(Math.round(performance.now() - startedAt));
       setProjection(m);
     });
@@ -574,6 +763,7 @@ export default function SiteMap({
     return () => {
       observer.disconnect();
       cancelAnimationFrame(resizeFrame);
+      hoverPopup.remove();
       m.remove();
       map.current = null;
     };
@@ -592,85 +782,121 @@ export default function SiteMap({
     const siteFeatures: Feature[] = siteEntities.flatMap((entity) => {
       const selectedSite =
         selectedEntity?.kind === 'site' && selectedEntity.id === entity.id;
-      const displayGeometry = selectedSite && geometry ? geometry : entity.geometry;
+      const displayGeometry =
+        selectedSite && geometry ? geometry : entity.geometry;
       if (!displayGeometry) return [];
-      return [{
-        type: 'Feature', id: `site:${entity.id}`, geometry: displayGeometry,
-        properties: {
-          entity_kind: 'site', entity_id: entity.id, name: entity.name,
-          boundary_version: entity.site.version,
+      return [
+        {
+          type: 'Feature',
+          id: `site:${entity.id}`,
+          geometry: displayGeometry,
+          properties: {
+            entity_kind: 'site',
+            entity_id: entity.id,
+            name: entity.name,
+            boundary_version: entity.site.version,
+          },
         },
-      }];
+      ];
     });
     if (!siteFeatures.length && geometry) {
       siteFeatures.push({
-        type: 'Feature', id: 'site:current-boundary', geometry,
+        type: 'Feature',
+        id: 'site:current-boundary',
+        geometry,
         properties: { entity_kind: null, entity_id: null },
       });
     }
-    const projectFeatures: Feature<Point>[] = linkedProjects.flatMap((entity) => {
-      const anchor = linkedSiteDisplayAnchor(entity.geometry);
-      if (!anchor) return [];
-      return [{
-        type: 'Feature', id: `project_subject:${entity.id}`,
-        geometry: { type: 'Point', coordinates: anchor },
-        properties: {
-          entity_kind: 'project_subject', entity_id: entity.id, name: entity.name,
-        },
-      }];
-    });
+    const projectFeatures: Feature<Point>[] = linkedProjects.flatMap(
+      (entity) => {
+        const anchor = linkedSiteDisplayAnchor(entity.geometry);
+        if (!anchor) return [];
+        return [
+          {
+            type: 'Feature',
+            id: `project_subject:${entity.id}`,
+            geometry: { type: 'Point', coordinates: anchor },
+            properties: {
+              entity_kind: 'project_subject',
+              entity_id: entity.id,
+              name: entity.name,
+            },
+          },
+        ];
+      },
+    );
     const environmentFeatures: Feature[] = findings.flatMap((finding) => {
-      if (
-        !finding.geometry || hiddenLayerSet.has(`environment:${finding.key}`)
-      ) return [];
-      return [{
-        type: 'Feature', id: `environment:${finding.key}`,
-        geometry: finding.geometry,
-        properties: {
-          environment_key: finding.key, name: finding.dataset,
-          color: layerColor(finding.key),
+      if (!finding.geometry || hiddenLayerSet.has(`environment:${finding.key}`))
+        return [];
+      return [
+        {
+          type: 'Feature',
+          id: `environment:${finding.key}`,
+          geometry: finding.geometry,
+          properties: {
+            environment_key: finding.key,
+            name: finding.dataset,
+            color: layerColor(finding.key),
+          },
         },
-      }];
+      ];
     });
-    const sceneFeatures: Feature[] = (mapScene?.features || []).flatMap((feature) => {
-      const layer = mapScene?.layers.find(
-        (item) => item.id === feature.properties.layer_id,
-      );
-      if (!layer || !['available', 'partial'].includes(layer.state)) return [];
-      const height = feature.properties.height;
-      const heightBacked =
-        height !== null &&
-        (height.state === 'available' || height.state === 'partial') &&
-        height.extrusion_height_m !== null;
-      return [{
-        type: 'Feature', id: feature.id, geometry: feature.geometry,
-        properties: {
-          object_id: feature.id,
-          layer_id: feature.properties.layer_id,
-          object_type: feature.properties.object_type,
-          name: mapFeatureName(feature),
-          classification: feature.properties.classification,
-          height_state: height?.state || null,
-          height_backed: heightBacked,
-          extrusion_height_m: heightBacked ? height.extrusion_height_m : 0,
-        },
-      }];
-    });
+    const sceneFeatures: Feature[] = (mapScene?.features || []).flatMap(
+      (feature) => {
+        const layer = mapScene?.layers.find(
+          (item) => item.id === feature.properties.layer_id,
+        );
+        if (!layer || !['available', 'partial'].includes(layer.state))
+          return [];
+        const height = feature.properties.height;
+        const heightBacked =
+          height !== null &&
+          (height.state === 'available' || height.state === 'partial') &&
+          height.extrusion_height_m !== null;
+        return [
+          {
+            type: 'Feature',
+            id: feature.id,
+            geometry: feature.geometry,
+            properties: {
+              object_id: feature.id,
+              layer_id: feature.properties.layer_id,
+              object_type: feature.properties.object_type,
+              name: mapFeatureName(feature),
+              classification: feature.properties.classification,
+              height_state: height?.state || null,
+              height_backed: heightBacked,
+              extrusion_height_m: heightBacked ? height.extrusion_height_m : 0,
+            },
+          },
+        ];
+      },
+    );
     setGeoJSONData(currentMap, SOURCE_IDS.sites, {
-      type: 'FeatureCollection', features: siteFeatures,
+      type: 'FeatureCollection',
+      features: siteFeatures,
     });
     setGeoJSONData(currentMap, SOURCE_IDS.projects, {
-      type: 'FeatureCollection', features: projectFeatures,
+      type: 'FeatureCollection',
+      features: projectFeatures,
     });
     setGeoJSONData(currentMap, SOURCE_IDS.environment, {
-      type: 'FeatureCollection', features: environmentFeatures,
+      type: 'FeatureCollection',
+      features: environmentFeatures,
     });
     setGeoJSONData(currentMap, SOURCE_IDS.infrastructure, {
-      type: 'FeatureCollection', features: sceneFeatures,
+      type: 'FeatureCollection',
+      features: sceneFeatures,
     });
   }, [
-    ready, geometry, siteEntities, linkedProjects, selectedEntity,
-    findings, mapScene, hiddenLayerSet,
+    ready,
+    geometry,
+    siteEntities,
+    linkedProjects,
+    selectedEntity,
+    findings,
+    mapScene,
+    hiddenLayerSet,
   ]);
   useEffect(() => {
     const currentMap = map.current;
@@ -692,7 +918,10 @@ export default function SiteMap({
         source: SOURCE_IDS.projects,
         id: `project_subject:${selectedEntity.id}`,
       });
-      if (chosenEntity?.kind === 'project_subject' && chosenEntity.subject.site_id)
+      if (
+        chosenEntity?.kind === 'project_subject' &&
+        chosenEntity.subject.site_id
+      )
         next.push({
           source: SOURCE_IDS.sites,
           id: `site:${chosenEntity.subject.site_id}`,
@@ -702,8 +931,14 @@ export default function SiteMap({
       currentMap.setFeatureState(feature, { selected: true });
     selectedNativeFeatures.current = next;
   }, [
-    ready, selectedMapObject, activeSelection, selectedEntity, chosenEntity,
-    mapScene, findings, entities,
+    ready,
+    selectedMapObject,
+    activeSelection,
+    selectedEntity,
+    chosenEntity,
+    mapScene,
+    findings,
+    entities,
   ]);
   const fitAllEntities = useCallback(() => {
     const m = map.current;
@@ -765,21 +1000,27 @@ export default function SiteMap({
     if (!ready || !currentMap?.isStyleLoaded()) return;
     const visibility = (layerId: string, hidden: boolean) =>
       currentMap.setLayoutProperty(
-        layerId, 'visibility', hidden ? 'none' : 'visible',
+        layerId,
+        'visibility',
+        hidden ? 'none' : 'visible',
       );
-    visibility('base', hiddenLayerSet.has('basemap'));
+    for (const layerId of basemapLayerIds.current)
+      visibility(layerId, hiddenLayerSet.has('basemap'));
     visibility(NATIVE_LAYER_IDS.sitesFill, hiddenLayerSet.has('site-boundary'));
     visibility(NATIVE_LAYER_IDS.sitesLine, hiddenLayerSet.has('site-boundary'));
-    visibility(NATIVE_LAYER_IDS.projects, hiddenLayerSet.has('project-subjects'));
+    visibility(
+      NATIVE_LAYER_IDS.projects,
+      hiddenLayerSet.has('project-subjects'),
+    );
     const semanticLayers: Record<InfrastructureLayerId, string[]> = {
       buildings: [
         NATIVE_LAYER_IDS.buildingFill,
-        NATIVE_LAYER_IDS.buildingExtrusion,
         NATIVE_LAYER_IDS.buildingLine,
         NATIVE_LAYER_IDS.buildingFlatLine,
       ],
       functional_sites: [
-        NATIVE_LAYER_IDS.functionalFill, NATIVE_LAYER_IDS.functionalLine,
+        NATIVE_LAYER_IDS.functionalFill,
+        NATIVE_LAYER_IDS.functionalLine,
       ],
       railway_tracks: [NATIVE_LAYER_IDS.railwayTracks],
       railway_stations: [NATIVE_LAYER_IDS.railwayStations],
@@ -787,7 +1028,11 @@ export default function SiteMap({
     for (const [layerId, renderedLayers] of Object.entries(semanticLayers))
       for (const renderedLayer of renderedLayers)
         visibility(renderedLayer, hiddenLayerSet.has(`built:${layerId}`));
-  }, [hiddenLayerSet, ready, projection]);
+    visibility(
+      NATIVE_LAYER_IDS.buildingExtrusion,
+      hiddenLayerSet.has('built:buildings') || !perspectiveActive,
+    );
+  }, [hiddenLayerSet, ready, projection, perspectiveActive]);
   // The isolated boundary editor retains its temporary SVG drawing surface.
   // The primary operating picture uses only native GeoJSON sources and layers.
   function path(g: Geometry | null): string {
@@ -821,13 +1066,35 @@ export default function SiteMap({
   );
   const builtLayerColor = (layer: InfrastructureLayerId) =>
     ({
-      buildings: '#8a633e',
-      functional_sites: '#65756b',
-      railway_tracks: '#7b4654',
-      railway_stations: '#304f47',
+      buildings: MAP_PALETTE.building,
+      functional_sites: MAP_PALETTE.functionalSite,
+      railway_tracks: MAP_PALETTE.railwayMulti,
+      railway_stations: MAP_PALETTE.station,
     })[layer];
   const builtLayerVisible = (layer: InfrastructureLayerId) =>
     !hiddenLayerSet.has(`built:${layer}`);
+  const featureSwatchColor = (feature: (typeof builtFeatures)[number]) => {
+    if (feature.properties.layer_id !== 'railway_tracks')
+      return builtLayerColor(feature.properties.layer_id);
+    return (
+      {
+        'Multi Track': MAP_PALETTE.railwayMulti,
+        'Single Track': MAP_PALETTE.railwaySingle,
+        'Narrow Gauge': MAP_PALETTE.railwayNarrow,
+      }[feature.properties.classification || ''] || MAP_PALETTE.railwaySingle
+    );
+  };
+  const legendFeatures = builtFeatures.filter((feature) =>
+    builtLayerVisible(feature.properties.layer_id),
+  );
+  const railClassifications = [
+    ...new Set(
+      legendFeatures
+        .filter((feature) => feature.properties.layer_id === 'railway_tracks')
+        .map((feature) => feature.properties.classification)
+        .filter((value): value is string => !!value),
+    ),
+  ];
   const rosterEntities = searchableInfrastructureEntities(
     entities,
     entityQuery,
@@ -895,7 +1162,10 @@ export default function SiteMap({
             onClick={() => {
               const open = !rosterOpen;
               setRosterOpen(open);
-              if (open) setLayerPanelOpen(false);
+              if (open) {
+                setLegendOpen(false);
+                setLayerPanelOpen(false);
+              }
             }}
           >
             <Search size={16} /> Entities{' '}
@@ -927,6 +1197,38 @@ export default function SiteMap({
               ).length}
           </span>
         </button>
+        <button
+          aria-expanded={legendOpen}
+          aria-controls="map-legend"
+          onClick={() => {
+            const open = !legendOpen;
+            setLegendOpen(open);
+            if (open) {
+              setRosterOpen(false);
+              setLayerPanelOpen(false);
+            }
+          }}
+        >
+          <ListTree size={16} /> Legend
+        </button>
+        {canPerspective && (
+          <button
+            aria-pressed={perspectiveActive}
+            title={
+              perspectiveActive
+                ? 'Return to top-down analysis'
+                : `View ${heightAvailableCount} evidence-backed building ${heightAvailableCount === 1 ? 'height' : 'heights'}`
+            }
+            onClick={() => {
+              const next = !perspectiveActive;
+              setPerspectiveSceneId(
+                next ? mapScene?.snapshot.id || null : null,
+              );
+            }}
+          >
+            <Box size={16} /> {perspectiveActive ? '2D' : 'Perspective'}
+          </button>
+        )}
         <button
           aria-label="Fit site boundary"
           title="Fit site boundary"
@@ -961,7 +1263,7 @@ export default function SiteMap({
               checked={!hiddenLayerSet.has('basemap')}
               onCheckedChange={(value) => setLayerHidden('basemap', !value)}
             />{' '}
-            OpenStreetMap basemap
+            {BASEMAP.label}
           </label>
           <div className="layer-group">
             <h3>Infrastructure entities</h3>
@@ -1119,14 +1421,16 @@ export default function SiteMap({
                           <small className={`layer-state state-${layer.state}`}>
                             {mapLayerStatus(layer)}
                           </small>
-                          {layer.id === 'buildings' && layer.feature_count > 0 && (
-                            <small className="layer-state">
-                              Solid · {layer.height_available_count} height-backed ·{' '}
-                              Dashed ·{' '}
-                              {layer.height_gap_count + layer.height_unsupported_count}{' '}
-                              flat
-                            </small>
-                          )}
+                          {layer.id === 'buildings' &&
+                            layer.feature_count > 0 && (
+                              <small className="layer-state">
+                                Solid · {layer.height_available_count}{' '}
+                                height-backed · Dashed ·{' '}
+                                {layer.height_gap_count +
+                                  layer.height_unsupported_count}{' '}
+                                flat
+                              </small>
+                            )}
                         </span>
                       </label>
                     </div>
@@ -1154,7 +1458,143 @@ export default function SiteMap({
           </p>
         </section>
       )}
+      {legendOpen && !layerPanelOpen && (
+        <section
+          id="map-legend"
+          className={infrastructureStyles.legendPanel}
+          aria-label="Map legend"
+        >
+          <header>
+            <span>
+              <strong>Operating legend</strong>
+              <small>Visible evidence and object states</small>
+            </span>
+            <button
+              aria-label="Close map legend"
+              onClick={() => setLegendOpen(false)}
+            >
+              <X size={15} />
+            </button>
+          </header>
+          <div className={infrastructureStyles.legendBody}>
+            <section>
+              <h3>Geography</h3>
+              <div className={infrastructureStyles.legendRow}>
+                <i
+                  className={infrastructureStyles.legendLine}
+                  style={{ background: MAP_PALETTE.boundary }}
+                />
+                <span>Site boundary</span>
+              </div>
+              {!!linkedProjects.length && (
+                <div className={infrastructureStyles.legendRow}>
+                  <i
+                    className={infrastructureStyles.legendPoint}
+                    style={{ background: MAP_PALETTE.project }}
+                  />
+                  <span>Site-linked Project Subject</span>
+                </div>
+              )}
+            </section>
+            <section>
+              <h3>Terrene Earth</h3>
+              {mapScene ? (
+                mapScene.layers.map((layer) => (
+                  <div
+                    className={infrastructureStyles.legendLayer}
+                    data-state={layer.state}
+                    key={layer.id}
+                  >
+                    <span>
+                      <i
+                        className={
+                          layer.id === 'railway_stations'
+                            ? infrastructureStyles.legendPoint
+                            : infrastructureStyles.legendLine
+                        }
+                        style={{ background: builtLayerColor(layer.id) }}
+                      />
+                      <b>{mapLayerLabel(layer.id)}</b>
+                    </span>
+                    <small>{mapLayerStatus(layer)}</small>
+                    {layer.id === 'buildings' && layer.feature_count > 0 && (
+                      <small>
+                        {layer.height_available_count} height-backed ·{' '}
+                        {layer.height_gap_count +
+                          layer.height_unsupported_count}{' '}
+                        flat
+                      </small>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p>
+                  {mapSceneState === 'failed'
+                    ? 'Scene unavailable; missing evidence is not zero.'
+                    : mapSceneState === 'loading'
+                      ? 'Loading saved scene…'
+                      : 'No saved infrastructure scene selected.'}
+                </p>
+              )}
+              {!!railClassifications.length && (
+                <div className={infrastructureStyles.railKey}>
+                  {railClassifications.map((classification) => (
+                    <span key={classification}>
+                      <i
+                        style={{
+                          background:
+                            classification === 'Multi Track'
+                              ? MAP_PALETTE.railwayMulti
+                              : classification === 'Narrow Gauge'
+                                ? MAP_PALETTE.railwayNarrow
+                                : MAP_PALETTE.railwaySingle,
+                        }}
+                      />{' '}
+                      {classification}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </section>
+            {!!legendFeatures.length && (
+              <section>
+                <h3>Keyboard object index</h3>
+                <div className={infrastructureStyles.legendObjects}>
+                  {legendFeatures.map((feature) => (
+                    <button
+                      key={feature.id}
+                      aria-pressed={feature.id === selectedMapObject}
+                      onClick={() => onInspectMapObject?.(feature.id)}
+                    >
+                      <i style={{ background: featureSwatchColor(feature) }} />
+                      <span>{mapFeatureName(feature)}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+            {!!mapScene?.sources.length && (
+              <section>
+                <h3>Evidence sources</h3>
+                <ul className={infrastructureStyles.sourceList}>
+                  {mapScene.sources.map((source) => (
+                    <li key={source.id}>
+                      <strong>{source.provider}</strong>
+                      <span>{source.release}</span>
+                      <time dateTime={source.retrieved_at}>
+                        Retrieved {sourceDate(source.retrieved_at)}
+                      </time>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </div>
+        </section>
+      )}
       {rosterOpen &&
+        !layerPanelOpen &&
+        !legendOpen &&
         (entities.length > 0 || entityLoading || entityUnavailable) && (
           <aside
             id="infrastructure-entity-roster"
@@ -1282,7 +1722,10 @@ export default function SiteMap({
       <div className="map-boundary-label">
         <i className="swatch boundary" />
         {boundaryLabel}
-        <small>{coordinates || 'WGS84 · EPSG:4326'}</small>
+        <small>
+          {perspectiveActive ? 'Perspective · 55°' : '2D · top-down'} ·{' '}
+          {coordinates || 'WGS84 · EPSG:4326'}
+        </small>
       </div>
       {selected &&
         findings.find(
