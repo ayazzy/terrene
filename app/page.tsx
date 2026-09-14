@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState, useCallback, useRef } from 'react';
-import dynamic from 'next/dynamic';
 import {
   readResource,
   criticalReadFailure,
@@ -16,10 +15,35 @@ import {
 import OverlayFindings from './overlay-findings';
 import ScreeningContextPanel from './screening-context-panel';
 import MapFeatureInspector from './map-feature-inspector';
-import { useSiteWorkspaceState } from './site-workspace-state';
+import {
+  useSiteWorkspaceState,
+  type WorkspaceTab,
+} from './site-workspace-state';
 import ProjectIntelligenceWorkspace from './project-intelligence-workspace';
+import EntityDossier from './entity-dossier';
+import {
+  OperatingCommandBar,
+  OperatingRail,
+  type ShellSearchResult,
+  type ShellSelection,
+} from './operating-shell';
+import shellStyles from './operating-shell.module.css';
+import { useOperatingPictureState } from './use-operating-picture-state';
+import {
+  createLatestRequestFence,
+  operatingPictureStatesEqual,
+  projectOperatingPictureState,
+  reconcileOperatingPictureState,
+} from './operating-picture-state';
 import type { OverlayFinding } from './site-evidence';
 import SiteMap from './map';
+import {
+  projectInfrastructureEntities,
+  searchableInfrastructureEntities,
+  infrastructureEntityLabel,
+  type InfrastructureEntity,
+} from './infrastructure-entities';
+import { useInfrastructureEntities } from './use-infrastructure-entities';
 import {
   EvidenceBadge,
   WorkspaceLoading,
@@ -27,7 +51,6 @@ import {
 } from './status-primitives';
 import {
   Plus,
-  Orbit,
   ArrowUpRight,
   ArrowLeft,
   MapPin,
@@ -35,16 +58,10 @@ import {
   Play,
   Upload,
   PenLine,
-  Search,
-  PanelLeft,
-  GitCompareArrows,
   Check,
   Info,
   RefreshCw,
-  PanelLeftClose,
   PanelLeftOpen,
-  Menu,
-  Database,
   FileText,
   Map as MapIcon,
   List,
@@ -81,14 +98,6 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
-const PortfolioMap = dynamic(() => import('./portfolio-map'), {
-  ssr: false,
-  loading: () => (
-    <div className="portfolio-map portfolio-loading">
-      Loading saved-site map…
-    </div>
-  ),
-});
 const statuses = ['Unreviewed', 'Investigate', 'Hold', 'Archived'];
 async function api(path: string, method = 'GET', body?: any): Promise<any> {
   const r = await fetch('/api' + path, {
@@ -140,12 +149,15 @@ function Status({
 }
 export default function Home() {
   const analysisPanel = useRef<HTMLDivElement>(null);
+  const analysisCloseButton = useRef<HTMLButtonElement>(null);
+  const reopenAnalysisButton = useRef<HTMLButtonElement>(null);
+  const dossierFocusIntent = useRef<'close' | 'reopen' | null>(null);
+  const historyRequestFence = useRef(createLatestRequestFence());
+  const operatingPicture = useOperatingPictureState();
+  const projectEntityIndex = useInfrastructureEntities();
+  const operatingState = operatingPicture.state;
   const [sites, setSites] = useState<any[]>([]),
     [datasets, setDatasets] = useState<any[]>([]),
-    [active, setActive] = useState<string | null>(null),
-    [view, setView] = useState('workspace'),
-    [sitesView, setSitesView] = useState('map'),
-    [selectedMapSite, setSelectedMapSite] = useState<string | null>(null),
     [error, setError] = useState(''),
     [readErrors, setReadErrors] = useState<{
       sites?: ReadFailure | null;
@@ -172,14 +184,78 @@ export default function Home() {
     [filter, setFilter] = useState('all'),
     [compare, setCompare] = useState<string[]>([]),
     [history, setHistory] = useState<any[]>([]),
-    [mode, setMode] = useState(''),
     [email, setEmail] = useState(''),
     [password, setPassword] = useState(''),
     [rawGeometry, setRawGeometry] = useState<any>(null),
-    [navigationCompact, setNavigationCompact] = useState(false),
-    [mobileNavigation, setMobileNavigation] = useState(false);
+    [navigationCompact, setNavigationCompact] = useState(true),
+    [mobileNavigation, setMobileNavigation] = useState(false),
+    [mapLayersOpen, setMapLayersOpen] = useState(false);
+  const operatingProjection = projectOperatingPictureState(operatingState);
+  const { view, sitesView, activeSiteId: active } = operatingProjection;
+  function setView(next: string) {
+    if (next === 'workspace') {
+      operatingPicture.transition((currentState) => ({
+        ...currentState,
+        mode: 'map',
+        artifact: null,
+        section: 'overview',
+        dossierOpen: true,
+      }));
+    } else if (next === 'project-intelligence') {
+      operatingPicture.setMode('project');
+    } else if (next === 'compare' || next === 'data') {
+      operatingPicture.setMode(next);
+    }
+  }
+  function setSitesView(next: string) {
+    if (next === 'map' || next === 'list')
+      operatingPicture.transition((currentState) => ({
+        ...currentState,
+        mode: next,
+        artifact: null,
+        section: 'overview',
+      }));
+  }
+  const closeMobileNavigation = useCallback(
+    () => setMobileNavigation(false),
+    [],
+  );
+  const requestedSiteAssessmentId =
+    operatingState.artifact?.kind === 'site_assessment'
+      ? operatingState.artifact.id
+      : null;
+  const requestedProjectSubjectId =
+    operatingProjection.selectedProjectSubjectId;
+  const requestedProjectRunId = operatingProjection.selectedProjectRunId;
+  const requestedSiteSection = (
+    ['overview', 'evidence', 'models', 'history'] as const
+  ).includes(
+    operatingState.section as 'overview' | 'evidence' | 'models' | 'history',
+  )
+    ? (operatingState.section as 'overview' | 'evidence' | 'models' | 'history')
+    : 'overview';
   const current = sites.find((s) => s.id === active);
-  const workspace = useSiteWorkspaceState(current, history);
+  const infrastructureEntities = projectInfrastructureEntities(
+    sites,
+    projectEntityIndex.subjects,
+    projectEntityIndex.runs,
+  );
+  const workspace = useSiteWorkspaceState(current, history, {
+    selectedAssessmentId: requestedSiteAssessmentId,
+    tab: requestedSiteSection,
+    panelOpen: operatingState.dossierOpen,
+    onAssessmentChange: (id, method) =>
+      operatingPicture.transition(
+        {
+          artifact: id ? { kind: 'site_assessment', id } : null,
+        },
+        method,
+      ),
+    onTabChange: (section, method) =>
+      operatingPicture.transition({ section }, method),
+    onPanelOpenChange: (dossierOpen, method) =>
+      operatingPicture.transition({ dossierOpen }, method),
+  });
   const {
     assessment,
     selectedAssessmentId: selectedAssessment,
@@ -203,6 +279,24 @@ export default function Home() {
       result &&
       !readErrors.datasets &&
       datasets.some((d) => !assessment.dataset_ids?.includes(d.id));
+  function changeSiteSection(next: WorkspaceTab) {
+    setTab(next);
+  }
+  function changeSitePanel(next: boolean) {
+    setPanelOpen(next);
+  }
+  function collapseSitePanel() {
+    dossierFocusIntent.current = 'reopen';
+    setPanelOpen(false);
+  }
+  function reopenSitePanel() {
+    dossierFocusIntent.current = 'close';
+    setPanelOpen(true);
+  }
+  function selectSiteAssessment(id: string | null) {
+    if (id) workspace.selectAssessment(id);
+    else workspace.returnToLatest();
+  }
   const overlayFinding = finding;
   const historyFailure =
     historyRead.siteId === active ? historyRead.failure : null;
@@ -223,13 +317,23 @@ export default function Home() {
       failure: readErrors.sites,
     },
     { label: 'Reference dataset updates', failure: readErrors.datasets },
-    { label: 'Live service status', failure: readErrors.health },
+    { label: 'Application service status', failure: readErrors.health },
     { label: 'Assessment history', failure: historyFailure },
   ].filter((item) => item.failure);
   const showRefreshNotice = refreshFailures.length > 0 && !criticalRead;
   useEffect(() => {
     analysisPanel.current?.scrollTo({ top: 0 });
   }, [tab, assessment?.id, mapEvidence.selectedObjectId]);
+  useEffect(() => {
+    const intent = dossierFocusIntent.current;
+    if (!intent) return;
+    dossierFocusIntent.current = null;
+    const animation = requestAnimationFrame(() => {
+      if (intent === 'close') analysisCloseButton.current?.focus();
+      else reopenAnalysisButton.current?.focus();
+    });
+    return () => cancelAnimationFrame(animation);
+  }, [panelOpen]);
   const reload = useCallback(async () => {
     setRefreshing(true);
     const [siteRead, datasetRead, healthRead] = await Promise.all([
@@ -243,8 +347,6 @@ export default function Home() {
     }
     if (!datasetRead.failure && 'data' in datasetRead)
       setDatasets(datasetRead.data);
-    if (!healthRead.failure && 'data' in healthRead)
-      setMode(healthRead.data.mode);
     setReadErrors({
       sites: siteRead.failure,
       datasets: datasetRead.failure,
@@ -257,11 +359,12 @@ export default function Home() {
     void reload();
   }, [reload]);
   useEffect(() => {
+    const requestFence = historyRequestFence.current;
+    const request = requestFence.begin();
     if (!active) return;
-    let cancelled = false;
     void readResource(() => api('/sites/' + active + '/assessments')).then(
       (read) => {
-        if (cancelled) return;
+        if (!requestFence.isCurrent(request)) return;
         if (!read.failure && 'data' in read) setHistory(read.data);
         setHistoryRead({
           siteId: active,
@@ -271,18 +374,47 @@ export default function Home() {
       },
     );
     return () => {
-      cancelled = true;
+      requestFence.invalidate();
     };
   }, [active, sites, historyRetry]);
+  useEffect(() => {
+    if (!hasLoadedSites || !operatingState.selection) return;
+    const availability = {
+      siteIds: sites.map((site) => String(site.id)),
+      ...(historyRead.siteId === active && historyRead.loaded
+        ? {
+            siteAssessmentIds: history.map((item) => String(item.id)),
+          }
+        : {}),
+    };
+    const reconciled = reconcileOperatingPictureState(
+      operatingState,
+      availability,
+    );
+    if (!operatingPictureStatesEqual(operatingState, reconciled))
+      operatingPicture.transition(reconciled, 'replace');
+  }, [
+    active,
+    hasLoadedSites,
+    history,
+    historyRead.loaded,
+    historyRead.siteId,
+    operatingPicture,
+    operatingState,
+    sites,
+  ]);
   function retryReads() {
     setHistoryRetry((value) => value + 1);
     void reload();
   }
   const refreshNotice = showRefreshNotice && (
-    <section className="refresh-notice" aria-label="Live refresh availability">
+    <section
+      className="refresh-notice"
+      aria-label="Source refresh availability"
+    >
       <div className="refresh-notice-heading">
         <p role="status">
-          <strong>Live refresh unavailable</strong>
+          <strong>Source refresh unavailable</strong>
           <span>
             {result
               ? 'Saved assessment evidence remains available.'
@@ -305,7 +437,8 @@ export default function Home() {
           ))}
         </ul>
         <p>
-          Values already loaded are retained. Live changes could not be checked.
+          Values already loaded are retained. Current source changes could not
+          be checked.
         </p>
       </details>
     </section>
@@ -362,9 +495,8 @@ export default function Home() {
   }
   function openSite(s: any) {
     workspace.resetForSite();
-    setActive(s.id);
     setHistory([]);
-    setView('site');
+    operatingPicture.selectEntity({ kind: 'site', id: s.id }, 'site');
   }
   function startNew() {
     setEditing(false);
@@ -388,9 +520,8 @@ export default function Home() {
       );
       setNewSite(false);
       setDrawing(false);
-      setActive(s.id);
-      setView('site');
       workspace.resetForSite();
+      operatingPicture.selectEntity({ kind: 'site', id: s.id }, 'site');
     });
   }
   async function upload(file?: File) {
@@ -440,138 +571,141 @@ export default function Home() {
       s.name.toLowerCase().includes(query.toLowerCase()) &&
       (filter === 'all' || s.status === filter),
   );
+  const availableSourceCount = datasets.filter(
+    (dataset) => dataset.state === 'available',
+  ).length;
+  const sourceTimes = datasets
+    .map((dataset) => Date.parse(dataset.retrieved))
+    .filter(Number.isFinite);
+  const latestSourceTime = sourceTimes.length ? Math.max(...sourceTimes) : null;
+  const sourceAsOf = latestSourceTime
+    ? `As of ${new Intl.DateTimeFormat('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }).format(new Date(latestSourceTime))}`
+    : loading
+      ? 'Dates loading'
+      : 'Dates unavailable';
+  const sourceState =
+    loading && !datasets.length
+      ? 'loading'
+      : !datasets.length
+        ? 'unavailable'
+        : readErrors.datasets || availableSourceCount < datasets.length
+          ? 'partial'
+          : 'available';
+  const sourceStatus =
+    loading && !datasets.length
+      ? 'Loading'
+      : !datasets.length
+        ? readErrors.datasets
+          ? 'Unavailable'
+          : 'No sources recorded'
+        : `${availableSourceCount} / ${datasets.length} available`;
+  const commandSearchResults: ShellSearchResult[] =
+    searchableInfrastructureEntities(infrastructureEntities, query, 8).map(
+      (entity) => ({
+        id: entity.id,
+        name: entity.name,
+        kind: entity.kind,
+        detail: infrastructureEntityLabel(entity),
+        evidenceState: entity.evidenceState,
+      }),
+    );
+  const selectedInfrastructureEntity = infrastructureEntities.find(
+    (entity) =>
+      entity.kind === operatingState.selection?.kind &&
+      entity.id === operatingState.selection.id,
+  );
+  const commandSelection: ShellSelection | null =
+    operatingState.selection?.kind === 'site'
+      ? {
+          kind: 'site',
+          id: operatingState.selection.id,
+          label:
+            sites.find((site) => site.id === operatingState.selection?.id)
+              ?.name || 'Selected site',
+        }
+      : operatingState.selection?.kind === 'project_subject'
+        ? {
+            kind: 'project_subject',
+            id: operatingState.selection.id,
+            label: selectedInfrastructureEntity?.name || 'Project Subject',
+          }
+        : null;
+  const spatialView =
+    (view === 'workspace' && sitesView === 'map') ||
+    view === 'site' ||
+    view === 'project-intelligence';
+  const selectedMapGeometry =
+    view === 'site' && current
+      ? viewingHistorical
+        ? assessment?.geometry || null
+        : current.geometry
+      : selectedInfrastructureEntity?.geometry || null;
+  function openInfrastructureEntity(entity: InfrastructureEntity) {
+    setQuery('');
+    if (entity.kind === 'site') openSite(entity.site);
+    else
+      operatingPicture.transition({
+        mode: 'project',
+        selection: { kind: 'project_subject', id: entity.id },
+        artifact: null,
+        section: 'overview',
+        dossierOpen: true,
+      });
+  }
+  function openSearchResult(result: ShellSearchResult) {
+    const entity = infrastructureEntities.find(
+      (item) => item.kind === result.kind && item.id === result.id,
+    );
+    if (entity) openInfrastructureEntity(entity);
+  }
+  const viewLabel =
+    view === 'site'
+      ? current?.name || 'Site investigation'
+      : view === 'project-intelligence'
+        ? 'Project intelligence'
+        : view === 'data'
+          ? 'Source register'
+          : view === 'compare'
+            ? 'Site comparison'
+            : sitesView === 'list'
+              ? 'Site roster'
+              : 'Geographic overview';
   return (
-    <main
-      className={`crc-shell${navigationCompact ? ' nav-compact' : ''}${mobileNavigation ? ' nav-mobile-open' : ''}`}
-    >
-      <aside id="primary-navigation" aria-label="Primary navigation">
-        <div className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            <Orbit />
-          </span>
-          <span className="brand-wordmark">Terrene</span>
-          <button
-            className="sidebar-toggle"
-            aria-label={
-              navigationCompact ? 'Expand sidebar' : 'Collapse sidebar'
-            }
-            title={navigationCompact ? 'Expand sidebar' : 'Collapse sidebar'}
-            aria-controls="primary-navigation"
-            aria-expanded={!navigationCompact}
-            onClick={() => setNavigationCompact((value) => !value)}
-          >
-            {navigationCompact ? <PanelLeftOpen /> : <PanelLeftClose />}
-          </button>
-        </div>
-        <p className="brand-descriptor">EARTH INTELLIGENCE</p>
-        <nav>
-          <span className="nav-section">Workspace</span>
-          <button
-            className={view === 'workspace' ? 'nav-active' : ''}
-            onClick={() => {
-              setView('workspace');
-              setMobileNavigation(false);
-            }}
-            title="Sites"
-          >
-            <PanelLeft size={18} /> <span className="nav-text">Sites</span>{' '}
-            <span className="nav-count">{sites.length}</span>
-          </button>
-          <button
-            className={view === 'compare' ? 'nav-active' : ''}
-            onClick={() => {
-              setView('compare');
-              setMobileNavigation(false);
-            }}
-            title="Compare sites"
-          >
-            <GitCompareArrows size={18} />
-            <span className="nav-text">Compare sites</span>
-          </button>
-          <button
-            className={view === 'project-intelligence' ? 'nav-active' : ''}
-            onClick={() => {
-              setView('project-intelligence');
-              setMobileNavigation(false);
-            }}
-            title="Project intelligence"
-          >
-            <Search size={18} />
-            <span className="nav-text">Project intelligence</span>
-          </button>
-          <span className="nav-section">Evidence</span>
-          <button
-            className={view === 'data' ? 'nav-active' : ''}
-            onClick={() => {
-              setView('data');
-              setMobileNavigation(false);
-            }}
-            title="Data sources"
-          >
-            <Database size={18} />
-            <span className="nav-text">Data sources</span>
-          </button>
-        </nav>
-        <div className="sidebar-note">
-          <span className="sidebar-note-label">
-            <span className="live-dot" /> SYSTEM STATUS
-          </span>
-          <div className="sidebar-status-row">
-            <span>Evidence services</span>
-            <strong>{readErrors.health ? 'Unavailable' : 'Operational'}</strong>
-          </div>
-          <div className="sidebar-status-row">
-            <span>Workspace</span>
-            <strong>
-              {mode
-                ? mode === 'development'
-                  ? 'Local'
-                  : 'Organisation'
-                : 'Unknown'}
-            </strong>
-          </div>
-        </div>
-        <footer>
-          <div className="workspace-avatar">OX</div>
-          <div className="workspace-identity">
-            <strong>Oxfordshire pilot</strong>
-            <span>England · Terrene workspace</span>
-          </div>
-        </footer>
-      </aside>
+    <main className={`crc-shell ${shellStyles.shell}`}>
+      <OperatingRail
+        view={view}
+        siteCount={sites.length}
+        compact={navigationCompact}
+        mobileOpen={mobileNavigation}
+        onViewChange={(next) => {
+          setView(next);
+          setMobileNavigation(false);
+        }}
+        onCompactChange={() => setNavigationCompact((value) => !value)}
+        onMobileClose={closeMobileNavigation}
+      />
       <section
-        className={`main${view === 'site' ? ' analysis-main' : ''}${view === 'workspace' && sitesView === 'map' ? ' portfolio-main' : ''}${view === 'workspace' && sitesView === 'list' ? ' portfolio-list-main' : ''}`}
+        className={`main${spatialView ? ' spatial-main' : ''}${view === 'site' ? ' analysis-main' : ''}${view === 'workspace' && sitesView === 'map' ? ' portfolio-main' : ''}${view === 'workspace' && sitesView === 'list' ? ' portfolio-list-main' : ''}`}
       >
-        <header>
-          <button
-            className="mobile-menu"
-            aria-label="Open navigation"
-            onClick={() => setMobileNavigation((value) => !value)}
-          >
-            <Menu />
-          </button>
-          <span className="breadcrumb">
-            Terrene <span>/</span>{' '}
-            {view === 'site'
-              ? current?.name
-              : view === 'project-intelligence'
-                ? 'Project intelligence'
-              : view === 'data'
-                ? 'Data sources'
-                : view === 'compare'
-                  ? 'Compare'
-                  : 'Land opportunities'}
-          </span>
-          <span className="pilot">
-            <span className="environment-status">
-              <span
-                className={`live-dot${refreshFailures.length ? ' is-unavailable' : ''}`}
-              />{' '}
-              {refreshFailures.length ? 'Refresh unavailable' : 'Live evidence'}
-            </span>
-            <b>OX</b>
-          </span>
-        </header>
+        <OperatingCommandBar
+          viewLabel={viewLabel}
+          query={query}
+          searchResults={commandSearchResults}
+          onQueryChange={setQuery}
+          onOpenEntity={openSearchResult}
+          onMobileMenu={() => setMobileNavigation((value) => !value)}
+          mobileNavigationOpen={mobileNavigation}
+          sourceStatus={sourceStatus}
+          sourceAsOf={sourceAsOf}
+          sourceState={sourceState}
+          selection={commandSelection}
+          refreshing={refreshing}
+          onRefresh={retryReads}
+        />
         {criticalError && view !== 'project-intelligence' && (
           <div role="alert" className="alert error">
             {criticalError}
@@ -583,7 +717,119 @@ export default function Home() {
           </div>
         )}
         {view !== 'site' && view !== 'project-intelligence' && refreshNotice}
-        <ProjectIntelligenceWorkspace enabled={view === 'project-intelligence'} />
+        {spatialView && (
+          <div className="operating-spatial-map">
+            <SiteMap
+              geometry={selectedMapGeometry}
+              findings={view === 'site' ? result?.findings : []}
+              selected={view === 'site' ? mapFocus?.key : undefined}
+              focusRequest={view === 'site' ? mapFocus?.request : undefined}
+              boundaryLabel={
+                view === 'site' && current
+                  ? `Boundary v${viewingHistorical ? assessment?.version : current.version}${viewingHistorical ? ' · historical assessment' : ''}`
+                  : 'Current saved Site boundaries'
+              }
+              onInspect={(finding) => {
+                if (view !== 'site') return;
+                showOnMap(finding.key);
+                setFinding(finding);
+              }}
+              screeningFeatures={view === 'site' ? mapEvidence.features : null}
+              screeningFeaturesState={
+                view === 'site' ? mapEvidence.state : 'idle'
+              }
+              screeningFeaturesError={view === 'site' ? mapEvidence.error : ''}
+              selectedMapObject={
+                view === 'site' ? mapEvidence.selectedObjectId : null
+              }
+              mapObjectFocusRequest={
+                view === 'site' ? mapEvidence.focusRequest : 0
+              }
+              onInspectMapObject={(id) => {
+                if (view !== 'site') return;
+                changeSitePanel(true);
+                mapEvidence.selectObject(id);
+              }}
+              onClearMapObject={mapEvidence.clearSelection}
+              hiddenLayerIds={operatingState.hiddenLayers}
+              onHiddenLayerIdsChange={operatingPicture.setHiddenLayers}
+              layersOpen={mapLayersOpen}
+              onLayersOpenChange={setMapLayersOpen}
+              entities={infrastructureEntities}
+              selectedEntity={operatingState.selection}
+              onSelectEntity={(selection) => {
+                if (!selection) {
+                  operatingPicture.selectEntity(null, 'map');
+                  return;
+                }
+                const entity = infrastructureEntities.find(
+                  (item) =>
+                    item.kind === selection.kind && item.id === selection.id,
+                );
+                if (!entity) return;
+                if (view === 'workspace')
+                  operatingPicture.selectEntity(selection, 'map');
+                else openInfrastructureEntity(entity);
+              }}
+              onOpenEntity={openInfrastructureEntity}
+              entityLoading={loading || projectEntityIndex.loading}
+              entityUnavailable={
+                (!hasLoadedSites && !!readErrors.sites) ||
+                (!!projectEntityIndex.error &&
+                  !projectEntityIndex.subjects.length)
+              }
+            />
+            {(view === 'site' || view === 'project-intelligence') &&
+              !panelOpen && (
+                <button
+                  ref={reopenAnalysisButton}
+                  className="reopen-analysis operating-map-reopen"
+                  onClick={reopenSitePanel}
+                >
+                  <PanelLeftOpen size={16} /> Open entity dossier
+                </button>
+              )}
+          </div>
+        )}
+        <ProjectIntelligenceWorkspace
+          enabled={view === 'project-intelligence'}
+          selectedSubjectId={requestedProjectSubjectId}
+          selectedRunId={requestedProjectRunId}
+          section={operatingState.section}
+          dossierOpen={operatingState.dossierOpen}
+          locationLabel={
+            selectedInfrastructureEntity
+              ? infrastructureEntityLabel(selectedInfrastructureEntity)
+              : 'Project Subject · geography not established'
+          }
+          closeButtonRef={analysisCloseButton}
+          onCollapse={collapseSitePanel}
+          onOpenLayers={() => setMapLayersOpen(true)}
+          onSubjectChange={(id, method) =>
+            operatingPicture.transition(
+              (currentState) => ({
+                ...currentState,
+                mode: 'project',
+                selection: id ? { kind: 'project_subject', id } : null,
+                artifact: null,
+                section: 'overview',
+                dossierOpen: true,
+              }),
+              method,
+            )
+          }
+          onRunChange={(id, method) =>
+            operatingPicture.transition(
+              (currentState) => ({
+                ...currentState,
+                artifact: id ? { kind: 'project_intelligence_run', id } : null,
+                section: id ? currentState.section : 'overview',
+              }),
+              method,
+            )
+          }
+          onSectionChange={operatingPicture.setSection}
+        />
         {view === 'workspace' && (
           <Tabs
             className="sites-views"
@@ -604,32 +850,24 @@ export default function Home() {
               </button>
             </div>
             <TabsContent value="map" className="sites-map-panel">
-              <PortfolioMap
-                sites={sites}
-                selected={selectedMapSite}
-                onSelect={setSelectedMapSite}
-                onOpen={openSite}
-                loading={loading}
-                unavailable={!hasLoadedSites && !!readErrors.sites}
-              />
+              <p className="sr-only">
+                The persistent infrastructure map contains the Site and Project
+                Subject entity index.
+              </p>
             </TabsContent>
             <TabsContent value="list" className="portfolio-list-panel">
-              <div className="portfolio-list-hero">
-                <div className="portfolio-list-hero-copy">
-                  <p className="eyebrow">TERRENE / LAND INTELLIGENCE</p>
-                  <h1>Saved site portfolio</h1>
+              <div className="portfolio-status-strip">
+                <div>
+                  <h1>Infrastructure site roster</h1>
                   <p>
-                    Screen the estate, compare evidence coverage and direct the
-                    next review.
+                    Evidence coverage, screening state and team review remain
+                    separate.
                   </p>
                 </div>
-                <div className="portfolio-list-hero-status">
-                  <span>PORTFOLIO / OXFORDSHIRE</span>
-                  <strong>
-                    <span className="live-dot" aria-hidden="true" />
-                    {filtered.length.toString().padStart(2, '0')} visible sites
-                  </strong>
-                </div>
+                <span>
+                  {filtered.length.toString().padStart(2, '0')} visible of{' '}
+                  {sites.length.toString().padStart(2, '0')} retained sites
+                </span>
               </div>
               <div className="workspace-content portfolio-ledger">
                 <section
@@ -668,15 +906,6 @@ export default function Home() {
                   </div>
                 </section>
                 <div className="toolbar portfolio-toolbar">
-                  <div className="search">
-                    <Search size={17} />
-                    <input
-                      aria-label="Search sites"
-                      placeholder="Search sites…"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                    />
-                  </div>
                   <Select
                     value={filter}
                     onValueChange={(v) => v && setFilter(v)}
@@ -721,7 +950,7 @@ export default function Home() {
                     title={
                       sites.length
                         ? 'No sites match these filters'
-                        : 'No land sites saved'
+                        : 'No infrastructure sites saved'
                     }
                     description="Draw a boundary or upload GeoJSON to create a site for evidence screening."
                     action={
@@ -818,8 +1047,8 @@ export default function Home() {
                                   <span>
                                     <strong>{s.name}</strong>
                                     <small>
-                                      SITE {s.id.slice(-8).toUpperCase()} ·
-                                      BND V{s.version} · ENGLAND
+                                      SITE {s.id.slice(-8).toUpperCase()} · BND
+                                      V{s.version} · ENGLAND
                                     </small>
                                   </span>
                                 </button>
@@ -902,49 +1131,43 @@ export default function Home() {
           </Tabs>
         )}
         {view === 'site' && current && (
-          <section
+          <EntityDossier
             className="site-workspace"
-            aria-label="Site analysis workspace"
-          >
-            <div className="heading site-heading">
-              <div className="site-context">
+            open={panelOpen}
+            ariaLabel="Site intelligence dossier"
+            entityKind="SITE"
+            title={current.name}
+            location={`England · Saved boundary v${stale ? assessment.version : current.version}${result ? ` · ${fmt(result.area_ha)} ha` : ''}`}
+            artifact={
+              assessment
+                ? `Assessment ${assessment.state}`
+                : 'No saved assessment'
+            }
+            evidenceAsOf={
+              assessment
+                ? `Evidence retained ${new Date(assessment.created).toLocaleDateString('en-GB')}`
+                : undefined
+            }
+            status={
+              <EvidenceBadge
+                state={
+                  assessment?.state === 'completed'
+                    ? 'available'
+                    : assessment?.state === 'failed'
+                      ? 'warning'
+                      : assessment
+                        ? 'partial'
+                        : 'missing'
+                }
+              >
+                {assessment ? assessment.state : 'Not assessed'}
+              </EvidenceBadge>
+            }
+            actions={
+              <>
                 <button className="back" onClick={() => setView('workspace')}>
                   <ArrowLeft size={14} /> All sites
                 </button>
-                <h1>{current.name}</h1>
-                <div className="site-meta-line">
-                  <span>
-                    <MapPin size={13} /> England
-                  </span>
-                  <span>
-                    Boundary v{stale ? assessment.version : current.version}
-                  </span>
-                  {result && <span>{fmt(result.area_ha)} ha</span>}
-                  <EvidenceBadge
-                    state={
-                      assessment?.state === 'completed'
-                        ? 'available'
-                        : assessment?.state === 'failed'
-                          ? 'warning'
-                          : assessment
-                            ? 'partial'
-                            : 'missing'
-                    }
-                  >
-                    {assessment
-                      ? `Assessment ${assessment.state}`
-                      : 'Not assessed'}
-                  </EvidenceBadge>
-                  {assessment && (
-                    <span className="context-date">
-                      {new Date(assessment.created).toLocaleString('en-GB', {
-                        dateStyle: 'medium',
-                      })}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="site-heading-controls">
                 <span className="compact-team-review">
                   <small>Team review</small>
                   <Status
@@ -993,8 +1216,22 @@ export default function Home() {
                     </button>
                   </div>
                 </details>
-              </div>
-            </div>
+              </>
+            }
+            historyState={
+              assessment &&
+              selectedAssessment &&
+              selectedAssessment !== current.assessment?.id
+                ? {
+                    label: `Boundary v${assessment.version} · ${new Date(assessment.created).toLocaleString('en-GB')}`,
+                    onReturnLatest: () => selectSiteAssessment(null),
+                  }
+                : undefined
+            }
+            closeButtonRef={analysisCloseButton}
+            onCollapse={collapseSitePanel}
+            onOpenLayers={() => setMapLayersOpen(true)}
+          >
             {stale && (
               <div className="alert">
                 Viewing saved boundary v{assessment.version}; current site is v
@@ -1002,20 +1239,6 @@ export default function Home() {
                 current boundary.
               </div>
             )}
-            {assessment &&
-              selectedAssessment &&
-              selectedAssessment !== current.assessment?.id && (
-                <div className="assessment-snapshot">
-                  Historical assessment ·{' '}
-                  {new Date(assessment.created).toLocaleString('en-GB')}
-                  <button
-                    className="text-btn"
-                    onClick={workspace.returnToLatest}
-                  >
-                    Return to latest
-                  </button>
-                </div>
-              )}
             {newerData && (
               <details className="data-update-note">
                 <summary>Newer reference data available</summary>
@@ -1028,37 +1251,6 @@ export default function Home() {
             <div
               className={`investigation${panelOpen ? '' : ' panel-collapsed'}`}
             >
-              <div className="analysis-map">
-                <SiteMap
-                  key={assessment?.id || current.id}
-                  geometry={
-                    viewingHistorical ? assessment.geometry : current.geometry
-                  }
-                  findings={result?.findings}
-                  selected={mapFocus?.key}
-                  focusRequest={mapFocus?.request}
-                  boundaryLabel={`Boundary v${viewingHistorical ? assessment.version : current.version}${viewingHistorical ? ' · historical assessment' : ''}`}
-                  onInspect={(f) => {
-                    showOnMap(f.key);
-                    setFinding(f);
-                  }}
-                  screeningFeatures={mapEvidence.features}
-                  screeningFeaturesState={mapEvidence.state}
-                  screeningFeaturesError={mapEvidence.error}
-                  selectedMapObject={mapEvidence.selectedObjectId}
-                  mapObjectFocusRequest={mapEvidence.focusRequest}
-                  onInspectMapObject={mapEvidence.selectObject}
-                  onClearMapObject={mapEvidence.clearSelection}
-                />
-                {!panelOpen && (
-                  <button
-                    className="reopen-analysis"
-                    onClick={() => setPanelOpen(true)}
-                  >
-                    <PanelLeftOpen size={16} /> Open analysis
-                  </button>
-                )}
-              </div>
               <div
                 className="findings-panel"
                 ref={analysisPanel}
@@ -1066,32 +1258,34 @@ export default function Home() {
               >
                 <div className="analysis-panel-heading">
                   <span>
-                    <strong>Site Analysis Workspace</strong>
+                    <strong>Site evidence and reasoning</strong>
                     <small>
                       Earth evidence · reasoning modules · team review
                     </small>
                   </span>
-                  <button
-                    className="icon-btn"
-                    aria-label="Collapse analysis panel"
-                    onClick={() => setPanelOpen(false)}
-                  >
-                    <PanelLeftClose size={17} />
-                  </button>
                 </div>
                 {mapEvidence.selectedObject && mapEvidence.features && (
                   <MapFeatureInspector
                     feature={mapEvidence.selectedObject}
                     layer={mapEvidence.features.layers.find(
-                      (layer) => layer.id === mapEvidence.selectedObject?.properties.layer_id,
+                      (layer) =>
+                        layer.id ===
+                        mapEvidence.selectedObject?.properties.layer_id,
                     )}
                     limitations={mapEvidence.features.limitations}
-                    onLocate={() => mapEvidence.locateObject(mapEvidence.selectedObject!.id)}
+                    onLocate={() =>
+                      mapEvidence.locateObject(mapEvidence.selectedObject!.id)
+                    }
                     onClose={mapEvidence.clearSelection}
                   />
                 )}
                 {refreshNotice}
-                <Tabs value={tab} onValueChange={setTab}>
+                <Tabs
+                  value={tab}
+                  onValueChange={(value) =>
+                    changeSiteSection(value as WorkspaceTab)
+                  }
+                >
                   <TabsList
                     className="panel-tabs analysis-tabs"
                     aria-label="Site analysis sections"
@@ -1110,9 +1304,9 @@ export default function Home() {
                         mode="overview"
                         context={workspace.context}
                         mapEvidence={mapEvidence}
-                        onEvidence={() => setTab('evidence')}
+                        onEvidence={() => changeSiteSection('evidence')}
                         onMap={(key) => {
-                          setPanelOpen(true);
+                          changeSitePanel(true);
                           showOnMap(key);
                         }}
                         mapTargets={[
@@ -1120,9 +1314,10 @@ export default function Home() {
                             .filter((item: OverlayFinding) => !!item.geometry)
                             .map((item: OverlayFinding) => item.key),
                           ...(mapEvidence.features?.layers || [])
-                            .filter((layer) =>
-                              layer.feature_count > 0
-                              && ['available', 'partial'].includes(layer.state),
+                            .filter(
+                              (layer) =>
+                                layer.feature_count > 0 &&
+                                ['available', 'partial'].includes(layer.state),
                             )
                             .map((layer) => `context:${layer.id}`),
                         ]}
@@ -1201,7 +1396,7 @@ export default function Home() {
                         mode="evidence"
                         context={workspace.context}
                         mapEvidence={mapEvidence}
-                        onEvidence={() => setTab('evidence')}
+                        onEvidence={() => changeSiteSection('evidence')}
                         site={{
                           name: current.name,
                           areaHa: result?.area_ha,
@@ -1213,7 +1408,7 @@ export default function Home() {
                       <NaturePanel
                         key={(assessment?.id || current.id) + ':evidence'}
                         section="evidence"
-                        onSection={() => setTab('models')}
+                        onSection={() => changeSiteSection('models')}
                         model={result?.wetland_model}
                         earth={result?.environmental_state}
                         assessmentState={assessment?.state}
@@ -1276,7 +1471,8 @@ export default function Home() {
                               key={(assessment?.id || current.id) + section}
                               section={section}
                               onSection={(next) => {
-                                if (next === 'evidence') setTab('evidence');
+                                if (next === 'evidence')
+                                  changeSiteSection('evidence');
                                 else
                                   setWetlandSection(
                                     next as typeof wetlandSection,
@@ -1341,7 +1537,7 @@ export default function Home() {
                           className={`history-row${a.id === assessment?.id ? ' is-selected' : ''}`}
                           aria-pressed={a.id === assessment?.id}
                           key={a.id}
-                          onClick={() => workspace.selectAssessment(a.id)}
+                          onClick={() => selectSiteAssessment(a.id)}
                         >
                           <b>
                             Boundary v{a.version} · {a.state}
@@ -1365,7 +1561,7 @@ export default function Home() {
                 </Tabs>
               </div>
             </div>
-          </section>
+          </EntityDossier>
         )}
         {view === 'data' && (
           <>
@@ -1441,7 +1637,6 @@ export default function Home() {
               <button
                 onClick={() => {
                   setSitesView('list');
-                  setView('workspace');
                 }}
               >
                 Choose sites
@@ -1452,12 +1647,11 @@ export default function Home() {
                 <WorkspaceState
                   kind="empty"
                   title="Select two or three sites"
-                  description="Use the checkboxes in Sites to choose the land opportunities you want to compare."
+                  description="Use the checkboxes in Sites to choose the infrastructure sites you want to compare."
                   action={
                     <button
                       onClick={() => {
                         setSitesView('list');
-                        setView('workspace');
                       }}
                     >
                       Back to sites
@@ -1532,7 +1726,7 @@ export default function Home() {
             <DialogDescription>
               {editing
                 ? 'Boundary changes preserve prior assessments as history.'
-                : 'Start with a name and an exact land boundary.'}
+                : 'Start with a name and an exact site boundary.'}
             </DialogDescription>
           </DialogHeader>
           <label>
@@ -1736,8 +1930,8 @@ export default function Home() {
                   </ul>
                   <button
                     onClick={() => {
-                      setTab('evidence');
-                      setPanelOpen(true);
+                      changeSiteSection('evidence');
+                      changeSitePanel(true);
                       setFinding(null);
                     }}
                   >

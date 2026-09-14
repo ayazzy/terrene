@@ -38,17 +38,33 @@ export type ContextState =
   | 'unauthorized'
   | 'failed';
 
+export type SiteWorkspaceNavigation = {
+  selectedAssessmentId: string | null;
+  tab: WorkspaceTab;
+  panelOpen: boolean;
+  onAssessmentChange: (
+    id: string | null,
+    method: 'push' | 'replace',
+  ) => void;
+  onTabChange: (tab: WorkspaceTab, method: 'push' | 'replace') => void;
+  onPanelOpenChange: (
+    panelOpen: boolean,
+    method: 'push' | 'replace',
+  ) => void;
+};
+
 export function useSiteWorkspaceState(
   site: Site | undefined,
   history: Assessment[],
+  navigation?: SiteWorkspaceNavigation,
 ) {
-  const [selectedAssessmentId, setSelectedAssessmentId] = useState<
+  const [localSelectedAssessmentId, setLocalSelectedAssessmentId] = useState<
     string | null
   >(null);
-  const [tab, setTab] = useState<WorkspaceTab>('overview');
+  const [localTab, setLocalTab] = useState<WorkspaceTab>('overview');
   const [wetlandSection, setWetlandSection] =
     useState<WetlandSection>('overview');
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [localPanelOpen, setLocalPanelOpen] = useState(true);
   const [mapFocus, setMapFocus] = useState<{
     key: string;
     request: number;
@@ -81,6 +97,32 @@ export function useSiteWorkspaceState(
     null,
   );
   const [mapObjectFocusRequest, setMapObjectFocusRequest] = useState(0);
+  const selectedAssessmentId = navigation
+    ? navigation.selectedAssessmentId
+    : localSelectedAssessmentId;
+  const tab = navigation ? navigation.tab : localTab;
+  const panelOpen = navigation ? navigation.panelOpen : localPanelOpen;
+  const setSelectedAssessmentId = (
+    id: string | null,
+    method: 'push' | 'replace' = 'push',
+  ) => {
+    if (navigation) navigation.onAssessmentChange(id, method);
+    else setLocalSelectedAssessmentId(id);
+  };
+  const setTab = (
+    next: WorkspaceTab,
+    method: 'push' | 'replace' = 'push',
+  ) => {
+    if (navigation) navigation.onTabChange(next, method);
+    else setLocalTab(next);
+  };
+  const setPanelOpen = (
+    next: boolean,
+    method: 'push' | 'replace' = 'push',
+  ) => {
+    if (navigation) navigation.onPanelOpenChange(next, method);
+    else setLocalPanelOpen(next);
+  };
 
   const assessment = useMemo(
     () => resolveWorkspaceAssessment(site, history, selectedAssessmentId),
@@ -101,10 +143,10 @@ export function useSiteWorkspaceState(
   }
 
   function resetForSite() {
-    setSelectedAssessmentId(null);
-    setTab('overview');
+    setSelectedAssessmentId(null, 'replace');
+    setTab('overview', 'replace');
     setWetlandSection('overview');
-    setPanelOpen(true);
+    setPanelOpen(true, 'replace');
     clearArtifactViews();
   }
 
@@ -273,14 +315,14 @@ export function useSiteWorkspaceState(
 
   function selectAssessment(id: string) {
     setSelectedAssessmentId(id);
-    setTab('overview');
+    setTab('overview', 'replace');
     setWetlandSection('overview');
     clearArtifactViews();
   }
 
   function returnToLatest() {
     setSelectedAssessmentId(null);
-    setTab('overview');
+    setTab('overview', 'replace');
     setWetlandSection('overview');
     clearArtifactViews();
   }

@@ -1,44 +1,51 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 
-const [page, map, css] = await Promise.all([
+const [page, map, mapCss, shellCss] = await Promise.all([
   readFile(new URL('../app/page.tsx', import.meta.url), 'utf8'),
-  readFile(new URL('../app/portfolio-map.tsx', import.meta.url), 'utf8'),
-  readFile(new URL('../app/globals.css', import.meta.url), 'utf8'),
+  readFile(new URL('../app/map.tsx', import.meta.url), 'utf8'),
+  readFile(
+    new URL('../app/infrastructure-map.module.css', import.meta.url),
+    'utf8',
+  ),
+  readFile(
+    new URL('../app/operating-shell.module.css', import.meta.url),
+    'utf8',
+  ),
 ]);
 
-function layer(name) {
-  const match = css.match(new RegExp(`--portfolio-layer-${name}:\\s*(\\d+)`));
-  assert.ok(match, `missing portfolio layer ${name}`);
-  return Number(match[1]);
-}
-
 test('portfolio application chrome is above all geographic content', () => {
-  const geography = layer('geography');
-  const locators = layer('locators');
-  const mapControls = layer('map-controls');
-  const appChrome = layer('app-chrome');
+  assert.match(map, /data-primary-map="infrastructure-operating-picture"/);
+  assert.match(mapCss, /\.roster\s*\{[^}]*z-index:\s*20/s);
+  assert.match(
+    shellCss,
+    /\.portfolio-main > \.sites-views\)\s*\{[^}]*z-index:\s*16/s,
+  );
+  assert.match(
+    shellCss,
+    /\.spatial-main > \.entity-dossier\)\s*\{[^}]*z-index:\s*18/s,
+  );
+  assert.match(
+    shellCss,
+    /@media \(min-width: 80rem\)[\s\S]*?\.spatial-main > \.entity-dossier\)[^}]*width: min\(48rem, 40%\)/,
+  );
+});
 
-  assert.ok(geography < locators);
-  assert.ok(locators < mapControls);
-  assert.ok(mapControls < appChrome);
-  assert.match(
-    css,
-    /\.portfolio-boundaries\s*\{[^}]*var\(--portfolio-layer-geography\)/s,
+test('the obsolete portfolio map controller cannot return', async () => {
+  await assert.rejects(
+    access(new URL('../app/portfolio-map.tsx', import.meta.url)),
+    /ENOENT/,
   );
-  assert.match(
-    css,
-    /\.portfolio-pins\s*\{[^}]*var\(--portfolio-layer-locators\)/s,
-  );
-  assert.match(
-    css,
-    /\.portfolio-context,[\s\S]*\.maplibregl-ctrl-top-right\s*\{[^}]*var\(--portfolio-layer-map-controls\)/,
-  );
-  assert.match(
-    css,
-    /\.portfolio-main \.sites-view-bar\s*\{[^}]*var\(--portfolio-layer-app-chrome\)/s,
-  );
+  assert.doesNotMatch(page, /PortfolioMap|portfolio-map/);
+});
+
+test('the retained map exposes local readiness without claiming live telemetry', () => {
+  assert.match(map, /const startedAt = performance\.now\(\)/);
+  assert.match(map, /data-map-ready=\{ready\}/);
+  assert.match(map, /data-map-ready-ms=\{readyMs \?\? undefined\}/);
+  assert.match(map, /aria-busy=\{!ready\}/);
+  assert.doesNotMatch(map, /real[- ]?time|latency|telemetry/i);
 });
 
 test('drawing map is part of the stable client module graph', () => {
@@ -47,16 +54,27 @@ test('drawing map is part of the stable client module graph', () => {
   assert.match(page, /<SiteMap[\s\S]*?\bdraw\b[\s\S]*?onDraw=/);
 });
 
-test('portfolio raster treatment stays scoped and restrained', () => {
-  assert.match(map, /'raster-opacity': 0\.7/);
-  assert.match(map, /'raster-contrast': -0\.12/);
-  assert.match(css, /\.portfolio-canvas \.maplibregl-canvas\s*\{[^}]*contrast\(0\.58\)/s);
-  assert.doesNotMatch(css, /\.map-wrap \.maplibregl-canvas[^}]*filter/s);
+test('infrastructure raster treatment stays scoped to the primary map', () => {
+  assert.match(map, /'raster-opacity': 0\.8/);
+  assert.match(
+    mapCss,
+    /\.operatingMap :global\(\.map-canvas \.maplibregl-canvas\)/,
+  );
+  assert.doesNotMatch(mapCss, /portfolio-canvas|portfolio-map/);
 });
 
-test('saved locators expose site name, area, and status beyond hover', () => {
-  assert.match(map, /aria-describedby=\{`portfolio-pin-context-/);
-  assert.match(map, /onFocus=\{\(\) => setHovered\(site\.id\)\}/);
-  assert.match(map, /hovered === site\.id \|\| selected === site\.id/);
-  assert.match(map, /\{siteArea\(site\)\}[\s\S]*\{site\.status\}/);
+test('saved entities expose identity, location and evidence state without hover', () => {
+  assert.match(map, /\[rosterOpen, setRosterOpen\] = useState\(false\)/);
+  assert.match(map, /infrastructureEntityLabel\(entity\)/);
+  assert.match(map, /entity\.evidenceState/);
+  assert.match(map, /aria-pressed=\{isSelected\}/);
+  assert.match(map, /Unlocated intelligence/);
+});
+
+test('retained built-world objects share layer visibility and inspection state', () => {
+  assert.match(map, /id={`map-built-\${layer\.id}`}/);
+  assert.match(map, /setLayerHidden\(`built:\${layer\.id}`, !value\)/);
+  assert.match(map, /data-map-object=\{feature\.id\}/);
+  assert.match(map, /onInspectMapObject\?\.\(objectId\)/);
+  assert.match(map, /onClearMapObject\?\.\(\)/);
 });

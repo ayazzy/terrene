@@ -1,0 +1,140 @@
+.header {
+  min-height: 5.25rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--border-default);
+  background: #222825;
+}
+
+.identity {
+  min-width: 0;
+  flex: 1;
+}
+
+.kind {
+  margin: 0 0 0.2rem;
+  color: var(--text-tertiary);
+  font-size: 0.625rem;
+  font-weight: 720;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.identity h1 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 620;
+  letter-spacing: -0.015em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.envelope {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.75rem;
+  margin-top: 0.45rem;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+}
+
+.envelope > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.envelope > span:not(:last-child)::after {
+  content: '';
+  width: 1px;
+  height: 0.75rem;
+  margin-left: 0.45rem;
+  background: var(--border-strong);
+}
+
+.actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.actions > button {
+  min-height: 2rem;
+  white-space: nowrap;
+}
+
+.history {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 1rem;
+  border-bottom: 1px solid #6d5b38;
+  background: #302a20;
+  color: #c8b88e;
+  font-size: 0.7rem;
+}
+
+.history span {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.history strong {
+  color: #ead8a7;
+  font-weight: 650;
+}
+
+.body {
+  min-height: 0;
+}
+
+@media (max-width: 47.5rem) {
+  .header {
+    position: relative;
+    min-height: 4.5rem;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .identity {
+    padding-right: 4.75rem;
+  }
+
+  .actions {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.65rem;
+  }
+
+  .actions > :global(.assessment-action),
+  .actions > :global(.compact-team-review) {
+    display: none;
+  }
+
+  .actions :global(.text-btn) {
+    font-size: 0;
+  }
+
+  .actions :global(.text-btn) svg {
+    margin: 0;
+  }
+
+  .envelope {
+    max-height: 2rem;
+    overflow: hidden;
+  }
+
+  .history {
+    padding-inline: 0.75rem;
+  }
+}

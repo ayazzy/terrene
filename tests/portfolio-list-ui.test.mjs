@@ -2,17 +2,24 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [page, css] = await Promise.all([
+const [page, css, shellCss] = await Promise.all([
   readFile(new URL('../app/page.tsx', import.meta.url), 'utf8'),
   readFile(new URL('../app/globals.css', import.meta.url), 'utf8'),
+  readFile(
+    new URL('../app/operating-shell.module.css', import.meta.url),
+    'utf8',
+  ),
 ]);
 
 test('portfolio list has a dedicated intelligence-led visual hierarchy', () => {
   assert.match(page, /portfolio-list-main/);
-  assert.match(page, /Saved site portfolio/);
+  assert.match(page, /Infrastructure site roster/);
   assert.match(page, /aria-label="Portfolio summary"/);
   assert.match(page, /Screening protocol/);
-  assert.match(css, /\.portfolio-list-hero::before/);
+  assert.match(page, /className="portfolio-status-strip"/);
+  assert.doesNotMatch(page, /className="portfolio-list-hero"/);
+  assert.match(shellCss, /:global\(\.portfolio-status-strip\)/);
+  assert.match(shellCss, /:global\(\.portfolio-summary\)[^{]*\{/);
   assert.match(css, /\.portfolio-site-table tbody tr\[data-selected='true'\]/);
   assert.match(page, /className="site-locator"[\s\S]*aria-hidden="true"/);
   assert.match(css, /\.portfolio-site-table \.site-locator \{/);

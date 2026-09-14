@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Terrene — Earth Intelligence',
+  title: 'Terrene — Infrastructure Intelligence',
   description:
-    'Geospatial evidence and decision support for understanding land.',
+    'Evidence-bound infrastructure intelligence grounded in geography.',
 };
 
 export default function RootLayout({

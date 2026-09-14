@@ -125,3 +125,58 @@ unreliable.
 **Rationale:** “Latest” selection and publication recency would make results non-reproducible and could turn an attributed assertion into an unsupported conclusion. Dedicated runs support non-spatial Project Subjects without weakening the Site-bound ModuleRun contract.
 
 **References:** [Project Intelligence v1](PROJECT-INTELLIGENCE-V1.md), [Architecture](ARCHITECTURE.md).
+
+## 2026-09-14 — Operating-picture navigation has one URL-addressable state contract
+
+**Decision:** Represent the active Terrene investigation through one typed
+navigation contract containing operating mode, an exact Site or Project Subject
+selection, a compatible historical assessment or intelligence run, dossier
+section/visibility and meaningful layer visibility. Use browser history as the
+restorable presentation-state boundary; keep camera position session-local.
+
+Validate identifiers syntactically and then against authorized API results.
+Invalid, unavailable or mutually inconsistent selection/artifact combinations
+fail closed and may not expose data retained from a prior entity. Navigation
+reads and history transitions must not create or rewrite domain records.
+
+**Rationale:** Independent in-memory map, workspace, entity and history states
+can disagree and cannot survive reload or browser Back/Forward. One canonical
+contract makes later shell, map and dossier convergence testable while
+preserving the distinction between ephemeral interaction state and immutable
+Terrene evidence/reasoning history.
+
+**References:** [Sprint 004](SPRINT-004-INFRASTRUCTURE-OPERATING-PICTURE.md), [Sprint 004 Task 1](SPRINT-004-TASK-1-OPERATING-PICTURE-STATE.md).
+
+## 2026-09-14 — Project geography requires an explicit Site relationship
+
+**Decision:** Use one persistent infrastructure-entity map for Site and Project
+Subject selection. Render a Project Subject spatially only when its authorized
+record has an explicit `site_id` relationship to an authorized Site with saved
+geometry. Derive the marker's display anchor from that Site envelope while
+retaining the Site boundary as the actual geographic object. Keep every other
+Project Subject in an explicitly unlocated roster and leave the camera unchanged
+when it is selected.
+
+**Rationale:** Names, promoter text and source references are not defensible
+spatial evidence. A shared map improves investigation continuity only if it does
+not turn missing geography into an approximate or fabricated location.
+
+**References:** [Sprint 004](SPRINT-004-INFRASTRUCTURE-OPERATING-PICTURE.md), [Sprint 004 Task 3](SPRINT-004-TASK-3-ENTITY-MAP.md), [Architecture](ARCHITECTURE.md).
+
+## 2026-09-14 — Sites and Project Subjects share one dossier shell
+
+**Decision:** Present Site and Project Subject investigation through one docked
+entity-dossier shell beside the persistent infrastructure map. The shell owns
+entity identity, defensible location state, exact assessment/run envelope,
+evidence time, historical state, map-layer access and collapse behavior. Keep
+the existing Site and Project evidence/reasoning components inside it rather
+than normalizing their distinct domain contracts.
+
+**Rationale:** A common investigation grammar reduces context switching and
+keeps the map operational, while shared presentation must not imply that Site
+observations and attributed project assertions are the same evidence type.
+Collapse is presentation state; historical artifact, section and entity
+selection remain canonical and restorable. Source assertions and Terrene
+conclusions remain visibly and navigably separate.
+
+**References:** [Sprint 004](SPRINT-004-INFRASTRUCTURE-OPERATING-PICTURE.md), [Sprint 004 Task 4](SPRINT-004-TASK-4-ENTITY-DOSSIERS.md), [Architecture](ARCHITECTURE.md).
