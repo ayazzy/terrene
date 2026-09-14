@@ -10,37 +10,56 @@ import json
 
 from backend import core
 from backend.acquisition import read_acquisition
-from backend.acquisition_contracts import AcquisitionError
-from backend.acquisition_sources import BoundedClient, SSSI_URL
+from backend.acquisition_contracts import AcquisitionError, SCOTLAND_SOURCE_ID
+from backend.acquisition_sources import BoundedClient, source_descriptor
 
 
 def verify(org, acquisition_id):
     summary = read_acquisition(org, acquisition_id)
     if summary['state'] != 'succeeded':
         raise AcquisitionError('successful_capture_required')
+    endpoint = source_descriptor(summary['request']['adapter_version'])['endpoint']
     area = summary['request']['area']
     polygons = [area['coordinates']] if area['type'] == 'Polygon' else area['coordinates']
     geometry = {'rings': [ring for polygon in polygons for ring in polygon],
                 'spatialReference': {'wkid':4326}}
     reader = BoundedClient()
     try:
-        before = reader.get(SSSI_URL, {'f':'json'})
-        response = reader.get(SSSI_URL+'/query', {
+        before = reader.get(endpoint, {'f':'json'})
+        response = reader.get(endpoint+'/query', {
             'f':'json', 'where':'1=1', 'geometry':json.dumps(geometry),
             'geometryType':'esriGeometryPolygon', 'inSR':'4326',
             'spatialRel':'esriSpatialRelIntersects', 'returnIdsOnly':'true',
         })
-        after = reader.get(SSSI_URL, {'f':'json'})
-        if (before.get('editingInfo') != after.get('editingInfo')
-                or after.get('editingInfo') != summary['result']['publisher_editing_info']):
-            raise AcquisitionError('provider_changed_since_capture')
         ids = response.get('objectIds')
         if (not isinstance(ids,list) or response.get('exceededTransferLimit')
                 or response.get('objectIdFieldName') != 'OBJECTID'
                 or any(type(i) is not int for i in ids) or len(set(ids)) != len(ids)
                 or sorted(ids) != sorted(summary['result']['selected_object_ids'])):
             raise AcquisitionError('independent_selection_mismatch')
-        return {'verification_version':'geographic_acquisition_live_verification_v1',
+        designation_check = {}
+        if summary['request']['source_id'] == SCOTLAND_SOURCE_ID:
+            attributes = reader.get(endpoint+'/query', {
+                'f':'json', 'where':'1=1', 'geometry':json.dumps(geometry),
+                'geometryType':'esriGeometryPolygon', 'inSR':'4326',
+                'spatialRel':'esriSpatialRelIntersects', 'returnGeometry':'false',
+                'outFields':'OBJECTID,PA_CODE,TYPE,STATUS,UPDATED',
+            })
+            rows = [f.get('attributes', {}) for f in attributes.get('features', [])]
+            if (attributes.get('exceededTransferLimit')
+                    or any(type(r.get('OBJECTID')) is not int or type(r.get('PA_CODE')) is not int for r in rows)
+                    or sorted(r['OBJECTID'] for r in rows) != sorted(ids)):
+                raise AcquisitionError('independent_selection_mismatch')
+            codes = sorted({r['PA_CODE'] for r in rows})
+            if codes != summary['result']['native_designation_ids'] or len(codes) != summary['result']['designation_count']:
+                raise AcquisitionError('independent_designation_mismatch')
+            designation_check = {'independent_designation_ids':codes, 'designation_count':len(codes),
+                                 'independent_designation_match':True}
+        after = reader.get(endpoint, {'f':'json'})
+        if (before.get('editingInfo') != after.get('editingInfo')
+                or after.get('editingInfo') != summary['result']['publisher_editing_info']):
+            raise AcquisitionError('provider_changed_since_capture')
+        return {**designation_check, 'verification_version':'geographic_acquisition_live_verification_v1',
                 'verified_at':core.now(), 'acquisition_id':acquisition_id,
                 'request':summary['request'], 'manifest_sha256':summary['manifest_sha256'],
                 'artifact_checksums':summary['artifact_checksums'],

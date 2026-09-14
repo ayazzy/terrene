@@ -1,4 +1,4 @@
-"""Bounded current-publication Natural England adapter and pinned coverage setup."""
+"""Bounded England/Scotland SSSI adapters and pinned national coverage setup."""
 import json
 import time
 
@@ -9,6 +9,7 @@ from shapely.geometry import mapping, shape, box
 from backend import core
 from backend.acquisition_contracts import (
     AcquisitionError, ADAPTER_VERSION, FULL_EXTENT_ADAPTER_VERSION, SOURCE_ID, MAX_AREA_HA, digest, encode,
+    SCOTLAND_SOURCE_ID, SCOTLAND_ADAPTER_VERSION,
 )
 
 SSSI_URL = ('https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/'
@@ -21,14 +22,23 @@ FULL_EXTENT_COVERAGE_VERSION = 'ons_england_dec2024_bfe_v1'
 FULL_EXTENT_COVERAGE_URL = ('https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/'
                             'Countries_December_2024_Boundaries_UK_BFE/FeatureServer/0')
 FULL_EXTENT_COVERAGE_ITEM = 'https://www.arcgis.com/sharing/rest/content/items/2d18d8d4d0b341dfbddebd39d66dbe79'
+SCOTLAND_COVERAGE_VERSION = 'ons_scotland_dec2024_bfe_p10_v1'
+SCOTLAND_URL = ('https://services1.arcgis.com/LM9GyVFsughzHdbO/arcgis/rest/services/'
+                'Sites_of_Special_Scientific_Interest/FeatureServer/0')
+SCOTLAND_ITEM = 'https://www.arcgis.com/sharing/rest/content/items/b243da0bc2164849b80f9c8b347edd18'
 # Each adapter explicitly selects a policy; old requests must never gain coverage.
 COVERAGE_POLICIES = {
     COVERAGE_VERSION: (COVERAGE_URL, COVERAGE_ITEM),
     FULL_EXTENT_COVERAGE_VERSION: (FULL_EXTENT_COVERAGE_URL, FULL_EXTENT_COVERAGE_ITEM),
+    SCOTLAND_COVERAGE_VERSION: (FULL_EXTENT_COVERAGE_URL, FULL_EXTENT_COVERAGE_ITEM),
 }
+COVERAGE_COUNTRIES = {COVERAGE_VERSION: ('E92000001', 'England'),
+                      FULL_EXTENT_COVERAGE_VERSION: ('E92000001', 'England'),
+                      SCOTLAND_COVERAGE_VERSION: ('S92000003', 'Scotland')}
 ADAPTER_COVERAGE = {
     ADAPTER_VERSION: COVERAGE_VERSION,
     FULL_EXTENT_ADAPTER_VERSION: FULL_EXTENT_COVERAGE_VERSION,
+    SCOTLAND_ADAPTER_VERSION: SCOTLAND_COVERAGE_VERSION,
 }
 LIMITS = {'max_area_ha': MAX_AREA_HA, 'max_features': 2_000, 'batch_size': 100,
           'max_response_bytes': 20_000_000, 'max_total_bytes': 60_000_000,
@@ -58,6 +68,34 @@ DESCRIPTOR = {
 
 
 def source_descriptor(adapter_version=ADAPTER_VERSION):
+    if adapter_version == SCOTLAND_ADAPTER_VERSION:
+        return {
+            'source_id': SCOTLAND_SOURCE_ID, 'adapter_version': SCOTLAND_ADAPTER_VERSION,
+            'capability_version': 'scotland_current_vector_v1',
+            'normalization_version': 'naturescot_sssi_polygon_selection_v1',
+            'coverage_profile_version': SCOTLAND_COVERAGE_VERSION,
+            'data_family': 'vector', 'publisher': 'NatureScot', 'jurisdiction': 'Scotland',
+            'designation_type': 'SSSI', 'native_identifier_field': 'OBJECTID',
+            'native_designation_identifier_field': 'PA_CODE',
+            'publication_object_identifier_field': 'OBJECTID',
+            'native_identifier_semantics': 'OBJECTID identifies a component in this publication; multiple components can share one PA_CODE designation.',
+            'native_crs': 'EPSG:27700', 'retrieved_crs': 'OGC:CRS84',
+            'temporal_modes': ['current_publication'], 'endpoint': SCOTLAND_URL,
+            'access': 'public; no credentials', 'resolution_m': None, 'limits': LIMITS,
+            'licence': 'Open Government Licence v3; publisher attribution retained verbatim in item metadata.',
+            'terms_url': SCOTLAND_ITEM,
+            'attribution': '© NatureScot, Contains Ordnance Survey data © Crown copyright and database right (2023)',
+            'coverage_method': 'Request must be wholly covered by pinned ONS Scotland December 2024 BFE polygon returned at 10 decimal places in WGS84 degrees.',
+            'limitations': [
+                'Mapped SSSI components; component count is not designation count. PA_CODE, TYPE, STATUS and UPDATED remain provider attributes.',
+                'TYPE classifies biological/geological/mixed interest; it is not the designation type.',
+                'This adapter requires STATUS Current and known interest classes; unexpected status/type is an explicit failure, not a silently filtered record.',
+                'Current publication only; UPDATED is a provider record-update value, not designation, observation or capture time.',
+                'ONS BFE is a bounded administrative footprint, not complete marine or legal coverage; remote/offshore areas outside it remain unsupported.',
+                'Mapped absence is not real-world absence. No site-condition assessment or ecological confidence is inferred.',
+                'Before/after metadata, item and ID checks detect some changes; the provider has no atomic snapshot transaction.',
+            ],
+        }
     if adapter_version == ADAPTER_VERSION:
         return DESCRIPTOR
     if adapter_version != FULL_EXTENT_ADAPTER_VERSION:
@@ -134,10 +172,12 @@ def load_coverage(sha, *, expected_version=None):
         profile = json.loads(data)
         policy = COVERAGE_POLICIES.get(profile['version'])
         if (policy is None or profile['endpoint'] != policy[0]
-                or profile['feature']['properties']['CTRY24CD'] != 'E92000001'):
+                or profile['feature']['properties']['CTRY24CD'] != COVERAGE_COUNTRIES[profile['version']][0]):
             raise AcquisitionError('coverage_integrity_failure')
         if expected_version is not None and profile['version'] != expected_version:
             raise AcquisitionError('coverage_version_mismatch')
+        if profile['version'] == SCOTLAND_COVERAGE_VERSION and profile.get('coordinate_precision_decimal_degrees') != 10:
+            raise AcquisitionError('coverage_integrity_failure')
         geometry = shape(profile['feature']['geometry'])
         if geometry.geom_type not in ('Polygon', 'MultiPolygon') or geometry.is_empty or not geometry.is_valid:
             raise AcquisitionError('coverage_integrity_failure')
@@ -154,32 +194,48 @@ def prepare_coverage(*, client=None, adapter_version=ADAPTER_VERSION):
         raise AcquisitionError('unsupported_adapter')
     version = ADAPTER_COVERAGE[adapter_version]
     endpoint, item_endpoint = COVERAGE_POLICIES[version]
-    reader = BoundedClient(client, max_response=100_000_000, max_total=110_000_000,
-                           seconds=240, request_timeout=75)
+    country_code, country_name = COVERAGE_COUNTRIES[version]
+    # Scotland's detailed coastline/islands exceeded the England setup budget
+    # in live verification. This affects only explicit profile preparation.
+    scotland = version == SCOTLAND_COVERAGE_VERSION
+    reader = BoundedClient(client, max_response=160_000_000 if scotland else 100_000_000,
+                           max_total=170_000_000 if scotland else 110_000_000,
+                           seconds=480 if scotland else 240, request_timeout=75)
     try:
         metadata = reader.get(endpoint, {'f': 'json'})
         item = reader.get(item_endpoint, {'f': 'json'})
         if item.get('id') != item_endpoint.rsplit('/', 1)[1] or item.get('owner') != 'ONSGeography_data':
             raise AcquisitionError('coverage_schema_changed')
-        if version == FULL_EXTENT_COVERAGE_VERSION:
+        if version != COVERAGE_VERSION:
             spatial = metadata.get('extent', {}).get('spatialReference', {})
             if (item.get('url') != endpoint.rsplit('/', 1)[0] or item.get('type') != 'Feature Service'
                     or metadata.get('geometryType') != 'esriGeometryPolygon'
                     or spatial.get('latestWkid', spatial.get('wkid')) != 27700):
                 raise AcquisitionError('coverage_schema_changed')
-        collection = reader.get(endpoint + '/query', {
-            'f': 'geojson', 'where': "CTRY24CD='E92000001'", 'outFields': '*',
+        parameters = {
+            'f': 'geojson', 'where': f"CTRY24CD='{country_code}'", 'outFields': '*',
             'outSR': '4326', 'returnGeometry': 'true',
-        })
+        }
+        if scotland:
+            # Reduce the large national response after observed incomplete
+            # transfers. No vertex generalization is requested.
+            parameters['geometryPrecision'] = 10
+        collection = reader.get(endpoint + '/query', parameters)
         if (collection.get('type') != 'FeatureCollection' or collection.get('exceededTransferLimit')
                 or len(collection.get('features', [])) != 1):
             raise AcquisitionError('incomplete_coverage')
         feature = collection['features'][0]
         geometry = shape(feature['geometry'])
-        if (feature['properties'].get('CTRY24CD') != 'E92000001' or not geometry.is_valid
+        if (feature['properties'].get('CTRY24CD') != country_code or not geometry.is_valid
                 or geometry.is_empty or geometry.geom_type not in ('Polygon', 'MultiPolygon')):
             raise AcquisitionError('invalid_coverage_geometry')
-        if version == FULL_EXTENT_COVERAGE_VERSION:
+        if scotland:
+            coordinates = feature['geometry']['coordinates']
+            polygons = [coordinates] if feature['geometry']['type'] == 'Polygon' else coordinates
+            if any(len(point) != 2 or any(v != round(v, 10) for v in point)
+                   for polygon in polygons for ring in polygon for point in ring):
+                raise AcquisitionError('coverage_precision_mismatch')
+        if version != COVERAGE_VERSION:
             if collection.get('crs') != {'type': 'name', 'properties': {'name': 'EPSG:4326'}}:
                 raise AcquisitionError('coverage_schema_changed')
             after = reader.get(endpoint, {'f': 'json'})
@@ -190,15 +246,20 @@ def prepare_coverage(*, client=None, adapter_version=ADAPTER_VERSION):
                    'feature': feature, 'responses': reader.responses,
                    'method': 'Whole-area covers test; no repair, buffer or clipping.',
                    'limitations': 'December 2024 full resolution, clipped to mean high water; operational coverage, not legal advice.'}
-        if version == FULL_EXTENT_COVERAGE_VERSION:
+        if version != COVERAGE_VERSION:
             profile.update(metadata_after=after,
                            limitations='December 2024 full resolution, extent of realm, generally mean low water. Operational administrative footprint; not complete marine or legal designation coverage.')
+        if scotland:
+            profile['coordinate_precision_decimal_degrees'] = 10
+            profile['method'] = 'Provider WGS84 coordinates at 10 decimal places; whole-area covers test, no repair, buffer, clipping or vertex-generalization request.'
+            profile['setup_limits'] = {'max_response_bytes':160_000_000, 'max_total_bytes':170_000_000,
+                                       'network_deadline_seconds':480, 'request_timeout_seconds':75}
         data = encode(profile)
         sha = digest(data)
         core.store_object_immutable(_profile_key(sha), data)
         load_coverage(sha, expected_version=version)
         return {'coverage_profile_sha256': sha, 'version': version,
-                'captured_at': profile['captured_at'], 'country': 'England'}
+                'captured_at': profile['captured_at'], 'country': country_name}
     finally:
         reader.close()
 
@@ -213,19 +274,38 @@ def validate_capabilities(request):
     return profile
 
 
-def _metadata(reader):
-    value = reader.get(SSSI_URL, {'f': 'json'})
+def _metadata(reader, descriptor=None):
+    descriptor = descriptor or DESCRIPTOR
+    value = reader.get(descriptor['endpoint'], {'f': 'json'})
     fields = {f['name']: f.get('type') for f in value.get('fields', [])}
     spatial = value.get('extent', {}).get('spatialReference', {})
     if (value.get('geometryType') != 'esriGeometryPolygon' or value.get('objectIdField') != 'OBJECTID'
-            or fields.get('OBJECTID') != 'esriFieldTypeOID' or 'REF_CODE' not in fields
+            or fields.get('OBJECTID') != 'esriFieldTypeOID'
             or spatial.get('latestWkid', spatial.get('wkid')) != 27700):
+        raise AcquisitionError('source_schema_changed')
+    if descriptor['source_id'] == SCOTLAND_SOURCE_ID:
+        required = {'PA_CODE': 'esriFieldTypeInteger', 'STATUS': 'esriFieldTypeString',
+                    'TYPE': 'esriFieldTypeString', 'UPDATED': 'esriFieldTypeDate'}
+        if value.get('serviceItemId') != SCOTLAND_ITEM.rsplit('/', 1)[1] or any(fields.get(k) != v for k, v in required.items()):
+            raise AcquisitionError('source_schema_changed')
+    elif 'REF_CODE' not in fields:
         raise AcquisitionError('source_schema_changed')
     return value
 
 
-def _ids(reader, envelope):
-    value = reader.get(SSSI_URL + '/query', {
+def _scotland_item(reader):
+    value = reader.get(SCOTLAND_ITEM, {'f': 'json'})
+    terms = value.get('licenseInfo')
+    if (value.get('id') != SCOTLAND_ITEM.rsplit('/', 1)[1] or value.get('owner') != 'SNH_Maps'
+            or value.get('orgId') != 'LM9GyVFsughzHdbO' or value.get('type') != 'Feature Service'
+            or value.get('url') != SCOTLAND_URL.rsplit('/', 1)[0]
+            or not isinstance(terms, str) or 'nationalarchives.gov.uk/doc/open-government-licence/' not in terms):
+        raise AcquisitionError('source_identity_or_terms_changed')
+    return value
+
+
+def _ids(reader, envelope, endpoint=SSSI_URL):
+    value = reader.get(endpoint + '/query', {
         'f': 'json', 'where': '1=1', 'geometry': ','.join(map(str, envelope)),
         'geometryType': 'esriGeometryEnvelope', 'inSR': '4326',
         'spatialRel': 'esriSpatialRelIntersects', 'returnIdsOnly': 'true',
@@ -249,11 +329,16 @@ def fetch_sssi(request, *, client=None, artifacts=None, diagnostics=None):
     diagnostics = diagnostics if diagnostics is not None else {}
     reader = BoundedClient(client)
     try:
+        descriptor = source_descriptor(request.adapter_version)
+        endpoint = descriptor['endpoint']
+        scotland = descriptor['source_id'] == SCOTLAND_SOURCE_ID
         area = shape(request.area)
         envelope = list(area.bounds)
-        before = _metadata(reader)
+        if scotland:
+            artifacts['provider_item_before'] = _scotland_item(reader)
+        before = _metadata(reader, descriptor)
         artifacts['provider_metadata_before'] = before
-        ids = _ids(reader, envelope)
+        ids = _ids(reader, envelope, endpoint)
         diagnostics.update({'envelope': envelope, 'expected_object_ids': ids})
         original = {'type': 'FeatureCollection', 'features': []}
         artifacts['assembled_provider_candidates'] = original
@@ -262,7 +347,7 @@ def fetch_sssi(request, *, client=None, artifacts=None, diagnostics=None):
             raise AcquisitionError('source_schema_changed')
         for offset in range(0, len(ids), size):
             batch = ids[offset:offset + size]
-            value = reader.get(SSSI_URL + '/query', {
+            value = reader.get(endpoint + '/query', {
                 'f': 'geojson', 'objectIds': ','.join(map(str, batch)), 'outFields': '*',
                 'outSR': '4326', 'returnGeometry': 'true',
             })
@@ -281,12 +366,17 @@ def fetch_sssi(request, *, client=None, artifacts=None, diagnostics=None):
             if (any(type(i) is not int for i in returned) or sorted(returned) != batch
                     or any('id' in f and f['id'] != f['properties']['OBJECTID'] for f in features)):
                 raise AcquisitionError('inconsistent_feature_ids')
-        after_ids = _ids(reader, envelope)
-        after = _metadata(reader)
+        after_ids = _ids(reader, envelope, endpoint)
+        after = _metadata(reader, descriptor)
         artifacts['provider_metadata_after'] = after
         if after_ids != ids or encode(before) != encode(after):
             raise AcquisitionError('source_changed_during_capture')
+        if scotland:
+            artifacts['provider_item_after'] = _scotland_item(reader)
+            if encode(artifacts['provider_item_before']) != encode(artifacts['provider_item_after']):
+                raise AcquisitionError('source_changed_during_capture')
         normalized, lineage, selected_ids, native_ids = [], [], [], []
+        designation_ids = set()
         for feature in original['features']:
             try:
                 geometry = shape(feature['geometry'])
@@ -297,15 +387,30 @@ def fetch_sssi(request, *, client=None, artifacts=None, diagnostics=None):
                 if (not normalized_geometry.is_valid or normalized_geometry.is_empty
                         or normalized_geometry.geom_type not in ('Polygon', 'MultiPolygon')):
                     raise ValueError('unsafe_repair')
-                native = feature['properties']['REF_CODE']
-                if not isinstance(native, str) or not native.strip():
-                    raise ValueError('missing_native_id')
+                properties = feature['properties']
+                if scotland:
+                    native = properties['OBJECTID']
+                    pa_code = properties['PA_CODE']
+                    if type(pa_code) is not int or pa_code <= 0:
+                        raise ValueError('missing_native_designation_id')
+                    if properties.get('STATUS') != 'Current' or properties.get('TYPE') not in ('BIOLOGICAL', 'GEOLOGICAL', 'MIXED'):
+                        raise AcquisitionError('unsupported_designation_status_or_type')
+                    if properties.get('UPDATED') is not None and type(properties['UPDATED']) is not int:
+                        raise AcquisitionError('invalid_provider_record_update')
+                else:
+                    native = properties['REF_CODE']
+                    if not isinstance(native, str) or not native.strip():
+                        raise ValueError('missing_native_id')
                 selected = normalized_geometry.intersects(area)
                 oid = feature['properties']['OBJECTID']
                 lineage.append({'object_id': oid, 'native_id': native, 'repaired': repaired,
                                 'method': 'shapely.make_valid' if repaired else 'unchanged',
                                 'selected': selected})
+                if scotland:
+                    lineage[-1]['native_designation_id'] = pa_code
                 if selected:
+                    if scotland:
+                        designation_ids.add(pa_code)
                     selected_ids.append(oid)
                     native_ids.append(native)
                     normalized.append({'type': 'Feature', 'id': oid, 'properties': feature['properties'],
@@ -314,12 +419,16 @@ def fetch_sssi(request, *, client=None, artifacts=None, diagnostics=None):
                 raise AcquisitionError('invalid_source_geometry_or_identity') from exc
         artifacts['normalized_selection'] = {'type': 'FeatureCollection', 'features': normalized}
         artifacts['normalization_lineage'] = lineage
-        return {'feature_count': len(normalized), 'candidate_count': len(ids),
+        result = {'feature_count': len(normalized), 'candidate_count': len(ids),
                 'selected_object_ids': selected_ids, 'native_feature_ids': native_ids,
                 'selection': 'Full normalized provider features intersecting request polygon; not clipped.',
                 'envelope': envelope, 'completeness': 'complete_provider_selection',
                 'publisher_editing_info': before.get('editingInfo'),
                 'publisher_release_id': None, 'observation_time': None, 'publication_time': None}
+        if scotland:
+            result.update(native_designation_ids=sorted(designation_ids), designation_count=len(designation_ids),
+                          feature_count_semantics='Selected mapped components; distinct PA_CODE count identifies represented SSSI designations.')
+        return result
     finally:
         diagnostics['responses'] = reader.responses
         diagnostics['decoded_bytes_received'] = reader.bytes_received

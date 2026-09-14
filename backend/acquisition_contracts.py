@@ -12,6 +12,12 @@ from shapely.geometry.polygon import orient
 SOURCE_ID = 'natural_england.sssi'
 ADAPTER_VERSION = 'sssi_arcgis_v1'
 FULL_EXTENT_ADAPTER_VERSION = 'sssi_arcgis_v2'
+SCOTLAND_SOURCE_ID = 'naturescot.sssi'
+SCOTLAND_ADAPTER_VERSION = 'naturescot_sssi_arcgis_v1'
+SOURCE_ADAPTERS = {
+    SOURCE_ID: (ADAPTER_VERSION, FULL_EXTENT_ADAPTER_VERSION),
+    SCOTLAND_SOURCE_ID: (SCOTLAND_ADAPTER_VERSION,),
+}
 MAX_AREA_HA = 100_000
 MAX_COORDINATES = 10_000
 MAX_REQUEST_BYTES = 500_000
@@ -97,8 +103,8 @@ class TemporalSelection(Contract):
 
 class AcquisitionRequest(Contract):
     contract_version: Literal['geographic_acquisition_request_v1']
-    source_id: Literal['natural_england.sssi']
-    adapter_version: Literal['sssi_arcgis_v1', 'sssi_arcgis_v2']
+    source_id: Literal['natural_england.sssi', 'naturescot.sssi']
+    adapter_version: Literal['sssi_arcgis_v1', 'sssi_arcgis_v2', 'naturescot_sssi_arcgis_v1']
     coverage_profile_sha256: str = Field(pattern=r'^[0-9a-f]{64}$')
     area: dict
     temporal: TemporalSelection
@@ -106,6 +112,8 @@ class AcquisitionRequest(Contract):
 
     @model_validator(mode='after')
     def valid_geometry(self):
+        if self.adapter_version not in SOURCE_ADAPTERS[self.source_id]:
+            raise ValueError('source_adapter_mismatch')
         if len(encode(self.model_dump())) > MAX_REQUEST_BYTES:
             raise ValueError('request_payload_limit')
         object.__setattr__(self, 'area', validate_area(self.area))

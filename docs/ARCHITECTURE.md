@@ -258,6 +258,18 @@ Adapter/profile versions must match on acquisition and successful readback. Old
 requests never gain coverage implicitly; neither profile proves full marine or
 legal designation coverage. See [coverage v2](GEOGRAPHIC-COVERAGE-V2.md).
 
+NatureScot is registered separately as `naturescot.sssi` /
+`naturescot_sssi_arcgis_v1`, with its own Scottish coverage profile and source
+metadata/terms checks. Requests bind compatible source, adapter and profile
+identities before collection. Scottish `OBJECTID` identifies a publication
+component; `PA_CODE` separately identifies its parent designation. Keep both
+identities and counts in retained evidence rather than imposing England's
+`REF_CODE` meaning. The Scottish ONS BFE profile explicitly pins provider output
+to 10 decimal places in WGS84 degrees, retaining vertices without requesting
+generalization. This numerical serialization policy belongs to that profile
+version and does not change source-feature precision or historical England
+coverage. See [NatureScot acquisition](NATURESCOT-SSSI-ACQUISITION.md).
+
 Migration 9 adds organization-scoped requests and append-only terminal attempts.
 Operational claims use optimistic concurrency, expiring leases and fenced
 publication. Immutable manifests retain exact request/source identities,

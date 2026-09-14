@@ -1,0 +1,572 @@
+{
+  "verification_version": "naturescot_sssi_live_verification_v1",
+  "verified_at": "2026-09-14T22:27:53.757854+00:00",
+  "source_id": "naturescot.sssi",
+  "source_url": "https://services1.arcgis.com/LM9GyVFsughzHdbO/arcgis/rest/services/Sites_of_Special_Scientific_Interest/FeatureServer/0",
+  "publisher_item_url": "https://www.arcgis.com/sharing/rest/content/items/b243da0bc2164849b80f9c8b347edd18",
+  "coverage_profile_sha256": "cc02feae231e635cf0d7f136a79f872451d78bbe3fb49553671833e13e5f2b5e",
+  "coverage_version": "ons_scotland_dec2024_bfe_p10_v1",
+  "captures": [
+    {
+      "independent_designation_ids": [
+        91,
+        547
+      ],
+      "designation_count": 2,
+      "independent_designation_match": true,
+      "verification_version": "geographic_acquisition_live_verification_v1",
+      "verified_at": "2026-09-14T22:27:25.625422+00:00",
+      "acquisition_id": "200f1dbf-a3af-4a34-9bee-affaf8fb6b74",
+      "request": {
+        "contract_version": "geographic_acquisition_request_v1",
+        "source_id": "naturescot.sssi",
+        "adapter_version": "naturescot_sssi_arcgis_v1",
+        "coverage_profile_sha256": "cc02feae231e635cf0d7f136a79f872451d78bbe3fb49553671833e13e5f2b5e",
+        "area": {
+          "coordinates": [
+            [
+              [
+                -3.2,
+                55.93
+              ],
+              [
+                -3.2,
+                55.97
+              ],
+              [
+                -3.14,
+                55.97
+              ],
+              [
+                -3.14,
+                55.93
+              ],
+              [
+                -3.2,
+                55.93
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "temporal": {
+          "mode": "current_publication",
+          "start": null,
+          "end": null
+        },
+        "idempotency_key": "live-2026-09-14-scotland-edinburgh"
+      },
+      "manifest_sha256": "20c3c2ab8bf68b7f46869a162ff05c83df77fc35dbba5bf1a580c66a53e2ae9f",
+      "artifact_checksums": {
+        "assembled_provider_candidates": {
+          "sha256": "2879704a4da4905472a9e1d6bf5b243fc7cfb61ec6362a8c828b0137a5c5a033",
+          "bytes": 102432
+        },
+        "normalization_lineage": {
+          "sha256": "582b0f675b6dd64f02f9398f4e6b7363e660fc976dfa37a7a2948d5549e9c980",
+          "bytes": 472
+        },
+        "normalized_selection": {
+          "sha256": "2879704a4da4905472a9e1d6bf5b243fc7cfb61ec6362a8c828b0137a5c5a033",
+          "bytes": 102432
+        },
+        "provider_item_after": {
+          "sha256": "668403437115f6453a6f7a5224704bd1138a59374b4366fdf8a4649449e03caa",
+          "bytes": 3610
+        },
+        "provider_item_before": {
+          "sha256": "668403437115f6453a6f7a5224704bd1138a59374b4366fdf8a4649449e03caa",
+          "bytes": 3610
+        },
+        "provider_metadata_after": {
+          "sha256": "7de15a1e7d3455a43d1968b24c424ec9a21ad015ed2534a26406183325091e62",
+          "bytes": 11353
+        },
+        "provider_metadata_before": {
+          "sha256": "7de15a1e7d3455a43d1968b24c424ec9a21ad015ed2534a26406183325091e62",
+          "bytes": 11353
+        }
+      },
+      "capture_started": "2026-09-14T22:27:14.606078+00:00",
+      "capture_completed": "2026-09-14T22:27:19.400910+00:00",
+      "feature_count": 4,
+      "native_feature_ids": [
+        8794,
+        8795,
+        8796,
+        12169
+      ],
+      "independent_object_ids": [
+        8794,
+        8795,
+        8796,
+        12169
+      ],
+      "independent_selection_match": true,
+      "publisher_editing_info": {
+        "lastEditDate": 1789123163237,
+        "schemaLastEditDate": 1789123163237,
+        "dataLastEditDate": 1788448810371
+      },
+      "independent_method": "New live ArcGIS polygon-intersection ID query; adapter uses envelope candidates plus local polygon selection.",
+      "independent_responses": [
+        {
+          "endpoint": "https://services1.arcgis.com/LM9GyVFsughzHdbO/arcgis/rest/services/Sites_of_Special_Scientific_Interest/FeatureServer/0",
+          "parameters": {
+            "f": "json"
+          },
+          "decoded_response_sha256": "9ab5ab533e16b0186fecc96fa0aa9ba2d4c3149e0efed80c7c4af56602d7e80a",
+          "decoded_bytes": 11517
+        },
+        {
+          "endpoint": "https://services1.arcgis.com/LM9GyVFsughzHdbO/arcgis/rest/services/Sites_of_Special_Scientific_Interest/FeatureServer/0/query",
+          "parameters": {
+            "f": "json",
+            "where": "1=1",
+            "geometry": "{\"rings\": [[[-3.2, 55.93], [-3.2, 55.97], [-3.14, 55.97], [-3.14, 55.93], [-3.2, 55.93]]], \"spatialReference\": {\"wkid\": 4326}}",
+            "geometryType": "esriGeometryPolygon",
+            "inSR": "4326",
+            "spatialRel": "esriSpatialRelIntersects",
+            "returnIdsOnly": "true"
+          },
+          "decoded_response_sha256": "51279bb3f54fecc70e88198120a50a1e4eceb4148bcd234b24c777e7c2e92ef1",
+          "decoded_bytes": 67
+        },
+        {
+          "endpoint": "https://services1.arcgis.com/LM9GyVFsughzHdbO/arcgis/rest/services/Sites_of_Special_Scientific_Interest/FeatureServer/0/query",
+          "parameters": {
+            "f": "json",
+            "where": "1=1",
+            "geometry": "{\"rings\": [[[-3.2, 55.93], [-3.2, 55.97], [-3.14, 55.97], [-3.14, 55.93], [-3.2, 55.93]]], \"spatialReference\": {\"wkid\": 4326}}",
+            "geometryType": "esriGeometryPolygon",
+            "inSR": "4326",
+            "spatialRel": "esriSpatialRelIntersects",
+            "returnGeometry": "false",
+            "outFields": "OBJECTID,PA_CODE,TYPE,STATUS,UPDATED"
+          },
+          "decoded_response_sha256": "b8fa3978b7e571e3e612046d67a87826445f06e26f10ecd344d0d19d5286badb",
+          "decoded_bytes": 1299
+        },
+        {
+          "endpoint": "https://services1.arcgis.com/LM9GyVFsughzHdbO/arcgis/rest/services/Sites_of_Special_Scientific_Interest/FeatureServer/0",
+          "parameters": {
+            "f": "json"
+          },
+          "decoded_response_sha256": "9ab5ab533e16b0186fecc96fa0aa9ba2d4c3149e0efed80c7c4af56602d7e80a",
+          "decoded_bytes": 11517
+        }
+      ],
+      "limits": "Current service comparison, not ecological/scientific validation; no atomic provider snapshot."
+    },
+    {
+      "independent_designation_ids": [
+        827,
+        1315
+      ],
+      "designation_count": 2,
+      "independent_designation_match": true,
+      "verification_version": "geographic_acquisition_live_verification_v1",
+      "verified_at": "2026-09-14T22:27:36.072793+00:00",
+      "acquisition_id": "6f63e1aa-55d3-4e0d-8412-621c0ad4e316",
+      "request": {
+        "contract_version": "geographic_acquisition_request_v1",
+        "source_id": "naturescot.sssi",
+        "adapter_version": "naturescot_sssi_arcgis_v1",
+        "coverage_profile_sha256": "cc02feae231e635cf0d7f136a79f872451d78bbe3fb49553671833e13e5f2b5e",
+        "area": {
+          "coordinates": [
+            [
+              [
+                -0.827,
+                60.767
+              ],
+              [
+                -0.827,
+                60.771
+              ],
+              [
+                -0.818,
+                60.771
+              ],
+              [
+                -0.818,
+                60.767
+              ],
+              [
+                -0.827,
+                60.767
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "temporal": {
+          "mode": "current_publication",
+          "start": null,
+          "end": null
+        },
+        "idempotency_key": "live-2026-09-14-scotland-unst-keen-of-hamar"
+      },
+      "manifest_sha256": "6e09cb537a4d2b8710418544c2945034bbb633ad4bb9aaaacb7f55f19f260a21",
+      "artifact_checksums": {
+        "assembled_provider_candidates": {
+          "sha256": "40d7369ae340cc330c5edc46c3551cca92cca0f16b6041482fda2bfa81f0a4ae",
+          "bytes": 52833
+        },
+        "normalization_lineage": {
+          "sha256": "83e3d37eba09564186e3cd46e2096f092ece3b00e3eef269c3352a6d7eee11b2",
+          "bytes": 238
+        },
+        "normalized_selection": {
+          "sha256": "40d7369ae340cc330c5edc46c3551cca92cca0f16b6041482fda2bfa81f0a4ae",
+          "bytes": 52833
+        },
+        "provider_item_after": {
+          "sha256": "668403437115f6453a6f7a5224704bd1138a59374b4366fdf8a4649449e03caa",
+          "bytes": 3610
+        },
+        "provider_item_before": {
+          "sha256": "668403437115f6453a6f7a5224704bd1138a59374b4366fdf8a4649449e03caa",
+          "bytes": 3610
+        },
+        "provider_metadata_after": {
+          "sha256": "7de15a1e7d3455a43d1968b24c424ec9a21ad015ed2534a26406183325091e62",
+          "bytes": 11353
+        },
+        "provider_metadata_before": {
+          "sha256": "7de15a1e7d3455a43d1968b24c424ec9a21ad015ed2534a26406183325091e62",
+          "bytes": 11353
+        }
+      },
+      "capture_started": "2026-09-14T22:27:25.631340+00:00",
+      "capture_completed": "2026-09-14T22:27:29.966063+00:00",
+      "feature_count": 2,
+      "native_feature_ids": [
+        2451,
+        8604
+      ],
+      "independent_object_ids": [
+        2451,
+        8604
+      ],
+      "independent_selection_match": true,
+      "publisher_editing_info": {
+        "lastEditDate": 1789123163237,
+        "schemaLastEditDate": 1789123163237,
+        "dataLastEditDate": 1788448810371
+      },
+      "independent_method": "New live ArcGIS polygon-intersection ID query; adapter uses envelope candidates plus local polygon selection.",
+      "independent_responses": [
+        {
+          "endpoint": "https://services1.arcgis.com/LM9GyVFsughzHdbO/arcgis/rest/services/Sites_of_Special_Scientific_Interest/FeatureServer/0",
+          "parameters": {
+            "f": "json"
+          },
+          "decoded_response_sha256": "9ab5ab533e16b0186fecc96fa0aa9ba2d4c3149e0efed80c7c4af56602d7e80a",
+          "decoded_bytes": 11517
+        },
+        {
+          "endpoint": "https://services1.arcgis.com/LM9GyVFsughzHdbO/arcgis/rest/services/Sites_of_Special_Scientific_Interest/FeatureServer/0/query",
+          "parameters": {
+            "f": "json",
+            "where": "1=1",
+            "geometry": "{\"rings\": [[[-0.827, 60.767], [-0.827, 60.771], [-0.818, 60.771], [-0.818, 60.767], [-0.827, 60.767]]], \"spatialReference\": {\"wkid\": 4326}}",
+            "geometryType": "esriGeometryPolygon",
+            "inSR": "4326",
+            "spatialRel": "esriSpatialRelIntersects",
+            "returnIdsOnly": "true"
+          },
+          "decoded_response_sha256": "a6d608260bec98f1ad7ac27cc8f7c882bd348dc796bf561016d1d489927209d3",
+          "decoded_bytes": 56
+        },
+        {
+          "endpoint": "https://services1.arcgis.com/LM9GyVFsughzHdbO/arcgis/rest/services/Sites_of_Special_Scientific_Interest/FeatureServer/0/query",
+          "parameters": {
+            "f": "json",
+            "where": "1=1",
+            "geometry": "{\"rings\": [[[-0.827, 60.767], [-0.827, 60.771], [-0.818, 60.771], [-0.818, 60.767], [-0.827, 60.767]]], \"spatialReference\": {\"wkid\": 4326}}",
+            "geometryType": "esriGeometryPolygon",
+            "inSR": "4326",
+            "spatialRel": "esriSpatialRelIntersects",
+            "returnGeometry": "false",
+            "outFields": "OBJECTID,PA_CODE,TYPE,STATUS,UPDATED"
+          },
+          "decoded_response_sha256": "d03356167aaff2c24b125d565eb51535d01a2991bee3f69aa732ee8312c77285",
+          "decoded_bytes": 1097
+        },
+        {
+          "endpoint": "https://services1.arcgis.com/LM9GyVFsughzHdbO/arcgis/rest/services/Sites_of_Special_Scientific_Interest/FeatureServer/0",
+          "parameters": {
+            "f": "json"
+          },
+          "decoded_response_sha256": "9ab5ab533e16b0186fecc96fa0aa9ba2d4c3149e0efed80c7c4af56602d7e80a",
+          "decoded_bytes": 11517
+        }
+      ],
+      "limits": "Current service comparison, not ecological/scientific validation; no atomic provider snapshot."
+    }
+  ],
+  "coverage_checks": [
+    {
+      "label": "england",
+      "area": {
+        "coordinates": [
+          [
+            [
+              -1.3,
+              51.7
+            ],
+            [
+              -1.3,
+              51.8
+            ],
+            [
+              -1.2,
+              51.8
+            ],
+            [
+              -1.2,
+              51.7
+            ],
+            [
+              -1.3,
+              51.7
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "state": "unsupported_geography"
+    },
+    {
+      "label": "wales",
+      "area": {
+        "coordinates": [
+          [
+            [
+              -3.2,
+              51.5
+            ],
+            [
+              -3.2,
+              51.51
+            ],
+            [
+              -3.19,
+              51.51
+            ],
+            [
+              -3.19,
+              51.5
+            ],
+            [
+              -3.2,
+              51.5
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "state": "unsupported_geography"
+    },
+    {
+      "label": "northern-ireland",
+      "area": {
+        "coordinates": [
+          [
+            [
+              -5.94,
+              54.59
+            ],
+            [
+              -5.94,
+              54.591
+            ],
+            [
+              -5.939,
+              54.591
+            ],
+            [
+              -5.939,
+              54.59
+            ],
+            [
+              -5.94,
+              54.59
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "state": "unsupported_geography"
+    },
+    {
+      "label": "england-scotland-border",
+      "area": {
+        "coordinates": [
+          [
+            [
+              -2.4,
+              55.6
+            ],
+            [
+              -2.4,
+              55.8
+            ],
+            [
+              -2.1,
+              55.8
+            ],
+            [
+              -2.1,
+              55.6
+            ],
+            [
+              -2.4,
+              55.6
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "state": "unsupported_geography"
+    },
+    {
+      "label": "rockall-offshore",
+      "area": {
+        "coordinates": [
+          [
+            [
+              -13.688,
+              57.595
+            ],
+            [
+              -13.688,
+              57.596
+            ],
+            [
+              -13.687,
+              57.596
+            ],
+            [
+              -13.687,
+              57.595
+            ],
+            [
+              -13.688,
+              57.595
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "state": "unsupported_geography"
+    }
+  ],
+  "previous_english_records": [
+    {
+      "label": "oxford",
+      "acquisition_id": "479183bb-923c-4f8d-b7db-75b424d016b8",
+      "manifest_sha256": "dbb02b4e051d36e5e953375792ca42be37010b82278152f0c6388c39130bebab",
+      "summary_unchanged": true
+    },
+    {
+      "label": "norfolk",
+      "acquisition_id": "e3221ce9-9b1c-4598-90d6-e7983c694ff4",
+      "manifest_sha256": "ccc50b567464ebe9c7dde590c6ba2a8f80d96d7950c68fbb0057e6f56bfd37bc",
+      "summary_unchanged": true
+    },
+    {
+      "label": "norfolk-broads",
+      "acquisition_id": "fa940c13-4bf7-4902-954f-abb9be4cdece",
+      "manifest_sha256": "16cf6e285142d842bf00809399e4bd864420bbac52bf2cb74a74ada4a709cc16",
+      "summary_unchanged": true
+    },
+    {
+      "label": "broads-v2",
+      "acquisition_id": "d43d57ee-f4c8-4bce-ab25-c37307404c47",
+      "manifest_sha256": "5d1062def9f4e92310466ad14e4c03d30d7c3c5928d867e541baeba10b8b208b",
+      "summary_unchanged": true
+    }
+  ],
+  "isolated_legacy_table_counts": {
+    "sites": 0,
+    "assessments": 0,
+    "datasets": 0,
+    "features": 0,
+    "land_evidence_snapshots": 0,
+    "module_runs": 0
+  },
+  "limitations": [
+    "Two bounded mainland/northern-island captures, not full national or marine certification.",
+    "Feature counts represent components; PA_CODE counts represent distinct designations.",
+    "No raw features, country geometry or database committed."
+  ],
+  "coverage_profile_verification": {
+    "country_code": "S92000003",
+    "geometry_type": "MultiPolygon",
+    "polygon_count": 2699,
+    "coordinate_count": 3791978,
+    "bounds": [
+      -8.6499958333,
+      54.6332196093,
+      -0.7244500496,
+      60.8608667553
+    ],
+    "valid_geometry": true,
+    "requested_precision_decimal_degrees": 10,
+    "returned_precision_match": true,
+    "response_provenance": [
+      {
+        "decoded_bytes": 9771,
+        "decoded_response_sha256": "cc0a1d66800b9d0361a6d423ba2ddf3e0ad4179f688564ce29c851c6e3f90596",
+        "endpoint": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Countries_December_2024_Boundaries_UK_BFE/FeatureServer/0",
+        "parameters": {
+          "f": "json"
+        }
+      },
+      {
+        "decoded_bytes": 4785,
+        "decoded_response_sha256": "e752b76402fd90dec05ae53f7a07b30beb9fdc298e320a2cc1e07a1b89560bc6",
+        "endpoint": "https://www.arcgis.com/sharing/rest/content/items/2d18d8d4d0b341dfbddebd39d66dbe79",
+        "parameters": {
+          "f": "json"
+        }
+      },
+      {
+        "decoded_bytes": 112928261,
+        "decoded_response_sha256": "68ed81896fab3242a0d6961ccabe209e0bf7237a82c596baeacfce1b3d418f20",
+        "endpoint": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Countries_December_2024_Boundaries_UK_BFE/FeatureServer/0/query",
+        "parameters": {
+          "f": "geojson",
+          "geometryPrecision": 10,
+          "outFields": "*",
+          "outSR": "4326",
+          "returnGeometry": "true",
+          "where": "CTRY24CD='S92000003'"
+        }
+      },
+      {
+        "decoded_bytes": 9771,
+        "decoded_response_sha256": "cc0a1d66800b9d0361a6d423ba2ddf3e0ad4179f688564ce29c851c6e3f90596",
+        "endpoint": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Countries_December_2024_Boundaries_UK_BFE/FeatureServer/0",
+        "parameters": {
+          "f": "json"
+        }
+      }
+    ]
+  },
+  "cross_border_sample_intersects_both_national_profiles": true,
+  "fresh_process_checks": [
+    {
+      "label": "edinburgh",
+      "summary_unchanged": true,
+      "offline_retry_unchanged": true
+    },
+    {
+      "label": "unst-keen-of-hamar",
+      "summary_unchanged": true,
+      "offline_retry_unchanged": true
+    }
+  ]
+}

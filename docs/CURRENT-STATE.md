@@ -18,6 +18,8 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 
 - Acquire the current Natural England SSSI publication independently for an explicit supported area through a typed service/operator CLI. Shared geometry accepts all four UK nations; this first source offers explicitly versioned England coverage: historical BFC/high-water v1 and BFE/extent-of-realm v2. Organization-scoped immutable attempts, safe integrity reads, retries and live Oxford/western Norfolk verification are implemented. See [geographic acquisition](GEOGRAPHIC-EVIDENCE-ACQUISITION.md).
 
+- Acquire NatureScot's current Scottish SSSI publication through the same independent service, with a separately pinned Scottish footprint, publisher identity/terms checks and native component/designation identities. Source adapters and national coverage profiles cannot be interchanged. See [NatureScot acquisition](NATURESCOT-SSSI-ACQUISITION.md).
+
 - Create sites from a drawn or uploaded Polygon/MultiPolygon in a contextual editor over the persistent operating map; validate, version and preserve boundary history.
 - Submit deterministic assessments with pinned dataset/model configuration, deduplication, worker leases/retries/fencing and immutable saved results.
 - Inspect portfolio sites in map-first or list mode; open the Site Analysis Workspace across Overview, Evidence, Models and History. Screening Context is the default Overview and the wetland assessment is a secondary Terrene Reasoning module.
@@ -46,6 +48,7 @@ Connected sources include:
 - ESA WorldCover 2021 v200: mapped land-cover distribution and derived mapped fractions.
 - Environment Agency Flood Map for Planning Zones 2/3 within a bounded Oxford corridor.
 - Natural England SSSI, legacy Ancient Woodland and revised Ancient Woodland inventories.
+- NatureScot SSSI: independent geographic captures only, with separate mapped-component and designation counts; not bound into legacy assessments or map scenes.
 - Natural England Priority Habitats Inventory: source-feature relationships and habitat-specific/union mapped overlap.
 - OS OpenMap – Local release `2026-04`: bounded built-world objects and relationships.
 
@@ -215,7 +218,7 @@ produced no new browser warnings or errors.
 ## Known limitations
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
-- Most legacy acquisition is bounded to the Oxford pilot; flood coverage is narrower. Independent SSSI acquisition supports bounded areas wholly inside a pinned England footprint. BFE v2 resolves the verified Broads tidal exclusion; historical BFC v1 retains its original limits. Neither profile establishes complete marine or legal designation coverage. National publisher coverage and customer-facing acquisition remain incomplete. Source-specific mapped absence never proves real-world absence.
+- Most legacy acquisition is bounded to the Oxford pilot; flood coverage is narrower. Independent SSSI acquisition supports bounded areas wholly inside the selected publisher's pinned England or Scotland footprint. England BFE v2 resolves the verified Broads tidal exclusion; historical BFC v1 retains its original limits. No profile establishes complete marine or legal designation coverage. Wales, Northern Ireland, cross-border composition and customer-facing acquisition remain incomplete. Source-specific mapped absence never proves real-world absence.
 - The wetland model is unvalidated and cannot yet rank the retained real locations defensibly.
 - Hosted Supabase/Render/R2 credentials and end-to-end tenant acceptance have not been configured or verified; the reserved Sites frontend is not a deployed product.
 - Team review status is not yet an immutable historical Decision record.
@@ -227,32 +230,33 @@ produced no new browser warnings or errors.
 
 ## Latest meaningful implementation
 
-The England SSSI adapter now offers explicit `sssi_arcgis_v2` coverage using a
-pinned ONS December 2024 BFE extent-of-realm polygon. The previously rejected
-Broads request succeeds with two SSSI features matching an independent live
-provider query. V1 retains its high-water clipping behavior, and the saved Oxford,
-western Norfolk and original Broads rejection records remain byte-identical at
-the manifest level and identical on summary readback. Profile/adapter mismatches
-fail before SSSI collection. Existing CLI defaults remain v1; adopting v2 requires
-an explicit version, profile hash and new idempotency key.
+NatureScot SSSI is connected as `naturescot.sssi` /
+`naturescot_sssi_arcgis_v1`, using the separately pinned
+`ons_scotland_dec2024_bfe_p10_v1` coverage profile. Scottish requests cannot reuse
+England profiles. The adapter preserves mapped-component `OBJECTID` values and
+distinct designation `PA_CODE` values, with current status, interest class,
+nullable provider update values and before/after publisher identity/terms checks.
+Repeated large boundary transfers were truncated; the new Scottish profile
+explicitly requests and validates 10 decimal places in WGS84 degrees without
+requesting vertex generalization. England v1/v2 geometry and defaults are unchanged.
 
-The combined acquisition suites passed 62 tests on SQLite and PostgreSQL/PostGIS;
-35 legacy assessment/reasoning tests passed on SQLite. Real coverage checks
-support Oxford, the Broads and a St Mary's island interior sample while rejecting
-the tested other-nation, cross-border and offshore areas. A separate Scilly
-coastal sample remains outside the operational footprint. Fresh-process v2
-readback matches. See [coverage v2](GEOGRAPHIC-COVERAGE-V2.md) and its
-[verification record](verification/geographic-coverage-v2-2026-09-14.json).
+Live Edinburgh verification retained four components across two designations;
+an Unst sample retained two components across two designations. Both match fresh
+provider polygon queries on component and designation IDs. Tested other-nation,
+cross-border and offshore requests fail explicitly. All four earlier England
+acquisition summaries and manifest identities remain unchanged. The combined
+acquisition suites pass 91 tests on each of SQLite and PostgreSQL/PostGIS;
+35 legacy assessment/reasoning tests passed on SQLite. See
+[NatureScot acquisition](NATURESCOT-SSSI-ACQUISITION.md) and its
+[verification record](verification/naturescot-sssi-2026-09-14.json).
 
 ## Current recommended engineering question
 
-Which official national designation adapter should be connected and independently
-verified next, with its own source identity and versioned coverage policy?
-
-Proceed with one additional national publisher, then continue sequentially across
-Scotland, Wales and Northern Ireland. Preserve native SSSI/ASSI meanings and
-cross-border gaps. The approved [UK expansion sequence](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md)
-remains the near-term priority. England coverage profiles do not establish another
-nation's support. Authenticated acquisition/evidence assembly and map access are
-later separate tasks; imagery and historical weather follow UK coverage work.
-The initial commercial market remains undecided and unvalidated.
+Connect and independently verify the official Welsh designation publisher next,
+then Northern Ireland in a separate iteration. Preserve native SSSI/ASSI meanings,
+national coverage boundaries, islands and cross-border gaps. The approved
+[UK expansion sequence](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md) remains the near-term
+priority. Neither England nor Scotland profiles establish another nation's
+support. Authenticated acquisition/evidence assembly and map access are later
+separate tasks; imagery and historical weather follow UK coverage work. The
+initial commercial market remains undecided and unvalidated.

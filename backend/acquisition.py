@@ -16,7 +16,7 @@ from sqlalchemy import insert, select, update
 from sqlalchemy.exc import IntegrityError
 
 from backend import core
-from backend.acquisition_contracts import AcquisitionError, AcquisitionRequest, digest, encode, MAX_REQUEST_BYTES
+from backend.acquisition_contracts import AcquisitionError, AcquisitionRequest, digest, encode, MAX_REQUEST_BYTES, SCOTLAND_ADAPTER_VERSION
 from backend.acquisition_sources import (
     ADAPTER_COVERAGE, source_descriptor, fetch_sssi, prepare_coverage, validate_capabilities, load_coverage,
 )
@@ -157,7 +157,7 @@ def acquire(org: str, request: AcquisitionRequest | dict, *, client=None) -> dic
         'started': claim['started'], 'completed': completed, 'state': state, 'error_code': error_code,
         'source': source_descriptor(request.adapter_version), 'result': result, 'diagnostics': diagnostics,
         'processing': {'shapely': shapely.__version__, 'pyproj': pyproj.__version__,
-                       'normalization_version': 'sssi_polygon_selection_v1',
+                       'normalization_version': source_descriptor(request.adapter_version).get('normalization_version', 'sssi_polygon_selection_v1'),
                        'area_method': 'WGS84 ellipsoid geodesic area',
                        'artifact_hash_semantics': 'Canonical assembled JSON; response hashes are decoded HTTP bytes.'},
         'artifacts': {},
@@ -231,6 +231,8 @@ def read_acquisition(org: str, acquisition_id: str, *, attempt_id: str | None = 
         if attempt['state'] == 'succeeded':
             required = {'provider_metadata_before', 'provider_metadata_after', 'assembled_provider_candidates',
                         'normalized_selection', 'normalization_lineage'}
+            if request.adapter_version == SCOTLAND_ADAPTER_VERSION:
+                required |= {'provider_item_before', 'provider_item_after'}
             if set(references) != required or manifest['result'] is None or attempt['error_code'] is not None:
                 raise AcquisitionError('integrity_failure')
             load_coverage(request.coverage_profile_sha256,

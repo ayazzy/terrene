@@ -342,3 +342,24 @@ separate next iterations.
 
 **References:** [Coverage v2 implementation and verification](GEOGRAPHIC-COVERAGE-V2.md),
 [ONS boundary definitions](https://www.ons.gov.uk/methodology/geography/geographicalproducts/digitalboundaries).
+
+## 2026-09-14 — Keep Scottish designation and component identities distinct
+
+**Decision:** Add NatureScot SSSI as a separate registered publisher/adapter with
+an explicitly pinned Scottish ONS BFE coverage profile. Preserve native
+`OBJECTID` component identities and `PA_CODE` designation identities separately;
+multiple components may represent one designation. Retain interest class,
+current status and nullable provider update values without turning them into
+observations, ecological condition or a publication date. Verify publisher item
+identity and terms before and after each capture.
+
+**Coverage:** The Scottish profile requests and checks 10 decimal places in
+provider WGS84 coordinates. This bounds output serialization while retaining
+vertices; no geometry generalization, buffering, clipping or repair is requested
+for coverage. Keep that precision policy in the new profile identity and retain
+the exact response hashes. England v1/v2 and their defaults remain unchanged.
+Whole-area coverage is operational and does not establish complete marine or
+legal designation extent. Wales, Northern Ireland and cross-border composition
+remain separate work.
+
+**References:** [NatureScot implementation and verification](NATURESCOT-SSSI-ACQUISITION.md).
