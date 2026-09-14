@@ -180,3 +180,11 @@ selection remain canonical and restorable. Source assertions and Terrene
 conclusions remain visibly and navigably separate.
 
 **References:** [Sprint 004](SPRINT-004-INFRASTRUCTURE-OPERATING-PICTURE.md), [Sprint 004 Task 4](SPRINT-004-TASK-4-ENTITY-DOSSIERS.md), [Architecture](ARCHITECTURE.md).
+
+## 2026-09-14 — Building height is versioned object evidence, not an object attribute
+
+**Decision:** Add `BuildingHeightObservation` in `land_evidence_registry_v4` and link each observation or explicit gap to one immutable `MappedBuildingObject`. Derive the estimate only from exact co-registered Environment Agency 1 m DSM/DTM responses using the pinned `crc_ea_lidar_building_height_v1` method. Keep the mapped building record unchanged and keep height evidence outside the historical wetland input.
+
+**Rationale:** A building identity comes from the declared OpenMap Local release, while DSM-derived surface height has separate source dates, artifacts, coverage, processing and uncertainty. Placing height directly on the object would conceal that independent lineage and encourage a later source or method to rewrite historical object state. A dedicated observation preserves multiple future measurements without introducing a general graph database or treating a historical composite as a current survey.
+
+**References:** [EA LIDAR building heights](EA-LIDAR-BUILDING-HEIGHTS.md), [OpenMap Local built world](OPENMAP-LOCAL-BUILT-WORLD.md), [Architecture](ARCHITECTURE.md).

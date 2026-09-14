@@ -1,0 +1,102 @@
+{
+  "verification_date": "2026-09-14",
+  "site": "Oxford railway station sample",
+  "source_record": "data/verification/england-real-openmap-local-2026-04/oxford-station-after.json",
+  "processing_version": "crc_ea_lidar_building_height_v1",
+  "status": "available",
+  "requested_bounds_27700": [450425, 206267, 450650, 206500],
+  "survey_metadata": {
+    "composite_product_year": 2022,
+    "constituent_survey_period_start": 2000,
+    "constituent_survey_period_end": 2022,
+    "local_survey_date": null,
+    "vertical_datum": "Ordnance Datum Newlyn",
+    "source_resolution_m": 1,
+    "surface_semantics": "Last-return composite digital surface model including buildings, vegetation, vehicles and terrain."
+  },
+  "artifacts": [
+    {
+      "role": "dtm_describe_coverage",
+      "sha256": "9f97049361979d188051bea7647039151cb74dcb68753b67be3d892c091de958",
+      "request_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs?service=WCS&version=2.0.1&request=DescribeCoverage&coverageId=13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m"
+    },
+    {
+      "role": "dtm_raster",
+      "sha256": "f6bd81ab3d068fd5d50dd5d570015fe3311da7b1ad9686214cde18d5398b2b72",
+      "request_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs?service=WCS&version=2.0.1&request=GetCoverage&coverageId=13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m&format=image%2Ftiff&subset=E%28450425%2C450650%29&subset=N%28206267%2C206500%29"
+    },
+    {
+      "role": "dsm_describe_coverage",
+      "sha256": "ba03668c211a5cf776556b8d9df67d944bbb6589bab79fd613162c6113394bca",
+      "request_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-surface-model-last-return-dsm-1m/wcs?service=WCS&version=2.0.1&request=DescribeCoverage&coverageId=9ba4d5ac-d596-445a-9056-dae3ddec0178__Lidar_Composite_Elevation_LZ_DSM_1m"
+    },
+    {
+      "role": "dsm_raster",
+      "sha256": "c7101a592d3bee7c6f8d0c3d3f4e4398bfc3da7623dd8654aec224b6ea0ba560",
+      "request_url": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-surface-model-last-return-dsm-1m/wcs?service=WCS&version=2.0.1&request=GetCoverage&coverageId=9ba4d5ac-d596-445a-9056-dae3ddec0178__Lidar_Composite_Elevation_LZ_DSM_1m&format=image%2Ftiff&subset=E%28450425%2C450650%29&subset=N%28206267%2C206500%29"
+    }
+  ],
+  "results": [
+    {
+      "source_object_key": "building:0C95A769-1D62-499A-96F6-CC222F0466C3",
+      "state": "available",
+      "p50_height_m": 7.395505905151367,
+      "p90_height_m": 8.311004638671875,
+      "extrusion_height_m": 8.311004638671875,
+      "candidate_cell_count": 246,
+      "valid_cell_count": 246,
+      "sample_count": 238,
+      "coverage_fraction": 1.0,
+      "median_absolute_deviation_m": 0.6269989013671875
+    },
+    {
+      "source_object_key": "building:43E962F9-52D4-4339-95A1-B8D7B2686698",
+      "state": "available",
+      "p50_height_m": 7.807500839233398,
+      "p90_height_m": 9.844306564331054,
+      "extrusion_height_m": 9.844306564331054,
+      "candidate_cell_count": 267,
+      "valid_cell_count": 266,
+      "sample_count": 248,
+      "coverage_fraction": 0.9962546816479401,
+      "median_absolute_deviation_m": 0.7644996643066406
+    },
+    {
+      "source_object_key": "building:5B10B0DE-9B4A-403D-B3A7-ED2C541A0E65",
+      "state": "available",
+      "p50_height_m": 2.74200439453125,
+      "p90_height_m": 2.9220027923583984,
+      "extrusion_height_m": 2.9220027923583984,
+      "candidate_cell_count": 166,
+      "valid_cell_count": 163,
+      "sample_count": 126,
+      "coverage_fraction": 0.9819277108433735,
+      "median_absolute_deviation_m": 0.2030029296875
+    },
+    {
+      "source_object_key": "building:699B96CB-11EF-48B9-9942-45E8BD72460A",
+      "state": "available",
+      "p50_height_m": 4.9940032958984375,
+      "p90_height_m": 8.572006225585938,
+      "extrusion_height_m": 8.572006225585938,
+      "candidate_cell_count": 4938,
+      "valid_cell_count": 4916,
+      "sample_count": 4701,
+      "coverage_fraction": 0.9955447549615228,
+      "median_absolute_deviation_m": 0.9200000762939453
+    },
+    {
+      "source_object_key": "building:9C9F54DA-BA7F-487D-92EF-D422F4380AB0",
+      "state": "available",
+      "p50_height_m": 8.952003479003906,
+      "p90_height_m": 15.893474578857422,
+      "extrusion_height_m": 15.893474578857422,
+      "candidate_cell_count": 7959,
+      "valid_cell_count": 7832,
+      "sample_count": 7823,
+      "coverage_fraction": 0.9840432215102399,
+      "median_absolute_deviation_m": 3.2329940795898438
+    }
+  ],
+  "qualification": "These are historical composite surface-height estimates, not current surveyed building heights. Raw WCS bytes were used for verification but are not committed. Production assessment acquisition retains them in private object storage."
+}

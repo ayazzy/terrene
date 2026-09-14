@@ -37,6 +37,7 @@ Implementation reports: [snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENC
 Connected sources include:
 
 - Environment Agency LIDAR Composite DTM 1m: elevation and slope summaries.
+- Paired Environment Agency LIDAR Composite DSM/DTM 1m: object-linked historical surface-height estimates for retained mapped buildings, with exact WCS provenance and explicit per-building gaps.
 - OS Open Rivers: watercourse intersection, proximity and distance.
 - ESA WorldCover 2021 v200: mapped land-cover distribution and derived mapped fractions.
 - Environment Agency Flood Map for Planning Zones 2/3 within a bounded Oxford corridor.
@@ -44,11 +45,11 @@ Connected sources include:
 - Natural England Priority Habitats Inventory: source-feature relationships and habitat-specific/union mapped overlap.
 - OS OpenMap – Local release `2026-04`: bounded built-world objects and relationships.
 
-Environment Agency Working with Natural Processes floodplain-reconnection data is retained only as an independent verification benchmark, not a model input. Source coverage, licences, embedded terms and limits are detailed in [Data](DATA.md), [Priority Habitats](PRIORITY-HABITATS-EVIDENCE.md) and [OpenMap Local built world](OPENMAP-LOCAL-BUILT-WORLD.md).
+Environment Agency Working with Natural Processes floodplain-reconnection data is retained only as an independent verification benchmark, not a model input. Source coverage, licences, embedded terms and limits are detailed in [Data](DATA.md), [Priority Habitats](PRIORITY-HABITATS-EVIDENCE.md), [OpenMap Local built world](OPENMAP-LOCAL-BUILT-WORLD.md) and [EA LIDAR building heights](EA-LIDAR-BUILDING-HEIGHTS.md).
 
 ## Terrene Earth today
 
-`land_evidence_v1` registry v3 represents reusable observations, gaps, capabilities, definitions, source/raw references and lineage for immutable parcel boundaries. It also represents these built-world objects:
+`land_evidence_v1` registry v4 represents reusable observations, gaps, capabilities, definitions, source/raw references and lineage for immutable parcel boundaries. Registry v3 introduced these built-world objects:
 
 - `MappedBuildingObject`
 - `FunctionalSiteObject`
@@ -56,6 +57,8 @@ Environment Agency Working with Natural Processes floodplain-reconnection data i
 - `RailwayStationObject`
 
 `ParcelObjectRelationship` records explicit topology such as `contained_within`, `overlaps`, `touches`, `crosses`, `intersects` and `minimum_distance`, with source and processing provenance. Derived observations include mapped building and functional-site overlap, mapped railway length within a parcel, and minimum track/station distance when search coverage is complete.
+
+Registry v4 adds `BuildingHeightObservation` without mutating `MappedBuildingObject`. Each height is the full-precision P90 of a boundary-buffered, median/MAD-filtered native 1 m `DSM − DTM` sample, linked to exact retained DSM/DTM artifacts. Missing or unsafe evidence is an object-linked gap and never a default extrusion. Registries v1–v3 remain supported byte-for-byte.
 
 `project_evidence_v1` is a separate Terrene Earth contract for attributed project assertions. It retains exact source versions, excerpts and locators; publication, recording and effective/target dates; a bounded planning/construction/grid-target vocabulary; explicit correction lineage; and an optional pin to one committed land Evidence Snapshot. Contradictory claims coexist and no claim is promoted to a Terrene conclusion.
 
