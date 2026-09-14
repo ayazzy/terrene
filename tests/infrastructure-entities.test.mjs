@@ -132,3 +132,18 @@ test('one primary map owns Sites, linked projects, unlocated roster and evidence
   assert.match(map, /environment:/);
   assert.match(map, /built:/);
 });
+
+test('clicking a rendered Site opens its dossier instead of only selecting its outline', async () => {
+  const page = await readFile(
+    new URL('../app/page.tsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(
+    page,
+    /onSelectEntity=\{\(selection\) => \{[\s\S]*?openInfrastructureEntity\(entity\);[\s\S]*?\}\}/,
+  );
+  assert.doesNotMatch(
+    page,
+    /if \(view === 'workspace'\)[\s\S]*?operatingPicture\.selectEntity\(selection, 'map'\)/,
+  );
+});

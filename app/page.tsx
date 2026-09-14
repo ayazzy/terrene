@@ -805,9 +805,7 @@ export default function Home() {
                     item.kind === selection.kind && item.id === selection.id,
                 );
                 if (!entity) return;
-                if (view === 'workspace')
-                  operatingPicture.selectEntity(selection, 'map');
-                else openInfrastructureEntity(entity);
+                openInfrastructureEntity(entity);
               }}
               onOpenEntity={openInfrastructureEntity}
               entityLoading={loading || projectEntityIndex.loading}
