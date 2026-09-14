@@ -196,3 +196,13 @@ conclusions remain visibly and navigably separate.
 **Rationale:** The operating picture needs object-centric interaction without making the map another evidence store or coupling spatial presentation to one reasoning module. A snapshot-native projection keeps selection, historical state and height eligibility tied to immutable evidence, while native MapLibre layers provide reliable layer ordering, hit testing and future perspective rendering. Keeping the historical response avoids silently changing existing Screening Context consumers.
 
 **References:** [Architecture](ARCHITECTURE.md), [Sprint 005 Task 2](SPRINT-005-TASK-2-NATIVE-INFRASTRUCTURE-MAP.md), [EA LIDAR building heights](EA-LIDAR-BUILDING-HEIGHTS.md).
+
+## 2026-09-14 — The operating picture uses a configured dark vector style
+
+**Decision:** Prefer `NEXT_PUBLIC_BASEMAP_STYLE_URL` as the primary MapLibre style configuration and retain `NEXT_PUBLIC_BASEMAP_URL` only as a legacy raster fallback. Permit OpenFreeMap Dark as the attributed, no-SLA local-development default; never make the public service an implicit production dependency. If production is unconfigured, load a dark blank base, preserve Terrene-owned semantic layers and disclose the missing configuration. Keep GeoLibre as a cartographic and workbench reference rather than an application runtime.
+
+The spatial UI defaults to top-down 2D. It may offer a 55-degree perspective only when valid object-level height evidence exists, and only height-backed buildings may extrude. Layers, legend and roster share one mutually exclusive left-side surface; the entity inspector is docked on desktop and becomes a bottom sheet on narrow screens. Legends and source times are generated from the selected scene rather than maintained as decorative static copy.
+
+**Rationale:** A native vector style gives the spatial application a coherent operator-grade hierarchy without corrupting source colours through a canvas filter. Explicit production configuration avoids depending on a public development service with no SLA. Evidence-gated perspective and generated states keep visual richness subordinate to immutable evidence semantics, while the surface hierarchy preserves the map as the primary analytical canvas.
+
+**References:** [Architecture](ARCHITECTURE.md), [Sprint 005 Task 3](SPRINT-005-TASK-3-DARK-SPATIAL-OPERATING-PICTURE.md), [OpenFreeMap quick start](https://openfreemap.org/quick_start/), [OpenFreeMap service](https://openfreemap.org/).
