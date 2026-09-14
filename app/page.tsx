@@ -437,7 +437,8 @@ export default function Home() {
           ))}
         </ul>
         <p>
-          Values already loaded are retained. Live changes could not be checked.
+          Values already loaded are retained. Current source changes could not
+          be checked.
         </p>
       </details>
     </section>
@@ -1646,7 +1647,7 @@ export default function Home() {
                 <WorkspaceState
                   kind="empty"
                   title="Select two or three sites"
-                  description="Use the checkboxes in Sites to choose the land opportunities you want to compare."
+                  description="Use the checkboxes in Sites to choose the infrastructure sites you want to compare."
                   action={
                     <button
                       onClick={() => {

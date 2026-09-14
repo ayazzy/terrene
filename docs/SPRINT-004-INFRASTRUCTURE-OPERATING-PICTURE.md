@@ -2,7 +2,7 @@
 
 ## Status
 
-Active. Tasks 1–2 completed 14 September 2026. This sprint begins from GitHub `main` at `e40a9f4`, after the Beacon Fen Task 2 merge. Sprint 003 is closed incomplete; no practitioner or customer validation is implied.
+Completed 14 September 2026. All five tasks are implemented and certified. This sprint began from GitHub `main` at `e40a9f4`, after the Beacon Fen Task 2 merge. Sprint 003 remains closed incomplete; no practitioner or customer validation is implied.
 
 ## Repository basis
 
@@ -126,6 +126,8 @@ Turn the existing Site and Project Intelligence workspaces into entity dossiers 
 ## Task 5 — Hardening, bug closure and end-to-end proof
 
 **Allocation:** Days 9–10
+
+**Status:** Completed 14 September 2026. See [Task 5 operating-picture certification](SPRINT-004-TASK-5-OPERATING-PICTURE-CERTIFICATION.md).
 
 Finish the sprint as a reliable interaction system rather than a visual demo.
 

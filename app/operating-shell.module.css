@@ -569,11 +569,17 @@
   top: var(--topbar-height);
   right: 0;
   bottom: 0;
-  width: min(56rem, 52%);
+  width: min(48rem, 48%);
   min-height: 0;
   overflow: hidden;
   border-left: 1px solid #4a554f;
   box-shadow: -16px 0 32px rgb(0 0 0 / 24%);
+}
+
+@media (min-width: 80rem) {
+  .shell :global(.spatial-main > .entity-dossier) {
+    width: min(48rem, 40%);
+  }
 }
 
 .shell :global(.spatial-main > .entity-dossier.dossier-collapsed) {
@@ -791,27 +797,18 @@
 
 .shell :global(.entity-dossier-heading),
 .shell :global(.analysis-context-bar),
-.shell :global(.assessment-snapshot),
 .shell :global(.analysis-panel-heading),
-.shell :global(.subject-list),
-.shell :global(.intelligence-content),
-.shell :global(.intelligence-titlebar) {
+.shell :global(.intelligence-content) {
   border-color: #414a45;
   background: #222825;
 }
 
-.shell :global(.subject-list > button),
 .shell :global(.intelligence-summary-grid article),
 .shell :global(.conflict-card),
 .shell :global(.question-card),
 .shell :global(.quiet-card),
 .shell :global(.run-history button) {
   border-radius: 2px;
-}
-
-.shell :global(.subject-list > button[aria-pressed='true']) {
-  background: #303935;
-  box-shadow: none;
 }
 
 .shell :global(.findings-panel) {

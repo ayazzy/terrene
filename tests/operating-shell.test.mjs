@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [page, shell, css, layout, portfolioMap] = await Promise.all([
+const [page, shell, css, layout, map] = await Promise.all([
   readFile(new URL('../app/page.tsx', import.meta.url), 'utf8'),
   readFile(new URL('../app/operating-shell.tsx', import.meta.url), 'utf8'),
   readFile(
@@ -10,7 +10,7 @@ const [page, shell, css, layout, portfolioMap] = await Promise.all([
     'utf8',
   ),
   readFile(new URL('../app/layout.tsx', import.meta.url), 'utf8'),
-  readFile(new URL('../app/portfolio-map.tsx', import.meta.url), 'utf8'),
+  readFile(new URL('../app/map.tsx', import.meta.url), 'utf8'),
 ]);
 
 test('shell identifies Terrene as infrastructure intelligence', () => {
@@ -20,7 +20,7 @@ test('shell identifies Terrene as infrastructure intelligence', () => {
   assert.doesNotMatch(page, /Land opportunities|EARTH INTELLIGENCE/);
   assert.match(layout, /Terrene — Infrastructure Intelligence/);
   assert.doesNotMatch(layout, /Earth Intelligence|understanding land/);
-  assert.doesNotMatch(`${page}\n${portfolioMap}`, /land sites|land boundary/i);
+  assert.doesNotMatch(`${page}\n${map}`, /land sites|land boundary/i);
   assert.doesNotMatch(shell, /Operational|Live evidence|SYSTEM STATUS/);
 });
 

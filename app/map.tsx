@@ -118,11 +118,12 @@ export default function SiteMap({
   const el = useRef<HTMLDivElement>(null),
     map = useRef<maplibregl.Map | null>(null);
   const [projection, setProjection] = useState<maplibregl.Map | null>(null),
+    [readyMs, setReadyMs] = useState<number | null>(null),
     [points, setPoints] = useState<number[][]>([]),
     [revision, setRevision] = useState(0),
     [localHiddenLayerIds, setLocalHiddenLayerIds] = useState<string[]>([]),
     [localLayersOpen, setLocalLayersOpen] = useState(false),
-    [rosterOpen, setRosterOpen] = useState(true),
+    [rosterOpen, setRosterOpen] = useState(false),
     [entityQuery, setEntityQuery] = useState(''),
     [coordinates, setCoordinates] = useState(''),
     [error, setError] = useState('');
@@ -189,6 +190,7 @@ export default function SiteMap({
   }, []);
   useEffect(() => {
     if (!el.current) return;
+    const startedAt = performance.now();
     const m = new maplibregl.Map({
       container: el.current,
       style: {
@@ -232,7 +234,10 @@ export default function SiteMap({
         `${Math.abs(e.lngLat.lat).toFixed(5)}° ${e.lngLat.lat >= 0 ? 'N' : 'S'} · ${Math.abs(e.lngLat.lng).toFixed(5)}° ${e.lngLat.lng >= 0 ? 'E' : 'W'}`,
       ),
     );
-    m.on('load', () => setProjection(m));
+    m.on('load', () => {
+      setReadyMs(Math.round(performance.now() - startedAt));
+      setProjection(m);
+    });
     m.on('move', repaint);
     m.on('resize', repaint);
     m.on('error', () =>
@@ -474,6 +479,9 @@ export default function SiteMap({
     <div
       className={`map-wrap${entities.length || entityLoading || entityUnavailable ? ` ${infrastructureStyles.operatingMap}` : ''}`}
       data-primary-map="infrastructure-operating-picture"
+      data-map-ready={ready}
+      data-map-ready-ms={readyMs ?? undefined}
+      aria-busy={!ready}
     >
       <div ref={el} className="map-canvas" />
       <svg
