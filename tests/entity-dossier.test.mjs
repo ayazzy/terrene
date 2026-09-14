@@ -126,4 +126,14 @@ test('dossier layout responds to its own width and uses one content gutter', () 
     dossierCss,
     /\.dossier:global\(\.site-workspace\) \.identity\s*\{\s*padding-right:\s*10rem/,
   );
+  assert.match(
+    dossierCss,
+    /@container entity-dossier \(max-width: 42rem\)[\s\S]*?\.actions > :global\(\.text-btn\)/,
+  );
+  assert.doesNotMatch(
+    dossierCss,
+    /\.actions :global\(\.text-btn\)/,
+    'compact header rules must not hide nested menu labels',
+  );
+  assert.match(page, /artifact=\{assessment \? 'Saved assessment'/);
 });

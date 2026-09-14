@@ -573,6 +573,7 @@ type Props = {
   onOpenPortfolio?: () => void;
   onOpenSiteDiligence?: () => void;
   onOpenDossier?: () => void;
+  dossierOpen?: boolean;
   openDossierButtonRef?: Ref<HTMLButtonElement>;
 };
 export default function SiteMap({
@@ -607,6 +608,7 @@ export default function SiteMap({
   onOpenPortfolio,
   onOpenSiteDiligence,
   onOpenDossier,
+  dossierOpen = false,
   openDossierButtonRef,
 }: Props) {
   const el = useRef<HTMLDivElement>(null),
@@ -628,6 +630,7 @@ export default function SiteMap({
   const [basemapState, setBasemapState] = useState<BasemapState>('loading');
   const drawRef = useRef(draw);
   const geometryRef = useRef(geometry);
+  const dossierOpenRef = useRef(dossierOpen);
   const lastOverlayFocus = useRef('');
   const selectedNativeFeatures = useRef<{ source: string; id: string }[]>([]);
   const inspectRef = useRef({ findings, onInspect });
@@ -650,6 +653,9 @@ export default function SiteMap({
   useEffect(() => {
     entityRef.current = { entities, onSelectEntity };
   }, [entities, onSelectEntity]);
+  useEffect(() => {
+    dossierOpenRef.current = dossierOpen;
+  }, [dossierOpen]);
   const ready = !!projection;
   const layerPanelOpen = layersOpen ?? localLayersOpen;
   const setLayerPanelOpen = (open: boolean) => {
@@ -714,9 +720,27 @@ export default function SiteMap({
     const currentMap = map.current;
     if (!currentMap || !nextGeometry) return;
     const bounds = geometryBounds(nextGeometry);
+    const mapRect = el.current?.getBoundingClientRect();
+    const dossier = dossierOpenRef.current
+      ? el.current
+          ?.closest('.spatial-main')
+          ?.querySelector<HTMLElement>(
+            '.entity-dossier:not(.dossier-collapsed)',
+          )
+      : null;
+    const dossierRect = dossier?.getBoundingClientRect();
+    const sideDockOverlap =
+      mapRect &&
+      dossierRect &&
+      dossierRect.width < mapRect.width * 0.8 &&
+      dossierRect.left > mapRect.left
+        ? Math.max(0, mapRect.right - dossierRect.left)
+        : 0;
     if (!bounds.isEmpty())
       currentMap.fitBounds(bounds, {
-        padding: 65,
+        padding: sideDockOverlap
+          ? { top: 65, right: sideDockOverlap + 48, bottom: 65, left: 65 }
+          : 65,
         maxZoom: 16,
         duration: 400,
       });
@@ -879,6 +903,14 @@ export default function SiteMap({
   useEffect(() => {
     geometryRef.current = geometry;
   }, [geometry]);
+  useEffect(() => {
+    if (!ready) return;
+    const frame = requestAnimationFrame(() => {
+      map.current?.resize();
+      fit(geometryRef.current);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [dossierOpen, fit, ready]);
   useEffect(() => {
     const currentMap = map.current;
     if (!ready || !currentMap?.isStyleLoaded()) return;
@@ -2011,8 +2043,10 @@ export default function SiteMap({
           </aside>
         )}
       <div className="map-boundary-label">
-        <i className="swatch boundary" />
-        {boundaryLabel}
+        <span className="map-boundary-title">
+          <i className="swatch boundary" />
+          {boundaryLabel}
+        </span>
         <small>
           {perspectiveActive ? 'Perspective · 55°' : '2D · top-down'} ·{' '}
           {coordinates || 'WGS84 · EPSG:4326'}

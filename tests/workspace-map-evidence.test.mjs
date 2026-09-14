@@ -152,6 +152,9 @@ test('workspace integration shares selection and never auto-focuses an off-site 
   assert.match(inspector, /Advanced provenance/);
   assert.match(inspector, /Asset intelligence context/);
   assert.match(inspector, /onReturnToSite/);
+  assert.match(inspector, /mapRelationshipPresentation/);
+  assert.match(inspector, /map-relationship-predicate/);
+  assert.match(inspector, /map-relationship-metrics/);
   assert.match(css, /\.asset-intelligence-view\s*\{[\s\S]*?min-height: 100%/);
   assert.match(
     css,
@@ -159,6 +162,11 @@ test('workspace integration shares selection and never auto-focuses an off-site 
   );
   assert.match(inspector, /Show related objects/);
   assert.match(inspector, /No object-to-object network is inferred/);
+  assert.match(
+    css,
+    /\.crc-shell \.map-feature-inspector-path button:hover\s*\{[\s\S]*?background:\s*transparent/,
+  );
+  assert.match(css, /\.site-actions-menu button\s*\{[\s\S]*?color:\s*#dce7e1/);
   assert.match(map, /feature-state', 'related'/);
   assert.match(map, /All sites/);
   assert.match(map, /Site diligence/);

@@ -271,6 +271,15 @@ export function mapFeatureName(feature: InfrastructureSceneFeature) {
 }
 
 export function mapRelationshipSummary(relationship: SceneRelationship) {
+  const presentation = mapRelationshipPresentation(relationship);
+  return presentation.metrics.length
+    ? `${presentation.label} · ${presentation.metrics
+        .map((metric) => metric.summary)
+        .join(' · ')}`
+    : presentation.label;
+}
+
+export function mapRelationshipPresentation(relationship: SceneRelationship) {
   const measurements = relationship.measurements;
   const label = {
     contained_within: 'Contained within the parcel',
@@ -280,22 +289,47 @@ export function mapRelationshipSummary(relationship: SceneRelationship) {
     intersects: 'Intersects the parcel',
     minimum_distance: 'Nearest mapped relationship',
   }[relationship.predicate];
-  const values = [
+  const metrics = [
     measurements.overlap_area_m2 === null
       ? null
-      : `${measurements.overlap_area_m2.toLocaleString('en-GB', { maximumFractionDigits: 2 })} m² overlap`,
+      : {
+          key: 'overlap-area',
+          label: 'Overlap area',
+          value: `${measurements.overlap_area_m2.toLocaleString('en-GB', { maximumFractionDigits: 2 })} m²`,
+          summary: `${measurements.overlap_area_m2.toLocaleString('en-GB', { maximumFractionDigits: 2 })} m² overlap`,
+        },
     measurements.parcel_overlap_fraction === null
       ? null
-      : `${(measurements.parcel_overlap_fraction * 100).toLocaleString('en-GB', { maximumFractionDigits: 4 })}% of parcel`,
+      : {
+          key: 'parcel-overlap',
+          label: 'Parcel overlap',
+          value: `${(measurements.parcel_overlap_fraction * 100).toLocaleString('en-GB', { maximumFractionDigits: 4 })}%`,
+          summary: `${(measurements.parcel_overlap_fraction * 100).toLocaleString('en-GB', { maximumFractionDigits: 4 })}% of parcel`,
+        },
     measurements.object_overlap_fraction === null
       ? null
-      : `${(measurements.object_overlap_fraction * 100).toLocaleString('en-GB', { maximumFractionDigits: 2 })}% of object`,
+      : {
+          key: 'object-overlap',
+          label: 'Object overlap',
+          value: `${(measurements.object_overlap_fraction * 100).toLocaleString('en-GB', { maximumFractionDigits: 2 })}%`,
+          summary: `${(measurements.object_overlap_fraction * 100).toLocaleString('en-GB', { maximumFractionDigits: 2 })}% of object`,
+        },
     measurements.length_within_m === null
       ? null
-      : `${measurements.length_within_m.toLocaleString('en-GB', { maximumFractionDigits: 2 })} m within parcel`,
+      : {
+          key: 'length-within',
+          label: 'Length in parcel',
+          value: `${measurements.length_within_m.toLocaleString('en-GB', { maximumFractionDigits: 2 })} m`,
+          summary: `${measurements.length_within_m.toLocaleString('en-GB', { maximumFractionDigits: 2 })} m within parcel`,
+        },
     measurements.minimum_distance_m === null
       ? null
-      : `${measurements.minimum_distance_m.toLocaleString('en-GB', { maximumFractionDigits: 2 })} m minimum mapped distance`,
-  ].filter(Boolean);
-  return values.length ? `${label} · ${values.join(' · ')}` : label;
+      : {
+          key: 'minimum-distance',
+          label: 'Mapped distance',
+          value: `${measurements.minimum_distance_m.toLocaleString('en-GB', { maximumFractionDigits: 2 })} m`,
+          summary: `${measurements.minimum_distance_m.toLocaleString('en-GB', { maximumFractionDigits: 2 })} m minimum mapped distance`,
+        },
+  ].filter((metric) => metric !== null);
+  return { label, metrics };
 }

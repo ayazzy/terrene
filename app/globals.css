@@ -2827,6 +2827,9 @@ summary {
   margin: 0;
 }
 .compact-team-review {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--text-secondary);
   white-space: nowrap;
 }
@@ -3052,14 +3055,28 @@ summary {
   z-index: 10;
   top: calc(100% + 5px);
   right: 0;
-  width: 180px;
-  padding: 10px;
+  width: 14rem;
+  padding: 0.35rem;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-control);
-  background: var(--surface-overlay);
+  background: #1a2521;
   box-shadow: var(--shadow-overlay);
 }
-.site-actions-menu button { width: 100%; justify-content: flex-start; }
+.site-actions-menu button {
+  width: 100%;
+  min-height: 2.25rem;
+  justify-content: flex-start;
+  padding: 0.5rem 0.625rem;
+  background: transparent;
+  color: #dce7e1;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.site-actions-menu button:hover,
+.site-actions-menu button:focus-visible {
+  background: #26332d;
+  color: #f1f6f3;
+}
 
 .screening-overview { padding: 18px 20px 22px; }
 .screening-overview .screening-heading { padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); }
@@ -3683,9 +3700,14 @@ summary {
   padding: 0;
   overflow: hidden;
   border: 0;
+  background: transparent;
   color: var(--action-primary);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.crc-shell .map-feature-inspector-path button:hover {
+  background: transparent;
+  color: var(--action-primary-hover);
 }
 .map-feature-inspector-path strong {
   color: var(--text-secondary);
@@ -3725,6 +3747,55 @@ summary {
 }
 .map-feature-inspector-body p {
   margin: 4px 0;
+}
+.map-relationship-list {
+  display: grid;
+  gap: 0.625rem;
+  margin-top: 0.625rem;
+}
+.map-relationship-list article {
+  min-width: 0;
+}
+.map-relationship-predicate {
+  min-height: 1.625rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid #4b685d;
+  border-radius: 999px;
+  background: #20332c;
+  color: #cfe8de;
+  font-size: 0.6875rem;
+  font-weight: 650;
+}
+.map-relationship-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 0.45rem;
+  margin: 0.5rem 0 0;
+}
+.map-relationship-metrics > div {
+  min-width: 0;
+  padding: 0.55rem 0.625rem;
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  background: #17211d;
+}
+.map-relationship-metrics dt {
+  overflow: hidden;
+  color: var(--text-tertiary);
+  font-size: 0.625rem;
+  letter-spacing: 0.055em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.map-relationship-metrics dd {
+  margin: 0.2rem 0 0;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 620;
 }
 .map-feature-inspector-body .height-state {
   color: var(--status-success);

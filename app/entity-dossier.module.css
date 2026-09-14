@@ -11,13 +11,13 @@
 
 .header {
   flex: 0 0 auto;
-  min-height: 5.25rem;
+  min-height: 4.75rem;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.8rem var(--dossier-gutter);
+  gap: 0.75rem;
+  padding: 0.75rem var(--dossier-gutter);
   border-bottom: 1px solid var(--border-default);
   background: #222825;
 }
@@ -40,7 +40,7 @@
   margin: 0;
   overflow: hidden;
   color: var(--text-primary);
-  font-size: 1.05rem;
+  font-size: 1.0625rem;
   font-weight: 620;
   letter-spacing: -0.015em;
   text-overflow: ellipsis;
@@ -51,8 +51,8 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.3rem 0.75rem;
-  margin-top: 0.45rem;
+  gap: 0.25rem 0.6rem;
+  margin-top: 0.35rem;
   color: var(--text-secondary);
   font-size: 0.6875rem;
 }
@@ -61,14 +61,6 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-}
-
-.envelope > span:not(:last-child)::after {
-  content: '';
-  width: 1px;
-  height: 0.75rem;
-  margin-left: 0.45rem;
-  background: var(--border-strong);
 }
 
 .actions {
@@ -151,12 +143,42 @@
 @container entity-dossier (max-width: 42rem) {
   .header {
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.75rem;
+    gap: 0.55rem;
   }
 
   .actions {
+    width: 100%;
     min-width: 0;
+    flex-wrap: nowrap;
     justify-content: flex-start;
+  }
+
+  .actions > :global(.back) {
+    width: 2rem;
+    padding-inline: 0;
+    font-size: 0;
+  }
+
+  .actions > :global(.back svg) {
+    margin: 0;
+  }
+
+  .actions > :global(.compact-team-review) {
+    margin-left: auto;
+  }
+
+  .actions > :global(.compact-team-review small) {
+    display: none;
+  }
+
+  .actions > :global(.text-btn) {
+    width: 2rem;
+    padding-inline: 0;
+    font-size: 0;
+  }
+
+  .actions > :global(.text-btn svg) {
+    margin: 0;
   }
 
   .body :global(.map-feature-inspector-body > div) {
@@ -173,30 +195,6 @@
   .header {
     gap: 0.5rem;
     padding-block: 0.65rem;
-  }
-
-  .actions :global(.back) {
-    width: 2rem;
-    padding-inline: 0;
-    font-size: 0;
-  }
-
-  .actions :global(.back svg) {
-    margin: 0;
-  }
-
-  .actions :global(.compact-team-review small) {
-    display: none;
-  }
-
-  .actions :global(.text-btn) {
-    width: 2rem;
-    padding-inline: 0;
-    font-size: 0;
-  }
-
-  .actions :global(.text-btn svg) {
-    margin: 0;
   }
 }
 
@@ -219,6 +217,7 @@
     position: absolute;
     top: 0.55rem;
     right: 0.65rem;
+    width: auto;
   }
 
   .actions > :global(.assessment-action),
@@ -226,11 +225,11 @@
     display: none;
   }
 
-  .actions :global(.text-btn) {
+  .actions > :global(.text-btn) {
     font-size: 0;
   }
 
-  .actions :global(.text-btn) svg {
+  .actions > :global(.text-btn) svg {
     margin: 0;
   }
 

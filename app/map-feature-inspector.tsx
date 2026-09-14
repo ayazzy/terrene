@@ -4,7 +4,7 @@ import { ArrowLeft, Link2, LocateFixed } from 'lucide-react';
 import {
   mapFeatureName,
   mapLayerLabel,
-  mapRelationshipSummary,
+  mapRelationshipPresentation,
   type InfrastructureSceneFeature,
   type InfrastructureSceneLayer,
   type SceneSource,
@@ -68,11 +68,28 @@ export default function MapFeatureInspector({
         <div>
           <strong>Relationship to parcel</strong>
           {properties.relationships.length ? (
-            properties.relationships.map((relationship) => (
-              <p key={relationship.id}>
-                {mapRelationshipSummary(relationship)}
-              </p>
-            ))
+            <div className="map-relationship-list">
+              {properties.relationships.map((relationship) => {
+                const presentation = mapRelationshipPresentation(relationship);
+                return (
+                  <article key={relationship.id}>
+                    <span className="map-relationship-predicate">
+                      {presentation.label}
+                    </span>
+                    {!!presentation.metrics.length && (
+                      <dl className="map-relationship-metrics">
+                        {presentation.metrics.map((metric) => (
+                          <div key={metric.key}>
+                            <dt>{metric.label}</dt>
+                            <dd>{metric.value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
           ) : (
             <p>No parcel relationship is represented for this source object.</p>
           )}

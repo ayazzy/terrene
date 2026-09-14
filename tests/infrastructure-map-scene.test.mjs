@@ -6,6 +6,7 @@ import {
   buildingHeightStatus,
   infrastructureMapScenePath,
   mapLayerStatus,
+  mapRelationshipPresentation,
   mapRelationshipSummary,
   readInfrastructureMapScene,
 } from '../app/infrastructure-map-scene.ts';
@@ -116,6 +117,41 @@ test('native scene helpers preserve layer and relationship semantics', () => {
       },
     }),
     /Contained within the parcel · 100 m² overlap · 25% of parcel · 100% of object/,
+  );
+  assert.deepEqual(
+    mapRelationshipPresentation({
+      predicate: 'overlaps',
+      measurements: {
+        overlap_area_m2: 3247.93,
+        parcel_overlap_fraction: 0.14389,
+        object_overlap_fraction: 0.2036,
+        length_within_m: null,
+        minimum_distance_m: null,
+      },
+    }),
+    {
+      label: 'Overlaps the parcel',
+      metrics: [
+        {
+          key: 'overlap-area',
+          label: 'Overlap area',
+          value: '3,247.93 m²',
+          summary: '3,247.93 m² overlap',
+        },
+        {
+          key: 'parcel-overlap',
+          label: 'Parcel overlap',
+          value: '14.389%',
+          summary: '14.389% of parcel',
+        },
+        {
+          key: 'object-overlap',
+          label: 'Object overlap',
+          value: '20.36%',
+          summary: '20.36% of object',
+        },
+      ],
+    },
   );
 });
 

@@ -97,7 +97,7 @@
   align-items: center;
   gap: 0.45rem;
   max-width: calc(57% - 6rem);
-  min-height: 2.25rem;
+  height: 4.25rem;
   margin-top: 0;
   padding: 0.4rem 0.55rem;
   border: 1px solid #34433d;
@@ -202,7 +202,20 @@
 }
 
 .operatingMap :global(.map-boundary-label) {
+  bottom: 1.75rem;
+  width: fit-content;
+  height: 4.25rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-direction: column;
   border-left: 2px solid #45d6e8;
+}
+
+.operatingMap :global(.map-boundary-title) {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .operatingMap :global(.map-selection) {

@@ -884,6 +884,10 @@ export default function Home() {
                   ? reopenSitePanel
                   : undefined
               }
+              dossierOpen={
+                (view === 'site' || view === 'project-intelligence') &&
+                panelOpen
+              }
               openDossierButtonRef={reopenAnalysisButton}
             />
           </div>
@@ -1236,11 +1240,7 @@ export default function Home() {
             entityKind="SITE"
             title={current.name}
             location={`England · Saved boundary v${stale ? assessment.version : current.version}${result ? ` · ${fmt(result.area_ha)} ha` : ''}`}
-            artifact={
-              assessment
-                ? `Assessment ${assessment.state}`
-                : 'No saved assessment'
-            }
+            artifact={assessment ? 'Saved assessment' : 'No saved assessment'}
             evidenceAsOf={
               assessment
                 ? `Evidence retained ${new Date(assessment.created).toLocaleDateString('en-GB')}`

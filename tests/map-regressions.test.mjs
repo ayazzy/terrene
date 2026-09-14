@@ -131,6 +131,26 @@ test('map orientation is available without reaching controls behind the dossier'
   );
 });
 
+test('opening the dossier re-centres the Site inside the visible map canvas', () => {
+  assert.match(page, /dossierOpen=\{/);
+  assert.match(map, /dossierOpenRef = useRef\(dossierOpen\)/);
+  assert.match(map, /\.entity-dossier:not\(\.dossier-collapsed\)/);
+  assert.match(map, /right: sideDockOverlap \+ 48/);
+  assert.match(map, /\[dossierOpen, fit, ready\]/);
+});
+
+test('map footer context surfaces use one aligned height', () => {
+  assert.match(map, /className="map-boundary-title"/);
+  assert.match(
+    mapCss,
+    /\.operatingMap \.workflowPath\s*\{[\s\S]*?height:\s*4\.25rem/,
+  );
+  assert.match(
+    mapCss,
+    /\.operatingMap :global\(\.map-boundary-label\)\s*\{[\s\S]*?bottom:\s*1\.75rem[\s\S]*?height:\s*4\.25rem/,
+  );
+});
+
 test('object roster distinguishes retained objects without a selected perimeter', () => {
   assert.match(map, /`\$\{label\} \$\{position\} of \$\{total\}`/);
   assert.match(
