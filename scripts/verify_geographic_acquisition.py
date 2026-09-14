@@ -1,8 +1,8 @@
-"""Independently compare a retained acquisition with a LIVE ArcGIS polygon query.
+"""Compare retained vector selections or raster samples with LIVE official services.
 
 Run as ``python -m scripts.verify_geographic_acquisition --org ORG --id ID``.
 Outputs only a small verification record. No fixtures/fallback, evidence mutation,
-provider geometry download, or private object locations. A changed provider release
+full provider geometry download, or private object locations. A changed provider release
 requires a new capture, never rewriting the previous result.
 """
 import argparse
@@ -10,7 +10,7 @@ import json
 
 from backend import core
 from backend.acquisition import read_acquisition
-from backend.acquisition_contracts import AcquisitionError, SCOTLAND_SOURCE_ID
+from backend.acquisition_contracts import AcquisitionError, SCOTLAND_SOURCE_ID, DTM_SOURCE_ID
 from backend.acquisition_sources import BoundedClient, source_descriptor
 
 
@@ -18,6 +18,9 @@ def verify(org, acquisition_id):
     summary = read_acquisition(org, acquisition_id)
     if summary['state'] != 'succeeded':
         raise AcquisitionError('successful_capture_required')
+    if summary['request']['source_id'] == DTM_SOURCE_ID:
+        from scripts.verify_lidar_acquisition import verify_raster
+        return verify_raster(org, summary)
     endpoint = source_descriptor(summary['request']['adapter_version'])['endpoint']
     area = summary['request']['area']
     polygons = [area['coordinates']] if area['type'] == 'Polygon' else area['coordinates']

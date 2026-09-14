@@ -363,3 +363,26 @@ legal designation extent. Wales, Northern Ireland and cross-border composition
 remain separate work.
 
 **References:** [NatureScot implementation and verification](NATURESCOT-SSSI-ACQUISITION.md).
+
+## 2026-09-14 — Prioritize LIDAR and data-family breadth before more designation publishers
+
+**Decision:** The founder explicitly deferred Wales and Northern Ireland
+designation work and asked to continue acquiring data such as LIDAR. Preserve
+the broader UK capability requirement while advancing one data family at a time.
+This supersedes the earlier requirement to finish those designation adapters
+before starting additional data families; it does not claim their coverage exists.
+
+**First outcome:** Add independent EA 1 m DTM raster acquisition on the existing
+geographic request/attempt foundation. Retain original binary source responses
+and explicit native-grid availability rather than running an assessment to
+obtain terrain data. Keep historical composite dates, acquisition time and unknown
+local survey dates separate. Missing cells remain missing, including an entirely
+nodata area; a successfully retained response does not imply usable terrain.
+
+**Compatibility:** Binary artifact support is additive. Preserve existing JSON
+manifest/object identities, source profiles, legacy terrain/height processing,
+snapshots and model inputs. Scotland LIDAR is not established by Scottish SSSI
+coverage. Surface models, imagery, weather and application access remain separate
+subsequent iterations. No market-validation or purchasing decision is implied.
+
+**Reference:** [Independent LIDAR acquisition](EA-LIDAR-GEOGRAPHIC-ACQUISITION.md).

@@ -20,6 +20,8 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 
 - Acquire NatureScot's current Scottish SSSI publication through the same independent service, with a separately pinned Scottish footprint, publisher identity/terms checks and native component/designation identities. Source adapters and national coverage profiles cannot be interchanged. See [NatureScot acquisition](NATURESCOT-SSSI-ACQUISITION.md).
 
+- Acquire EA 1 m bare-earth terrain independently for a supported bounded England area, retain original XML/GeoTIFF artifacts, read their verified bytes internally, and report native cell availability separately from acquisition success. Live Oxford and East Anglia captures and independent pixel queries pass. See [independent LIDAR acquisition](EA-LIDAR-GEOGRAPHIC-ACQUISITION.md).
+
 - Create sites from a drawn or uploaded Polygon/MultiPolygon in a contextual editor over the persistent operating map; validate, version and preserve boundary history.
 - Submit deterministic assessments with pinned dataset/model configuration, deduplication, worker leases/retries/fencing and immutable saved results.
 - Inspect portfolio sites in map-first or list mode; open the Site Analysis Workspace across Overview, Evidence, Models and History. Screening Context is the default Overview and the wetland assessment is a secondary Terrene Reasoning module.
@@ -42,7 +44,7 @@ Implementation reports: [snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENC
 
 Connected sources include:
 
-- Environment Agency LIDAR Composite DTM 1m: elevation and slope summaries.
+- Environment Agency LIDAR Composite DTM 1m: legacy elevation/slope summaries plus independent native-raster captures with explicit cell availability; the two paths do not silently exchange evidence.
 - Paired Environment Agency LIDAR Composite DSM/DTM 1m: object-linked historical surface-height estimates for retained mapped buildings, with exact WCS provenance and explicit per-building gaps.
 - OS Open Rivers: watercourse intersection, proximity and distance.
 - ESA WorldCover 2021 v200: mapped land-cover distribution and derived mapped fractions.
@@ -219,6 +221,7 @@ produced no new browser warnings or errors.
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
 - Most legacy acquisition is bounded to the Oxford pilot; flood coverage is narrower. Independent SSSI acquisition supports bounded areas wholly inside the selected publisher's pinned England or Scotland footprint. England BFE v2 resolves the verified Broads tidal exclusion; historical BFC v1 retains its original limits. No profile establishes complete marine or legal designation coverage. Wales, Northern Ireland, cross-border composition and customer-facing acquisition remain incomplete. Source-specific mapped absence never proves real-world absence.
+- Independent LIDAR currently serves EA terrain in England only, capped at 4 million cells per requested bounding window and 4,096 pixels per axis. This is a historical composite raster, not point clouds, a current survey or national bulk ingestion. Surface-model acquisition remains assessment-specific; no independent raster map layer or terrain-to-model binding is implemented.
 - The wetland model is unvalidated and cannot yet rank the retained real locations defensibly.
 - Hosted Supabase/Render/R2 credentials and end-to-end tenant acceptance have not been configured or verified; the reserved Sites frontend is not a deployed product.
 - Team review status is not yet an immutable historical Decision record.
@@ -230,33 +233,28 @@ produced no new browser warnings or errors.
 
 ## Latest meaningful implementation
 
-NatureScot SSSI is connected as `naturescot.sssi` /
-`naturescot_sssi_arcgis_v1`, using the separately pinned
-`ons_scotland_dec2024_bfe_p10_v1` coverage profile. Scottish requests cannot reuse
-England profiles. The adapter preserves mapped-component `OBJECTID` values and
-distinct designation `PA_CODE` values, with current status, interest class,
-nullable provider update values and before/after publisher identity/terms checks.
-Repeated large boundary transfers were truncated; the new Scottish profile
-explicitly requests and validates 10 decimal places in WGS84 degrees without
-requesting vertex generalization. England v1/v2 geometry and defaults are unchanged.
+Independent geographic acquisition now supports a raster family through
+`environment_agency.lidar_dtm_1m` / `ea_lidar_dtm_wcs_v1`. It uses the existing
+England BFE operational profile, validates the WCS coverage identity and native
+single-band EPSG:27700 1 m grid, and retains original XML/GeoTIFF bytes with
+organization-scoped hashes. Native cell coverage respects the requested polygon
+and holes; all-nodata, partial coverage and genuine zero elevation remain distinct.
+Acquisition does not execute or change the existing slope, height or wetland models.
 
-Live Edinburgh verification retained four components across two designations;
-an Unst sample retained two components across two designations. Both match fresh
-provider polygon queries on component and designation IDs. Tested other-nation,
-cross-border and offshore requests fail explicitly. All four earlier England
-acquisition summaries and manifest identities remain unchanged. The combined
-acquisition suites pass 91 tests on each of SQLite and PostgreSQL/PostGIS;
-35 legacy assessment/reasoning tests passed on SQLite. See
-[NatureScot acquisition](NATURESCOT-SSSI-ACQUISITION.md) and its
-[verification record](verification/naturescot-sssi-2026-09-14.json).
+Live Oxford and East Anglia requests each contain 25,600 valid area cells in a
+retained 167 × 167 raster window. All six independent one-cell WCS comparisons
+match, offline coverage replay matches, and fresh-process reads/offline retries
+retain the same identities. All six earlier England/Scotland vector capture
+summaries remain unchanged. The affected acquisition, terrain and height suites
+pass 148 tests on each of SQLite and PostgreSQL/PostGIS. See [implementation and verification](EA-LIDAR-GEOGRAPHIC-ACQUISITION.md).
 
 ## Current recommended engineering question
 
-Connect and independently verify the official Welsh designation publisher next,
-then Northern Ireland in a separate iteration. Preserve native SSSI/ASSI meanings,
-national coverage boundaries, islands and cross-border gaps. The approved
-[UK expansion sequence](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md) remains the near-term
-priority. Neither England nor Scotland profiles establish another nation's
-support. Authenticated acquisition/evidence assembly and map access are later
-separate tasks; imagery and historical weather follow UK coverage work. The
-initial commercial market remains undecided and unvalidated.
+The founder has deferred Wales and Northern Ireland designation adapters to
+prioritize additional data such as LIDAR. The next bounded acquisition candidate
+is independent EA surface-model (DSM) capture, with explicit compatibility and
+pairing rules for retained terrain rasters. Dated imagery and historical weather
+can follow as separate data-family iterations. Customer-facing acquisition and
+raster/map assembly also remain separate work. Keep UK-wide capability as the
+broader objective and each source's national gaps explicit. The initial commercial
+market remains undecided and unvalidated.

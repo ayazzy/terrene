@@ -1,5 +1,6 @@
 """Versioned geographic requests; independent of Sites and analytical models."""
 from hashlib import sha256
+from dataclasses import dataclass
 import json
 import math
 from typing import Literal
@@ -14,9 +15,12 @@ ADAPTER_VERSION = 'sssi_arcgis_v1'
 FULL_EXTENT_ADAPTER_VERSION = 'sssi_arcgis_v2'
 SCOTLAND_SOURCE_ID = 'naturescot.sssi'
 SCOTLAND_ADAPTER_VERSION = 'naturescot_sssi_arcgis_v1'
+DTM_SOURCE_ID = 'environment_agency.lidar_dtm_1m'
+DTM_ADAPTER_VERSION = 'ea_lidar_dtm_wcs_v1'
 SOURCE_ADAPTERS = {
     SOURCE_ID: (ADAPTER_VERSION, FULL_EXTENT_ADAPTER_VERSION),
     SCOTLAND_SOURCE_ID: (SCOTLAND_ADAPTER_VERSION,),
+    DTM_SOURCE_ID: (DTM_ADAPTER_VERSION,),
 }
 MAX_AREA_HA = 100_000
 MAX_COORDINATES = 10_000
@@ -28,6 +32,13 @@ class AcquisitionError(RuntimeError):
     def __init__(self, code: str):
         self.code = code
         super().__init__(code)
+
+
+@dataclass(frozen=True)
+class BinaryArtifact:
+    """Original decoded HTTP bytes; never serialize rasters or XML as JSON."""
+    content: bytes
+    media_type: Literal['image/tiff', 'application/xml']
 
 
 def encode(value) -> bytes:
@@ -103,8 +114,8 @@ class TemporalSelection(Contract):
 
 class AcquisitionRequest(Contract):
     contract_version: Literal['geographic_acquisition_request_v1']
-    source_id: Literal['natural_england.sssi', 'naturescot.sssi']
-    adapter_version: Literal['sssi_arcgis_v1', 'sssi_arcgis_v2', 'naturescot_sssi_arcgis_v1']
+    source_id: Literal['natural_england.sssi', 'naturescot.sssi', 'environment_agency.lidar_dtm_1m']
+    adapter_version: Literal['sssi_arcgis_v1', 'sssi_arcgis_v2', 'naturescot_sssi_arcgis_v1', 'ea_lidar_dtm_wcs_v1']
     coverage_profile_sha256: str = Field(pattern=r'^[0-9a-f]{64}$')
     area: dict
     temporal: TemporalSelection

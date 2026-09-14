@@ -1,4 +1,4 @@
-"""Bounded England/Scotland SSSI adapters and pinned national coverage setup."""
+"""Registered geographic sources, bounded HTTP retrieval and pinned coverage setup."""
 import json
 import time
 
@@ -10,6 +10,7 @@ from backend import core
 from backend.acquisition_contracts import (
     AcquisitionError, ADAPTER_VERSION, FULL_EXTENT_ADAPTER_VERSION, SOURCE_ID, MAX_AREA_HA, digest, encode,
     SCOTLAND_SOURCE_ID, SCOTLAND_ADAPTER_VERSION,
+    DTM_ADAPTER_VERSION,
 )
 
 SSSI_URL = ('https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/'
@@ -39,6 +40,7 @@ ADAPTER_COVERAGE = {
     ADAPTER_VERSION: COVERAGE_VERSION,
     FULL_EXTENT_ADAPTER_VERSION: FULL_EXTENT_COVERAGE_VERSION,
     SCOTLAND_ADAPTER_VERSION: SCOTLAND_COVERAGE_VERSION,
+    DTM_ADAPTER_VERSION: FULL_EXTENT_COVERAGE_VERSION,
 }
 LIMITS = {'max_area_ha': MAX_AREA_HA, 'max_features': 2_000, 'batch_size': 100,
           'max_response_bytes': 20_000_000, 'max_total_bytes': 60_000_000,
@@ -68,6 +70,9 @@ DESCRIPTOR = {
 
 
 def source_descriptor(adapter_version=ADAPTER_VERSION):
+    if adapter_version == DTM_ADAPTER_VERSION:
+        from backend.acquisition_rasters import descriptor
+        return descriptor()
     if adapter_version == SCOTLAND_ADAPTER_VERSION:
         return {
             'source_id': SCOTLAND_SOURCE_ID, 'adapter_version': SCOTLAND_ADAPTER_VERSION,
@@ -125,7 +130,7 @@ class BoundedClient:
         if self.owned:
             self.client.close()
 
-    def get(self, url, params):
+    def get_bytes(self, url, params, *, max_bytes=None):
         remaining = self.deadline - time.monotonic()
         if remaining <= 0:
             raise AcquisitionError('network_deadline')
@@ -137,7 +142,7 @@ class BoundedClient:
                 for chunk in response.iter_bytes():
                     size += len(chunk)
                     self.bytes_received += len(chunk)
-                    if size > self.max_response or self.bytes_received > self.max_total:
+                    if size > min(max_bytes or self.max_response, self.max_response) or self.bytes_received > self.max_total:
                         raise AcquisitionError('byte_limit')
                     if time.monotonic() > self.deadline:
                         raise AcquisitionError('network_deadline')
@@ -146,12 +151,17 @@ class BoundedClient:
                 # These hashes describe decoded response bytes, not the compressed wire payload.
                 self.responses.append({'endpoint': url, 'parameters': params,
                                        'decoded_response_sha256': digest(data), 'decoded_bytes': size})
-                value = json.loads(data)
-                if not isinstance(value, dict) or value.get('error'):
-                    raise AcquisitionError('provider_error')
-                return value
+                return data
         except httpx.HTTPError as exc:
             raise AcquisitionError('network_failure') from exc
+
+    def get(self, url, params):
+        data = self.get_bytes(url, params)
+        try:
+            value = json.loads(data)
+            if not isinstance(value, dict) or value.get('error'):
+                raise AcquisitionError('provider_error')
+            return value
         except (ValueError, UnicodeError) as exc:
             raise AcquisitionError('invalid_provider_json') from exc
 

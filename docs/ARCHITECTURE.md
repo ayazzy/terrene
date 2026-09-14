@@ -227,15 +227,15 @@ The intended shared capabilities are:
   derived results. Public provider data does not make customer areas or queries
   public. Purchased data must retain usage terms and acquisition-cost context.
 
-The first [independent geographic acquisition iteration](GEOGRAPHIC-EVIDENCE-ACQUISITION.md)
-now covers one existing vector source in Oxford and a second bounded area. Prioritize
-four-nation source expansion and application access immediately after that proof,
-with a coverage matrix and explicit gaps for each evidence family. Subsequent
-data-family iterations should test dated Sentinel-2 imagery, then historical weather data,
-with their appropriate processing and presentation. Radar, climate projections,
-commercial feeds and richer workflows remain later candidates. This sequence
-approves architectural direction, not a claim that those integrations exist or
-authorization to purchase data or implement all applications at once.
+Independent acquisition now includes England and Scotland SSSI and bounded EA
+terrain raster capture. On 14 September 2026 the founder deferred Wales and
+Northern Ireland designation adapters to prioritize additional data families,
+starting with LIDAR. UK-wide capability remains the broader objective, with
+source-family coverage and gaps kept explicit. Surface-model acquisition, dated
+imagery and historical weather are subsequent candidates in bounded iterations,
+alongside the separate application-access work. Radar, climate projections,
+commercial feeds and richer workflows remain later candidates. This direction
+does not establish those integrations, customer demand or authorization to buy data.
 
 ### Terrene Scenario
 
@@ -269,6 +269,21 @@ to 10 decimal places in WGS84 degrees, retaining vertices without requesting
 generalization. This numerical serialization policy belongs to that profile
 version and does not change source-feature precision or historical England
 coverage. See [NatureScot acquisition](NATURESCOT-SSSI-ACQUISITION.md).
+
+The raster adapter `environment_agency.lidar_dtm_1m` / `ea_lidar_dtm_wcs_v1`
+uses the existing England BFE operational profile and separately measures
+valid native cell coverage. The same attempt/manifest mechanism now supports
+typed original XML/GeoTIFF byte artifacts, stored under organization-scoped
+content hashes. Historical JSON artifact keys and encodings are unchanged.
+Successful raster reads verify required artifact kinds and the matching saved
+coverage summary; trusted internal artifact reads return exact checked bytes.
+No public raw-data URL or authenticated acquisition API is introduced.
+
+Raster acquisition retains the native EPSG:27700 1 m bounding window and reports
+centre-in-polygon complete/partial/no-valid-cell availability, respecting holes.
+It does not clip, resample, fill missing pixels, run terrain models or bind new
+captures into assessments. Local survey dates remain unknown and source composite
+semantics remain separate from capture time. See [independent LIDAR acquisition](EA-LIDAR-GEOGRAPHIC-ACQUISITION.md).
 
 Migration 9 adds organization-scoped requests and append-only terminal attempts.
 Operational claims use optimistic concurrency, expiring leases and fenced

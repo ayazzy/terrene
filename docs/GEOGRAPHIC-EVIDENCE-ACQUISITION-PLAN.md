@@ -5,7 +5,11 @@
 Scoped on 14 September 2026 against repository baseline `bf6e927`. This document
 records the approved scope following the intelligence-platform direction. The
 first iteration is now implemented; see [implementation, verification and limits](GEOGRAPHIC-EVIDENCE-ACQUISITION.md).
-The remaining national expansion steps below are still planned.
+England and Scotland designation acquisition are implemented. On 14 September
+2026 the founder deferred Wales and Northern Ireland designation expansion to
+prioritize LIDAR and additional data families. The original iteration constraints
+below remain historical scope; use [Current State](CURRENT-STATE.md) and the
+append-only [Decisions](DECISIONS.md) for the current sequence.
 
 **Primary outcome:** acquire and integrity-read one existing vector source for an
 explicit supported area without creating an assessment, running a model or

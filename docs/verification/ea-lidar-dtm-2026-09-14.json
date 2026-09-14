@@ -1,0 +1,629 @@
+{
+  "verification_version": "ea_dtm_acquisition_verification_v1",
+  "verified_at": "2026-09-14T22:48:53.220129+00:00",
+  "captures": [
+    {
+      "label": "oxford",
+      "verification_version": "geographic_raster_live_verification_v1",
+      "verified_at": "2026-09-14T22:48:29.804246+00:00",
+      "acquisition_id": "324434c4-a1b0-4e2b-ab58-4614697d1438",
+      "request": {
+        "contract_version": "geographic_acquisition_request_v1",
+        "source_id": "environment_agency.lidar_dtm_1m",
+        "adapter_version": "ea_lidar_dtm_wcs_v1",
+        "coverage_profile_sha256": "e671d4095419d0df1f5ad8be40467aef759c666aa34d2f6ecdd8ef6fc8c061bf",
+        "area": {
+          "coordinates": [
+            [
+              [
+                -1.288311489128907,
+                51.77339524601814
+              ],
+              [
+                -1.2882888701206927,
+                51.77483370159375
+              ],
+              [
+                -1.2859700908637715,
+                51.77481964644158
+              ],
+              [
+                -1.285992783577688,
+                51.77338119158734
+              ],
+              [
+                -1.288311489128907,
+                51.77339524601814
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "temporal": {
+          "mode": "current_publication",
+          "start": null,
+          "end": null
+        },
+        "idempotency_key": "live-2026-09-14-lidar-oxford"
+      },
+      "manifest_sha256": "e987df4361d227065dbeffcdcc3608f6c81aaf390ab05c91e524e81b9fd97f27",
+      "artifact_checksums": {
+        "native_raster": {
+          "sha256": "2fce4b7a7df84d107ff035b8a67f5fb9dc4dce464bf680edd08f0f9daaba4494",
+          "bytes": 410051,
+          "media_type": "image/tiff"
+        },
+        "provider_description_after": {
+          "sha256": "9f97049361979d188051bea7647039151cb74dcb68753b67be3d892c091de958",
+          "bytes": 3360,
+          "media_type": "application/xml"
+        },
+        "provider_description_before": {
+          "sha256": "9f97049361979d188051bea7647039151cb74dcb68753b67be3d892c091de958",
+          "bytes": 3360,
+          "media_type": "application/xml"
+        },
+        "raster_coverage": {
+          "sha256": "a3fe8209cfca50d48a22b84f2e213232937fc4305f039c865d59eefe06f23e9a",
+          "bytes": 930
+        }
+      },
+      "raster_coverage": {
+        "area_cell_count": 25600,
+        "band_count": 1,
+        "bounds_27700": [
+          449199.0,
+          208538.0,
+          449366.0,
+          208705.0
+        ],
+        "contract_version": "geographic_raster_coverage_v1",
+        "coverage_state": "complete",
+        "crs": "EPSG:27700",
+        "dtype": "float32",
+        "height": 167,
+        "missing_cell_count": 0,
+        "nodata_value": -3.4028234663852886e+38,
+        "processing_version": "ea_dtm_native_cell_coverage_v1",
+        "projection_method": "pyproj EPSG:4326 to EPSG:27700, always_xy; polygon vertices transformed without densification.",
+        "resolution_m": 1,
+        "retained_extent": "Unmodified WCS bounding window with 3 m margin; availability counts refer only to the request polygon.",
+        "sampling_method": "Native cell centres in projected request polygon; holes excluded. No filling, reprojection of raster, resampling or clipping.",
+        "transform": [
+          1.0,
+          0.0,
+          449199.0,
+          0.0,
+          -1.0,
+          208705.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "valid_cell_count": 25600,
+        "valid_cell_fraction": 1.0,
+        "vertical_datum": "Ordnance Datum Newlyn",
+        "vertical_unit": "metre",
+        "width": 167
+      },
+      "offline_replay_match": true,
+      "independent_sample_match": true,
+      "samples": [
+        {
+          "row": 3,
+          "column": 3,
+          "bounds_27700": [
+            449202.0,
+            208701.0,
+            449203.0,
+            208702.0
+          ],
+          "valid": true,
+          "elevation_m": 57.47100067138672,
+          "independent_match": true
+        },
+        {
+          "row": 83,
+          "column": 3,
+          "bounds_27700": [
+            449202.0,
+            208621.0,
+            449203.0,
+            208622.0
+          ],
+          "valid": true,
+          "elevation_m": 57.40299987792969,
+          "independent_match": true
+        },
+        {
+          "row": 162,
+          "column": 162,
+          "bounds_27700": [
+            449361.0,
+            208542.0,
+            449362.0,
+            208543.0
+          ],
+          "valid": true,
+          "elevation_m": 57.44200134277344,
+          "independent_match": true
+        }
+      ],
+      "independent_responses": [
+        {
+          "endpoint": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+          "parameters": {
+            "service": "WCS",
+            "version": "2.0.1",
+            "request": "DescribeCoverage",
+            "coverageId": "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m"
+          },
+          "decoded_response_sha256": "9f97049361979d188051bea7647039151cb74dcb68753b67be3d892c091de958",
+          "decoded_bytes": 3360
+        },
+        {
+          "endpoint": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+          "parameters": [
+            [
+              "service",
+              "WCS"
+            ],
+            [
+              "version",
+              "2.0.1"
+            ],
+            [
+              "request",
+              "GetCoverage"
+            ],
+            [
+              "coverageId",
+              "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m"
+            ],
+            [
+              "format",
+              "image/tiff"
+            ],
+            [
+              "subset",
+              "E(449202.0,449203.0)"
+            ],
+            [
+              "subset",
+              "N(208701.0,208702.0)"
+            ]
+          ],
+          "decoded_response_sha256": "94fb396679e499e71ea58670b17e21bb3ae5328bdf4f140a1eeb22c4e67e4784",
+          "decoded_bytes": 1443
+        },
+        {
+          "endpoint": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+          "parameters": [
+            [
+              "service",
+              "WCS"
+            ],
+            [
+              "version",
+              "2.0.1"
+            ],
+            [
+              "request",
+              "GetCoverage"
+            ],
+            [
+              "coverageId",
+              "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m"
+            ],
+            [
+              "format",
+              "image/tiff"
+            ],
+            [
+              "subset",
+              "E(449202.0,449203.0)"
+            ],
+            [
+              "subset",
+              "N(208621.0,208622.0)"
+            ]
+          ],
+          "decoded_response_sha256": "c9b79d4752f2f1d05c32d5ddebd370cf902151dde3f7fa66802d5f18f5cd4071",
+          "decoded_bytes": 1443
+        },
+        {
+          "endpoint": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+          "parameters": [
+            [
+              "service",
+              "WCS"
+            ],
+            [
+              "version",
+              "2.0.1"
+            ],
+            [
+              "request",
+              "GetCoverage"
+            ],
+            [
+              "coverageId",
+              "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m"
+            ],
+            [
+              "format",
+              "image/tiff"
+            ],
+            [
+              "subset",
+              "E(449361.0,449362.0)"
+            ],
+            [
+              "subset",
+              "N(208542.0,208543.0)"
+            ]
+          ],
+          "decoded_response_sha256": "fd22099ef8898f386b6808fa56e9b8c8375eeca079c0b45bd91923149c9404d4",
+          "decoded_bytes": 1443
+        },
+        {
+          "endpoint": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+          "parameters": {
+            "service": "WCS",
+            "version": "2.0.1",
+            "request": "DescribeCoverage",
+            "coverageId": "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m"
+          },
+          "decoded_response_sha256": "9f97049361979d188051bea7647039151cb74dcb68753b67be3d892c091de958",
+          "decoded_bytes": 3360
+        }
+      ],
+      "limits": "Offline full-coverage replay and 3\u20134 live one-cell comparisons, not a second complete raster download, survey validation or atomic provider snapshot.",
+      "retained_metadata_schema_and_unit_tag_match": true
+    },
+    {
+      "label": "east-anglia",
+      "verification_version": "geographic_raster_live_verification_v1",
+      "verified_at": "2026-09-14T22:48:40.710970+00:00",
+      "acquisition_id": "367ec0d6-d880-4a79-8a4a-825229f9a1c7",
+      "request": {
+        "contract_version": "geographic_acquisition_request_v1",
+        "source_id": "environment_agency.lidar_dtm_1m",
+        "adapter_version": "ea_lidar_dtm_wcs_v1",
+        "coverage_profile_sha256": "e671d4095419d0df1f5ad8be40467aef759c666aa34d2f6ecdd8ef6fc8c061bf",
+        "area": {
+          "coordinates": [
+            [
+              [
+                0.3693466228429095,
+                52.753925283844154
+              ],
+              [
+                0.36942463214864907,
+                52.75536237936599
+              ],
+              [
+                0.3717932842832606,
+                52.75531502442363
+              ],
+              [
+                0.3717151971631158,
+                52.75387793135176
+              ],
+              [
+                0.3693466228429095,
+                52.753925283844154
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "temporal": {
+          "mode": "current_publication",
+          "start": null,
+          "end": null
+        },
+        "idempotency_key": "live-2026-09-14-lidar-east-anglia"
+      },
+      "manifest_sha256": "881ccb3a2d9cafe75dd5cdc2803801ee244e6a220b6587d453435162de50d8cc",
+      "artifact_checksums": {
+        "native_raster": {
+          "sha256": "009147b9cf5df33de2a2b535474f758bbf693c09c95e0afbf809a6eebb4b4e8f",
+          "bytes": 410051,
+          "media_type": "image/tiff"
+        },
+        "provider_description_after": {
+          "sha256": "9f97049361979d188051bea7647039151cb74dcb68753b67be3d892c091de958",
+          "bytes": 3360,
+          "media_type": "application/xml"
+        },
+        "provider_description_before": {
+          "sha256": "9f97049361979d188051bea7647039151cb74dcb68753b67be3d892c091de958",
+          "bytes": 3360,
+          "media_type": "application/xml"
+        },
+        "raster_coverage": {
+          "sha256": "a8a5c46817b09d522e4ca73a790561fd2e8ed20c7761fa5626902c32c2f4e8ed",
+          "bytes": 930
+        }
+      },
+      "raster_coverage": {
+        "area_cell_count": 25600,
+        "band_count": 1,
+        "bounds_27700": [
+          559997.0,
+          319996.0,
+          560164.0,
+          320163.0
+        ],
+        "contract_version": "geographic_raster_coverage_v1",
+        "coverage_state": "complete",
+        "crs": "EPSG:27700",
+        "dtype": "float32",
+        "height": 167,
+        "missing_cell_count": 0,
+        "nodata_value": -3.4028234663852886e+38,
+        "processing_version": "ea_dtm_native_cell_coverage_v1",
+        "projection_method": "pyproj EPSG:4326 to EPSG:27700, always_xy; polygon vertices transformed without densification.",
+        "resolution_m": 1,
+        "retained_extent": "Unmodified WCS bounding window with 3 m margin; availability counts refer only to the request polygon.",
+        "sampling_method": "Native cell centres in projected request polygon; holes excluded. No filling, reprojection of raster, resampling or clipping.",
+        "transform": [
+          1.0,
+          0.0,
+          559997.0,
+          0.0,
+          -1.0,
+          320163.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "valid_cell_count": 25600,
+        "valid_cell_fraction": 1.0,
+        "vertical_datum": "Ordnance Datum Newlyn",
+        "vertical_unit": "metre",
+        "width": 167
+      },
+      "offline_replay_match": true,
+      "independent_sample_match": true,
+      "samples": [
+        {
+          "row": 3,
+          "column": 3,
+          "bounds_27700": [
+            560000.0,
+            320159.0,
+            560001.0,
+            320160.0
+          ],
+          "valid": true,
+          "elevation_m": 2.490000009536743,
+          "independent_match": true
+        },
+        {
+          "row": 83,
+          "column": 3,
+          "bounds_27700": [
+            560000.0,
+            320079.0,
+            560001.0,
+            320080.0
+          ],
+          "valid": true,
+          "elevation_m": 2.619999885559082,
+          "independent_match": true
+        },
+        {
+          "row": 162,
+          "column": 162,
+          "bounds_27700": [
+            560159.0,
+            320000.0,
+            560160.0,
+            320001.0
+          ],
+          "valid": true,
+          "elevation_m": 3.619999885559082,
+          "independent_match": true
+        }
+      ],
+      "independent_responses": [
+        {
+          "endpoint": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+          "parameters": {
+            "service": "WCS",
+            "version": "2.0.1",
+            "request": "DescribeCoverage",
+            "coverageId": "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m"
+          },
+          "decoded_response_sha256": "9f97049361979d188051bea7647039151cb74dcb68753b67be3d892c091de958",
+          "decoded_bytes": 3360
+        },
+        {
+          "endpoint": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+          "parameters": [
+            [
+              "service",
+              "WCS"
+            ],
+            [
+              "version",
+              "2.0.1"
+            ],
+            [
+              "request",
+              "GetCoverage"
+            ],
+            [
+              "coverageId",
+              "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m"
+            ],
+            [
+              "format",
+              "image/tiff"
+            ],
+            [
+              "subset",
+              "E(560000.0,560001.0)"
+            ],
+            [
+              "subset",
+              "N(320159.0,320160.0)"
+            ]
+          ],
+          "decoded_response_sha256": "ee921438f5b3f0723b0d2b2960454bb2f3d142fbdfcb2cfe445cdebdfdd6f466",
+          "decoded_bytes": 1443
+        },
+        {
+          "endpoint": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+          "parameters": [
+            [
+              "service",
+              "WCS"
+            ],
+            [
+              "version",
+              "2.0.1"
+            ],
+            [
+              "request",
+              "GetCoverage"
+            ],
+            [
+              "coverageId",
+              "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m"
+            ],
+            [
+              "format",
+              "image/tiff"
+            ],
+            [
+              "subset",
+              "E(560000.0,560001.0)"
+            ],
+            [
+              "subset",
+              "N(320079.0,320080.0)"
+            ]
+          ],
+          "decoded_response_sha256": "fe03b2d846eb9bc79b1e8654b1f81c33d9cf95f5377f2ebd7529009f35eb8083",
+          "decoded_bytes": 1443
+        },
+        {
+          "endpoint": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+          "parameters": [
+            [
+              "service",
+              "WCS"
+            ],
+            [
+              "version",
+              "2.0.1"
+            ],
+            [
+              "request",
+              "GetCoverage"
+            ],
+            [
+              "coverageId",
+              "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m"
+            ],
+            [
+              "format",
+              "image/tiff"
+            ],
+            [
+              "subset",
+              "E(560159.0,560160.0)"
+            ],
+            [
+              "subset",
+              "N(320000.0,320001.0)"
+            ]
+          ],
+          "decoded_response_sha256": "d4b9b560a4c38e4857028c0b405e2f5c3b911728434f45671febdbcc8501e330",
+          "decoded_bytes": 1443
+        },
+        {
+          "endpoint": "https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs",
+          "parameters": {
+            "service": "WCS",
+            "version": "2.0.1",
+            "request": "DescribeCoverage",
+            "coverageId": "13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_1m"
+          },
+          "decoded_response_sha256": "9f97049361979d188051bea7647039151cb74dcb68753b67be3d892c091de958",
+          "decoded_bytes": 3360
+        }
+      ],
+      "limits": "Offline full-coverage replay and 3\u20134 live one-cell comparisons, not a second complete raster download, survey validation or atomic provider snapshot.",
+      "retained_metadata_schema_and_unit_tag_match": true
+    }
+  ],
+  "previous_vector_captures": [
+    {
+      "label": "oxford",
+      "acquisition_id": "479183bb-923c-4f8d-b7db-75b424d016b8",
+      "manifest_sha256": "dbb02b4e051d36e5e953375792ca42be37010b82278152f0c6388c39130bebab",
+      "summary_unchanged": true
+    },
+    {
+      "label": "norfolk",
+      "acquisition_id": "e3221ce9-9b1c-4598-90d6-e7983c694ff4",
+      "manifest_sha256": "ccc50b567464ebe9c7dde590c6ba2a8f80d96d7950c68fbb0057e6f56bfd37bc",
+      "summary_unchanged": true
+    },
+    {
+      "label": "norfolk-broads",
+      "acquisition_id": "fa940c13-4bf7-4902-954f-abb9be4cdece",
+      "manifest_sha256": "16cf6e285142d842bf00809399e4bd864420bbac52bf2cb74a74ada4a709cc16",
+      "summary_unchanged": true
+    },
+    {
+      "label": "broads-v2",
+      "acquisition_id": "d43d57ee-f4c8-4bce-ab25-c37307404c47",
+      "manifest_sha256": "5d1062def9f4e92310466ad14e4c03d30d7c3c5928d867e541baeba10b8b208b",
+      "summary_unchanged": true
+    },
+    {
+      "label": "scotland-edinburgh",
+      "acquisition_id": "200f1dbf-a3af-4a34-9bee-affaf8fb6b74",
+      "manifest_sha256": "20c3c2ab8bf68b7f46869a162ff05c83df77fc35dbba5bf1a580c66a53e2ae9f",
+      "summary_unchanged": true
+    },
+    {
+      "label": "scotland-unst-keen-of-hamar",
+      "acquisition_id": "6f63e1aa-55d3-4e0d-8412-621c0ad4e316",
+      "manifest_sha256": "6e09cb537a4d2b8710418544c2945034bbb633ad4bb9aaaacb7f55f19f260a21",
+      "summary_unchanged": true
+    }
+  ],
+  "isolated_legacy_table_counts": {
+    "sites": 0,
+    "assessments": 0,
+    "datasets": 0,
+    "features": 0,
+    "land_evidence_snapshots": 0,
+    "module_runs": 0
+  },
+  "limitations": [
+    "Two bounded England captures; no UK-wide or full-country raster certification.",
+    "Local survey date remains unknown. Live cell checks are samples, not whole-raster external certification.",
+    "Raw GeoTIFF/XML files and database remain private and outside Git."
+  ],
+  "fresh_process_checks": [
+    {
+      "label": "oxford",
+      "readback_unchanged": true,
+      "offline_retry_unchanged": true,
+      "native_bytes_checksum_match": true
+    },
+    {
+      "label": "east-anglia",
+      "readback_unchanged": true,
+      "offline_retry_unchanged": true,
+      "native_bytes_checksum_match": true
+    }
+  ]
+}

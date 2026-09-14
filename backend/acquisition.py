@@ -16,7 +16,10 @@ from sqlalchemy import insert, select, update
 from sqlalchemy.exc import IntegrityError
 
 from backend import core
-from backend.acquisition_contracts import AcquisitionError, AcquisitionRequest, digest, encode, MAX_REQUEST_BYTES, SCOTLAND_ADAPTER_VERSION
+from backend.acquisition_contracts import (
+    AcquisitionError, AcquisitionRequest, BinaryArtifact, digest, encode,
+    MAX_REQUEST_BYTES, SCOTLAND_ADAPTER_VERSION, DTM_ADAPTER_VERSION,
+)
 from backend.acquisition_sources import (
     ADAPTER_COVERAGE, source_descriptor, fetch_sssi, prepare_coverage, validate_capabilities, load_coverage,
 )
@@ -39,6 +42,14 @@ def _object_key(org, sha):
 
 
 def _store(org, value):
+    if isinstance(value, BinaryArtifact):
+        if value.media_type not in ('image/tiff', 'application/xml'):
+            raise AcquisitionError('unsupported_artifact_type')
+        data = value.content
+        sha = digest(data)
+        key = _object_key(org, sha).removesuffix('.json') + '.bin'
+        core.store_object_immutable(key, data)
+        return {'key': key, 'sha256': sha, 'bytes': len(data), 'media_type': value.media_type}
     data = encode(value)
     sha = digest(data)
     key = _object_key(org, sha)
@@ -48,14 +59,20 @@ def _store(org, value):
 
 def _load(org, reference):
     try:
-        if reference['key'] != _object_key(org, reference['sha256']):
+        key = _object_key(org, reference['sha256'])
+        binary = 'media_type' in reference
+        if binary:
+            if reference['media_type'] not in ('image/tiff', 'application/xml'):
+                raise AcquisitionError('integrity_failure')
+            key = key.removesuffix('.json') + '.bin'
+        if reference['key'] != key:
             raise AcquisitionError('integrity_failure')
         data = core.load_object(reference['key'])
         if data is None or digest(data) != reference['sha256']:
             raise AcquisitionError('integrity_failure')
         if 'bytes' in reference and len(data) != reference['bytes']:
             raise AcquisitionError('integrity_failure')
-        return json.loads(data)
+        return data if binary else json.loads(data)
     except AcquisitionError:
         raise
     except Exception as exc:
@@ -142,7 +159,11 @@ def acquire(org: str, request: AcquisitionRequest | dict, *, client=None) -> dic
     state, error_code = 'succeeded', None
     try:
         validate_capabilities(request)
-        result = fetch_sssi(request, client=client, artifacts=artifacts, diagnostics=diagnostics)
+        if request.adapter_version == DTM_ADAPTER_VERSION:
+            from backend.acquisition_rasters import fetch_dtm
+            result = fetch_dtm(request, client=client, artifacts=artifacts, diagnostics=diagnostics)
+        else:
+            result = fetch_sssi(request, client=client, artifacts=artifacts, diagnostics=diagnostics)
     except AcquisitionError as exc:
         state, error_code = 'failed', exc.code
     except Exception:
@@ -162,6 +183,12 @@ def acquire(org: str, request: AcquisitionRequest | dict, *, client=None) -> dic
                        'artifact_hash_semantics': 'Canonical assembled JSON; response hashes are decoded HTTP bytes.'},
         'artifacts': {},
     }
+    if request.adapter_version == DTM_ADAPTER_VERSION:
+        import rasterio
+        manifest['processing'].update(
+            rasterio=rasterio.__version__, gdal=rasterio.__gdal_version__,
+            artifact_hash_semantics='XML/GeoTIFF hashes cover original decoded HTTP bytes; JSON uses canonical encoding.',
+        )
     try:
         for name, value in artifacts.items():
             manifest['artifacts'][name] = _store(org, value)
@@ -228,11 +255,22 @@ def read_acquisition(org: str, acquisition_id: str, *, attempt_id: str | None = 
         for name, ref in manifest['artifacts'].items():
             _load(org, ref)
             references[name] = {k: ref[k] for k in ('sha256', 'bytes')}
+            if 'media_type' in ref:
+                references[name]['media_type'] = ref['media_type']
         if attempt['state'] == 'succeeded':
             required = {'provider_metadata_before', 'provider_metadata_after', 'assembled_provider_candidates',
                         'normalized_selection', 'normalization_lineage'}
             if request.adapter_version == SCOTLAND_ADAPTER_VERSION:
                 required |= {'provider_item_before', 'provider_item_after'}
+            if request.adapter_version == DTM_ADAPTER_VERSION:
+                required = {'provider_description_before', 'provider_description_after', 'native_raster', 'raster_coverage'}
+                for name, kind in [('native_raster', 'image/tiff'), ('provider_description_before', 'application/xml'),
+                                   ('provider_description_after', 'application/xml')]:
+                    if references.get(name, {}).get('media_type') != kind:
+                        raise AcquisitionError('integrity_failure')
+                coverage_ref = manifest['artifacts'].get('raster_coverage', {})
+                if 'media_type' in coverage_ref or _load(org, coverage_ref) != (manifest['result'] or {}).get('raster'):
+                    raise AcquisitionError('integrity_failure')
             if set(references) != required or manifest['result'] is None or attempt['error_code'] is not None:
                 raise AcquisitionError('integrity_failure')
             load_coverage(request.coverage_profile_sha256,
@@ -254,6 +292,16 @@ def read_acquisition(org: str, acquisition_id: str, *, attempt_id: str | None = 
         'attempts': [{k: a[k] for k in ('id', 'number', 'state', 'error_code', 'started', 'completed')}
                      for a in history],
     }
+
+
+def read_acquisition_artifact(org, acquisition_id, name, *, attempt_id=None):
+    """Trusted internal read of an exact checked artifact; never follows a caller URL."""
+    summary = read_acquisition(org, acquisition_id, attempt_id=attempt_id)
+    if name not in summary['artifact_checksums']:
+        raise AcquisitionError('artifact_not_found')
+    manifest = _load(org, {'key': _object_key(org, summary['manifest_sha256']),
+                           'sha256': summary['manifest_sha256']})
+    return _load(org, manifest['artifacts'][name])
 
 
 def main(argv=None):
