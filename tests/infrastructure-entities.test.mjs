@@ -80,7 +80,10 @@ test('Project Subjects receive geography only from an exact authorized Site rela
   assert.equal(linked.evidenceState, '1 intelligence run');
   assert.equal(beacon.locationState, 'unlocated');
   assert.equal(beacon.geometry, null);
-  assert.match(infrastructureEntityLabel(beacon), /unlocated intelligence/);
+  assert.equal(
+    infrastructureEntityLabel(beacon),
+    'Project Subject · No verified geography',
+  );
   assert.equal(broken.locationState, 'linked_site_unavailable');
   assert.equal(broken.geometry, null);
 });
@@ -94,7 +97,7 @@ test('entity search spans type, evidence and location state without geocoding na
     ['beacon-fen'],
   );
   assert.deepEqual(
-    searchableInfrastructureEntities(entities, 'unlocated intelligence').map(
+    searchableInfrastructureEntities(entities, 'No verified geography').map(
       (entity) => entity.id,
     ),
     ['beacon-fen'],

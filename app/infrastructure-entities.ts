@@ -98,7 +98,7 @@ export function infrastructureEntityLabel(entity: InfrastructureEntity) {
     return `Project Subject · linked to ${entity.linkedSite?.name}`;
   if (entity.locationState === 'linked_site_unavailable')
     return 'Project Subject · linked Site unavailable';
-  return 'Project Subject · unlocated intelligence';
+  return 'Project Subject · No verified geography';
 }
 
 export function searchableInfrastructureEntities(

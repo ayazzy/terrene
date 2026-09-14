@@ -22,7 +22,7 @@ The connected local application demonstrated:
 
 1. The map reached its explicit ready state and remained mounted through Site and Project transitions.
 2. A saved Site and a Site-linked synthetic Project Subject were directly selectable from the shared map roster/marker.
-3. Beacon Fen remained in `Unlocated intelligence`; it received no map marker and its dossier showed supported consent with construction and grid evidence unresolved.
+3. Beacon Fen remained in `Unlocated intelligence` with the explicit state `No verified geography`; it received no map marker and its dossier showed supported consent with construction and grid evidence unresolved.
 4. The Beacon Fen source passage, source version and exact claim reference were inspectable while the map remained present.
 5. The four-run synthetic North Fen history allowed an earlier three-bundle evidence envelope to be selected; the historical banner, bundle count and run identity changed together without rewriting the latest run.
 6. The retained Ancient Woodland layer toggled from one rendered path to zero and back to one; the canonical URL gained and then removed `hidden=environment:woodland`.
