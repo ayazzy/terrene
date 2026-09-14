@@ -206,3 +206,11 @@ The spatial UI defaults to top-down 2D. It may offer a 55-degree perspective onl
 **Rationale:** A native vector style gives the spatial application a coherent operator-grade hierarchy without corrupting source colours through a canvas filter. Explicit production configuration avoids depending on a public development service with no SLA. Evidence-gated perspective and generated states keep visual richness subordinate to immutable evidence semantics, while the surface hierarchy preserves the map as the primary analytical canvas.
 
 **References:** [Architecture](ARCHITECTURE.md), [Sprint 005 Task 3](SPRINT-005-TASK-3-DARK-SPATIAL-OPERATING-PICTURE.md), [OpenFreeMap quick start](https://openfreemap.org/quick_start/), [OpenFreeMap service](https://openfreemap.org/).
+
+## 2026-09-14 — Spatial presentation failures do not change evidence semantics
+
+**Decision:** Treat the basemap, immutable map scene and object-height evidence as separate failure boundaries. If a configured remote basemap fails, retain the authorized Terrene scene on an evidence-only dark background and disclose the cartographic failure. If the selected scene fails validation, is unavailable or is superseded by a newer request, fail closed and never retain objects from the prior selection. Preserve partial, gap and historical unsupported height states explicitly; only valid evidence-backed observations may extrude.
+
+**Rationale:** A third-party cartographic dependency must not hide evidence Terrene can still verify, while a missing or stale evidence response must not be made plausible with current objects, zero values or default heights. Keeping these boundaries visible preserves analyst continuity without weakening historical or scientific integrity.
+
+**References:** [Architecture](ARCHITECTURE.md), [Sprint 005 Task 5 spatial overhaul certification](SPRINT-005-TASK-5-SPATIAL-OVERHAUL-CERTIFICATION.md).
