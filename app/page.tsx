@@ -37,7 +37,7 @@ import {
   reconcileOperatingPictureState,
 } from './operating-picture-state';
 import type { OverlayFinding } from './site-evidence';
-import SiteMap from './map';
+import SiteMap, { type BoundaryDrawingControls } from './map';
 import {
   projectInfrastructureEntities,
   searchableInfrastructureEntities,
@@ -151,6 +151,7 @@ export default function Home() {
   const analysisCloseButton = useRef<HTMLButtonElement>(null);
   const reopenAnalysisButton = useRef<HTMLButtonElement>(null);
   const siteNameInput = useRef<HTMLInputElement>(null);
+  const boundaryDrawingControls = useRef<BoundaryDrawingControls | null>(null);
   const dossierFocusIntent = useRef<'close' | 'reopen' | null>(null);
   const previousAssetId = useRef<string | null>(null);
   const assetReturnFocusIntent = useRef(false);
@@ -188,6 +189,7 @@ export default function Home() {
     [geometry, setGeometry] = useState<any>(null),
     [drawing, setDrawing] = useState(false),
     [drawSession, setDrawSession] = useState(0),
+    [drawPointCount, setDrawPointCount] = useState(0),
     [editing, setEditing] = useState(false),
     [query, setQuery] = useState(''),
     [filter, setFilter] = useState('all'),
@@ -584,6 +586,7 @@ export default function Home() {
     setGeometry(null);
     setRawGeometry(null);
     setDrawing(false);
+    setDrawPointCount(0);
     setError('');
     operatingPicture.transition(
       (currentState) => ({
@@ -603,6 +606,7 @@ export default function Home() {
   function closeSiteEditor() {
     setNewSite(false);
     setDrawing(false);
+    setDrawPointCount(0);
     setEditing(false);
     setGeometry(null);
     setRawGeometry(null);
@@ -859,11 +863,14 @@ export default function Home() {
               }
               draw={newSite && drawing}
               drawSession={drawSession}
+              drawControlsRef={boundaryDrawingControls}
+              onDrawProgress={setDrawPointCount}
               boundaryEditing={newSite}
               onDraw={(nextGeometry) => {
                 setRawGeometry(null);
                 setGeometry(nextGeometry);
                 setDrawing(false);
+                setDrawPointCount(0);
               }}
               onInspect={(finding) => {
                 if (view !== 'site') return;
@@ -1902,6 +1909,7 @@ export default function Home() {
                 : undefined
             }
             drawing={drawing}
+            drawPointCount={drawPointCount}
             busy={busy}
             error={error}
             nameInputRef={siteNameInput}
@@ -1909,8 +1917,11 @@ export default function Home() {
             onNotesChange={setNotes}
             onStartDrawing={() => {
               setDrawSession((session) => session + 1);
+              setDrawPointCount(0);
               setDrawing(true);
             }}
+            onUndoDrawing={() => boundaryDrawingControls.current?.undo()}
+            onFinishDrawing={() => boundaryDrawingControls.current?.finish()}
             onUpload={(file) => void upload(file)}
             onCancel={closeSiteEditor}
             onSave={() => void save()}

@@ -208,6 +208,11 @@
   box-shadow: inset 0 0 0 1px rgb(125 157 138 / 24%);
 }
 
+.operatingMap :global(.map-toolbar button:focus-visible) {
+  outline-width: 2px;
+  outline-offset: -2px;
+}
+
 .operatingMap :global(.map-view-switch) {
   border-right-color: #3b4942;
 }

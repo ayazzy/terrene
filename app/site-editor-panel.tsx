@@ -11,12 +11,15 @@ type Props = {
   stagedGeometry: Geometry | null;
   existingBoundaryLabel?: string;
   drawing: boolean;
+  drawPointCount: number;
   busy: boolean;
   error: string;
   nameInputRef?: Ref<HTMLInputElement>;
   onNameChange: (value: string) => void;
   onNotesChange: (value: string) => void;
   onStartDrawing: () => void;
+  onUndoDrawing: () => void;
+  onFinishDrawing: () => void;
   onUpload: (file?: File) => void;
   onCancel: () => void;
   onSave: () => void;
@@ -29,12 +32,15 @@ export default function SiteEditorPanel({
   stagedGeometry,
   existingBoundaryLabel,
   drawing,
+  drawPointCount,
   busy,
   error,
   nameInputRef,
   onNameChange,
   onNotesChange,
   onStartDrawing,
+  onUndoDrawing,
+  onFinishDrawing,
   onUpload,
   onCancel,
   onSave,
@@ -129,8 +135,28 @@ export default function SiteEditorPanel({
             </div>
             {drawing ? (
               <output className="boundary-drawing">
-                Click the map to place vertices. Use the map controls to undo or
-                finish.
+                <span>
+                  {drawPointCount < 3
+                    ? `Place ${3 - drawPointCount} more ${3 - drawPointCount === 1 ? 'vertex' : 'vertices'} on the map.`
+                    : `${drawPointCount} vertices ready to finish.`}
+                </span>
+                <span className="boundary-drawing-actions">
+                  <button
+                    type="button"
+                    disabled={!drawPointCount}
+                    onClick={onUndoDrawing}
+                  >
+                    Undo
+                  </button>
+                  <button
+                    type="button"
+                    className="primary"
+                    disabled={drawPointCount < 3}
+                    onClick={onFinishDrawing}
+                  >
+                    Finish boundary
+                  </button>
+                </span>
               </output>
             ) : stagedGeometry ? (
               <output className="boundary-ready">

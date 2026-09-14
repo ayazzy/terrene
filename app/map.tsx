@@ -2,6 +2,7 @@
 import {
   useCallback,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
@@ -544,6 +545,8 @@ type Props = {
   selected?: string;
   draw?: boolean;
   drawSession?: number;
+  drawControlsRef?: Ref<BoundaryDrawingControls | null>;
+  onDrawProgress?: (pointCount: number) => void;
   boundaryEditing?: boolean;
   focusRequest?: number;
   boundaryLabel?: string;
@@ -584,12 +587,20 @@ type Props = {
   dossierOpen?: boolean;
   openDossierButtonRef?: Ref<HTMLButtonElement>;
 };
+
+export type BoundaryDrawingControls = {
+  undo: () => void;
+  finish: () => void;
+};
+
 export default function SiteMap({
   geometry,
   findings = [],
   selected,
   draw = false,
   drawSession = 0,
+  drawControlsRef,
+  onDrawProgress,
   boundaryEditing = false,
   onDraw,
   focusRequest,
@@ -1302,8 +1313,38 @@ export default function SiteMap({
       return g.geometries.map(path).join(' ');
     return '';
   }
-  const points =
-    draftVertices.session === drawSession ? draftVertices.points : [];
+  const points = useMemo(
+    () => (draftVertices.session === drawSession ? draftVertices.points : []),
+    [draftVertices, drawSession],
+  );
+
+  useEffect(() => {
+    onDrawProgress?.(draw ? points.length : 0);
+  }, [draw, onDrawProgress, points.length]);
+
+  useImperativeHandle(
+    drawControlsRef,
+    () => ({
+      undo() {
+        if (!draw) return;
+        setDraftVertices({
+          session: drawSession,
+          points: points.slice(0, -1),
+        });
+      },
+      finish() {
+        if (!draw || points.length < 3) return;
+        const completedBoundary: Polygon = {
+          type: 'Polygon',
+          coordinates: [[...points, points[0]]],
+        };
+        setDraftVertices({ session: drawSession, points: [] });
+        onDraw?.(completedBoundary);
+      },
+    }),
+    [draw, drawSession, onDraw, points],
+  );
+
   const draft: LineString | null =
     points.length > 1 ? { type: 'LineString', coordinates: points } : null;
   const builtFeatures = (mapScene?.features || []).filter((feature) =>
@@ -1380,7 +1421,7 @@ export default function SiteMap({
   const shownRosterEntities = entityQuery.trim() ? rosterEntities : entities;
   return (
     <div
-      className={`map-wrap${entities.length || entityLoading || entityUnavailable ? ` ${infrastructureStyles.operatingMap}` : ''}`}
+      className={`map-wrap${entities.length || entityLoading || entityUnavailable ? ` ${infrastructureStyles.operatingMap}` : ''}${boundaryEditing ? ' is-boundary-editing' : ''}`}
       data-primary-map="infrastructure-operating-picture"
       data-map-ready={ready}
       data-map-ready-ms={readyMs ?? undefined}
@@ -1616,7 +1657,7 @@ export default function SiteMap({
           </button>
         )}
       </div>
-      {workflowLevel && (
+      {workflowLevel && !boundaryEditing && (
         <nav
           className={infrastructureStyles.workflowPath}
           aria-label="Spatial intelligence level"
@@ -2190,36 +2231,6 @@ export default function SiteMap({
             </span>
           </div>
         )}
-      {draw && (
-        <div className="draw-bar">
-          <span>Click to place vertices · {points.length} points</span>
-          <button
-            disabled={!points.length}
-            onClick={() => {
-              setDraftVertices({
-                session: drawSession,
-                points: points.slice(0, -1),
-              });
-            }}
-          >
-            Undo
-          </button>
-          <button
-            disabled={points.length < 3}
-            className="primary"
-            onClick={() => {
-              const completedBoundary: Polygon = {
-                type: 'Polygon',
-                coordinates: [[...points, points[0]]],
-              };
-              setDraftVertices({ session: drawSession, points: [] });
-              onDraw?.(completedBoundary);
-            }}
-          >
-            Finish boundary
-          </button>
-        </div>
-      )}
     </div>
   );
 }

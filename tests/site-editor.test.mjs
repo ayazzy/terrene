@@ -46,6 +46,21 @@ test('new Site drafts clear prior identity and remain unsaved until submit', () 
   );
 });
 
+test('boundary completion is available inside the editor that gates Save', () => {
+  assert.match(page, /drawControlsRef=\{boundaryDrawingControls\}/);
+  assert.match(page, /onDrawProgress=\{setDrawPointCount\}/);
+  assert.match(editor, /drawPointCount < 3[\s\S]*?Undo[\s\S]*?Finish boundary/);
+  assert.match(
+    editor,
+    /className="primary"[\s\S]*?disabled=\{drawPointCount < 3\}[\s\S]*?onClick=\{onFinishDrawing\}/,
+  );
+  assert.match(
+    map,
+    /useImperativeHandle\([\s\S]*?undo\(\)[\s\S]*?points\.slice\(0, -1\)[\s\S]*?finish\(\)[\s\S]*?points\.length < 3[\s\S]*?onDraw\?\.\(completedBoundary\)/,
+  );
+  assert.doesNotMatch(map, /className="draw-bar"/);
+});
+
 test('drawing sessions cannot leak vertices between redraw attempts', () => {
   assert.match(page, /setDrawSession\(\(session\) => session \+ 1\)/);
   assert.match(map, /drawSessionRef\.current = drawSession/);

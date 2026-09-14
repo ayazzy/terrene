@@ -49,7 +49,10 @@ test('the retained map exposes local readiness without claiming live telemetry',
 });
 
 test('boundary drawing reuses the stable primary map module', () => {
-  assert.match(page, /import SiteMap from '\.\/map';/);
+  assert.match(
+    page,
+    /import SiteMap(?:, \{ type BoundaryDrawingControls \})? from '\.\/map';/,
+  );
   assert.doesNotMatch(page, /dynamic\(\(\) => import\('\.\/map'\)/);
   assert.equal((page.match(/<SiteMap/g) || []).length, 1);
   assert.match(page, /draw=\{newSite && drawing\}/);
@@ -140,6 +143,18 @@ test('portfolio navigation and map tools share one rounded command card', () => 
     mapCss,
     /map-toolbar button\)\s*\{[^}]*min-height:\s*2\.5rem[^}]*border-radius:\s*7px/s,
   );
+});
+
+test('constrained dossier maps use one compact toolbar row', () => {
+  assert.match(
+    shellCss,
+    /@media \(max-width: 79\.9375rem\) and \(min-width: 47\.5625rem\)[\s\S]*?entity-dossier:not\(\.dossier-collapsed\)[\s\S]*?\.map-toolbar[\s\S]*?flex-wrap: nowrap/,
+  );
+  assert.match(
+    shellCss,
+    /entity-dossier:not\(\.dossier-collapsed\)[\s\S]*?\.map-toolbar[\s\S]*?button[\s\S]*?font-size: 0/,
+  );
+  assert.match(map, /workflowLevel && !boundaryEditing/);
 });
 
 test('map orientation is available without reaching controls behind the dossier', () => {

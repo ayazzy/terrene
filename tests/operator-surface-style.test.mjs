@@ -64,3 +64,18 @@ test('semantic pills and analytical tabs retain their distinct geometry', () => 
     /\.intelligence-tabs \{[\s\S]*?border-radius: 0 !important;/,
   );
 });
+
+test('list navigation stays dark with restrained selected and focus states', () => {
+  assert.match(
+    shellCss,
+    /\.portfolio-list-main \.sites-view-bar \[role='tablist'\][\s\S]*?background: #151d1a/,
+  );
+  assert.match(
+    shellCss,
+    /\.portfolio-list-main \.sites-view-bar \[role='tab'\]\[data-active\][\s\S]*?background: #26322d/,
+  );
+  assert.match(
+    shellCss,
+    /\.portfolio-list-main \.sites-view-bar \[role='tab'\]:focus-visible[\s\S]*?outline-offset: 1px/,
+  );
+});
