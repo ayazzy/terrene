@@ -20,8 +20,11 @@ import {
   RotateCw,
   ArrowUpRight,
   FileSearch,
+  List,
+  Map as MapIcon,
   MapPin,
   PanelLeftOpen,
+  Plus,
   Search,
   X,
 } from 'lucide-react';
@@ -572,6 +575,9 @@ type Props = {
   entityUnavailable?: boolean;
   workflowLevel?: 'portfolio' | 'site' | 'asset';
   workflowAssetLabel?: string;
+  portfolioView?: 'map' | 'list';
+  onPortfolioViewChange?: (view: 'map' | 'list') => void;
+  onAddSite?: () => void;
   onOpenPortfolio?: () => void;
   onOpenSiteDiligence?: () => void;
   onOpenDossier?: () => void;
@@ -609,6 +615,9 @@ export default function SiteMap({
   entityUnavailable = false,
   workflowLevel,
   workflowAssetLabel,
+  portfolioView,
+  onPortfolioViewChange,
+  onAddSite,
   onOpenPortfolio,
   onOpenSiteDiligence,
   onOpenDossier,
@@ -1463,6 +1472,23 @@ export default function SiteMap({
           </output>
         )}
       <div className="map-toolbar">
+        {portfolioView && onPortfolioViewChange && (
+          <fieldset className="map-view-switch">
+            <legend className="sr-only">Sites view</legend>
+            <button
+              aria-pressed={portfolioView === 'map'}
+              onClick={() => onPortfolioViewChange('map')}
+            >
+              <MapIcon size={16} /> Map
+            </button>
+            <button
+              aria-pressed={portfolioView === 'list'}
+              onClick={() => onPortfolioViewChange('list')}
+            >
+              <List size={16} /> List
+            </button>
+          </fieldset>
+        )}
         {onOpenDossier && (
           <button ref={openDossierButtonRef} onClick={onOpenDossier}>
             <PanelLeftOpen size={16} /> Open dossier
@@ -1584,6 +1610,11 @@ export default function SiteMap({
         >
           <LocateFixed size={17} />
         </button>
+        {onAddSite && (
+          <button className="map-add-site" onClick={onAddSite}>
+            <Plus size={16} /> Add site
+          </button>
+        )}
       </div>
       {workflowLevel && (
         <nav

@@ -586,15 +586,14 @@
 .shell :global(.spatial-main > .site-creation-panel) {
   position: absolute;
   z-index: 20;
-  top: calc(var(--topbar-height) + 3.5rem);
-  right: 0;
-  bottom: 0;
+  top: calc(var(--topbar-height) + 0.75rem);
+  right: 0.75rem;
+  bottom: 0.75rem;
   width: min(27rem, 36%);
   overflow: hidden;
 }
 
 .shell :global(.spatial-main > .site-creation-panel.is-editing-site) {
-  top: var(--topbar-height);
   width: min(48rem, 48%);
 }
 
@@ -663,15 +662,20 @@
 }
 
 .shell :global(.sites-view-bar) {
-  min-height: 3.5rem;
-  padding: 0.5rem 0.75rem;
-  border-color: #414a45;
-  background: #202624;
+  width: fit-content;
+  min-height: 3rem;
+  margin: 0.75rem var(--page-gutter) 0.5rem auto;
+  padding: 4px;
+  border: 1px solid #405047;
+  border-radius: 10px;
+  background: rgb(20 28 24 / 96%);
+  box-shadow: 0 14px 36px rgb(0 0 0 / 22%);
 }
 
 .shell :global(.sites-view-bar button),
 .shell :global(.sites-view-bar [data-slot='tabs-list']) {
-  border-radius: 2px;
+  min-height: 2.5rem;
+  border-radius: 7px;
 }
 
 .shell :global(.portfolio-list-main),
@@ -934,6 +938,8 @@
   .shell :global(.spatial-main > .site-creation-panel),
   .shell :global(.spatial-main > .site-creation-panel.is-editing-site) {
     top: 42%;
+    right: 0;
+    bottom: 0;
     width: 100%;
     border-top: 1px solid #4a554f;
     border-left: 0;
@@ -1100,7 +1106,10 @@
   }
 
   .shell :global(.sites-view-bar) {
-    min-height: 3.25rem;
+    width: calc(100% - 1.5rem);
+    min-height: 3rem;
+    margin: 0.75rem;
+    justify-content: space-between;
   }
 
   .shell :global(.portfolio-list-panel) {

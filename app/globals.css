@@ -1779,7 +1779,8 @@ pre,
   display: flex;
   min-height: 0;
   flex-direction: column;
-  border-left: 1px solid #46534d;
+  border: 1px solid #46534d;
+  border-radius: 12px;
   background: #1b211e;
   box-shadow: -16px 0 34px rgb(0 0 0 / 28%);
   color: var(--text-primary);
@@ -1798,6 +1799,7 @@ pre,
   gap: 1rem;
   padding: 1rem;
   border-bottom: 1px solid var(--border-default);
+  border-radius: 11px 11px 0 0;
   background: #222825;
 }
 .site-creation-panel > header h2 {
@@ -1853,8 +1855,10 @@ pre,
   resize: vertical;
 }
 .site-boundary-step {
-  padding-top: 0.9rem;
-  border-top: 1px solid var(--border-subtle);
+  padding: 0.875rem;
+  border: 1px solid #36443d;
+  border-radius: 8px;
+  background: #18201c;
 }
 .site-boundary-step > div:first-child {
   display: flex;
@@ -1924,6 +1928,7 @@ pre,
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   border-top: 1px solid var(--border-default);
+  border-radius: 0 0 11px 11px;
   background: #202624;
 }
 .site-creation-panel > form > footer button {
@@ -2716,10 +2721,23 @@ summary {
   top: 12px;
   left: 12px;
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
 }
 .map-toolbar button {
-  box-shadow: var(--shadow-float);
+  min-height: 2.5rem;
+  box-shadow: none;
+}
+.map-view-switch {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 3px 0 0;
+  padding: 0 5px 0 0;
+  border: 0;
+  border-right: 1px solid var(--border-default);
 }
 .layer-count {
   color: var(--text-secondary);

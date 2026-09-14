@@ -922,6 +922,15 @@ export default function Home() {
                   ? mapFeatureName(mapEvidence.selectedObject)
                   : undefined
               }
+              portfolioView={
+                view === 'workspace' && !newSite ? sitesView : undefined
+              }
+              onPortfolioViewChange={
+                view === 'workspace' && !newSite ? setSitesView : undefined
+              }
+              onAddSite={
+                view === 'workspace' && !newSite ? startNew : undefined
+              }
               onOpenPortfolio={() => setView('workspace')}
               onOpenSiteDiligence={() => mapEvidence.clearSelection()}
               onOpenDossier={
@@ -985,19 +994,21 @@ export default function Home() {
             value={sitesView}
             onValueChange={(value) => setSitesView(String(value))}
           >
-            <div className="sites-view-bar">
-              <TabsList aria-label="Sites view">
-                <TabsTrigger value="map">
-                  <MapIcon size={16} /> Map
-                </TabsTrigger>
-                <TabsTrigger value="list">
-                  <List size={16} /> List
-                </TabsTrigger>
-              </TabsList>
-              <button className="primary" onClick={startNew}>
-                <Plus size={18} /> Add site
-              </button>
-            </div>
+            {sitesView === 'list' && (
+              <div className="sites-view-bar">
+                <TabsList aria-label="Sites view">
+                  <TabsTrigger value="map">
+                    <MapIcon size={16} /> Map
+                  </TabsTrigger>
+                  <TabsTrigger value="list">
+                    <List size={16} /> List
+                  </TabsTrigger>
+                </TabsList>
+                <button className="primary" onClick={startNew}>
+                  <Plus size={16} /> Add site
+                </button>
+              </div>
+            )}
             <TabsContent value="map" className="sites-map-panel">
               <p className="sr-only">
                 The persistent infrastructure map contains the Site and Project

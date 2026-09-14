@@ -14,7 +14,11 @@ const [page, map, editor, globals, shellCss] = await Promise.all([
 ]);
 
 test('Add site opens a contextual editor over the one persistent map', () => {
-  assert.match(page, /<Plus size=\{18\} \/> Add site/);
+  assert.match(
+    page,
+    /onAddSite=\{[\s\S]*?view === 'workspace' && !newSite[\s\S]*?startNew/,
+  );
+  assert.match(map, /<Plus size=\{16\} \/> Add site/);
   assert.match(page, /<SiteEditorPanel[\s\S]*?editing=\{editing\}/);
   assert.equal((page.match(/<SiteMap/g) || []).length, 1);
   assert.match(editor, /data-map-reserved-surface="right"/);
@@ -66,7 +70,7 @@ test('the editor reserves map space and becomes a bottom sheet on narrow screens
   assert.match(globals, /\.site-creation-body\s*\{[^}]*overflow-y:\s*auto/s);
   assert.match(
     shellCss,
-    /\.spatial-main > \.site-creation-panel\)[^}]*position: absolute[^}]*right: 0[^}]*bottom: 0/s,
+    /\.spatial-main > \.site-creation-panel\)[^}]*position: absolute[^}]*right: 0\.75rem[^}]*bottom: 0\.75rem/s,
   );
   assert.match(
     shellCss,

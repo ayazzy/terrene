@@ -122,6 +122,26 @@ test('operator controls preserve 2D truth and mutually exclusive left surfaces',
   assert.match(map, /className: 'terrene-map-hover'/);
 });
 
+test('portfolio navigation and map tools share one rounded command card', () => {
+  assert.match(
+    page,
+    /portfolioView=\{[\s\S]*?view === 'workspace' && !newSite[\s\S]*?onPortfolioViewChange=[\s\S]*?onAddSite=\{[\s\S]*?view === 'workspace' && !newSite/,
+  );
+  assert.match(
+    map,
+    /<div className="map-toolbar">[\s\S]*?<fieldset className="map-view-switch">[\s\S]*?Entities[\s\S]*?Layers[\s\S]*?Legend[\s\S]*?className="map-add-site"/,
+  );
+  assert.match(page, /\{sitesView === 'list' && \([\s\S]*?sites-view-bar/);
+  assert.match(
+    mapCss,
+    /map-toolbar\)\s*\{[^}]*border-radius:\s*10px[^}]*background:/s,
+  );
+  assert.match(
+    mapCss,
+    /map-toolbar button\)\s*\{[^}]*min-height:\s*2\.5rem[^}]*border-radius:\s*7px/s,
+  );
+});
+
 test('map orientation is available without reaching controls behind the dossier', () => {
   assert.match(map, /dragRotate: true/);
   assert.match(map, /pitchWithRotate: true/);
