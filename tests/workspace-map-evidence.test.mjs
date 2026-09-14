@@ -131,6 +131,10 @@ test('workspace integration shares selection and never auto-focuses an off-site 
     new URL('../app/map-feature-inspector.tsx', import.meta.url),
     'utf8',
   );
+  const css = readFileSync(
+    new URL('../app/globals.css', import.meta.url),
+    'utf8',
+  );
   assert.match(state, /setSelectedMapObjectId\(null\)/);
   assert.match(state, /mapFeaturesAssessmentKey === assessmentKey/);
   assert.match(state, /function selectMapObject/);
@@ -140,9 +144,19 @@ test('workspace integration shares selection and never auto-focuses an off-site 
   assert.match(page, /<MapFeatureInspector/);
   assert.match(page, /selectedMapObjectId: operatingState\.assetId/);
   assert.match(page, /showRelatedObjects=/);
-  assert.match(page, /tab, assessment\?\.id, mapEvidence\.selectedObjectId/);
-  assert.match(page, /closest<HTMLElement>\('\.entity-dossier'\)/);
+  assert.match(page, /const previousAssetId = useRef<string \| null>\(null\)/);
+  assert.match(page, /siteReturnPosition\.current = current/);
+  assert.match(page, /top: analysisPanel\.current\?\.scrollTop \|\| 0/);
+  assert.match(page, /top: returnTop/);
+  assert.match(page, /assetReturnFocusIntent\.current/);
   assert.match(inspector, /Advanced provenance/);
+  assert.match(inspector, /Asset intelligence context/);
+  assert.match(inspector, /onReturnToSite/);
+  assert.match(css, /\.asset-intelligence-view\s*\{[\s\S]*?min-height: 100%/);
+  assert.match(
+    css,
+    /\.map-feature-inspector-body\s*\{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/,
+  );
   assert.match(inspector, /Show related objects/);
   assert.match(inspector, /No object-to-object network is inferred/);
   assert.match(map, /feature-state', 'related'/);

@@ -3649,10 +3649,47 @@ summary {
   border-left: 3px solid var(--action-primary);
 }
 .map-feature-inspector {
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border-default);
-  background: var(--surface-selected);
+  min-height: 100%;
+  padding: 0 18px 24px;
+  background: #1d2823;
   font-size: 13px;
+}
+.asset-intelligence-view {
+  min-height: 100%;
+  background: #1d2823;
+}
+.crc-shell .map-feature-inspector-path {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin: 0 -18px 18px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--border-default);
+  background: rgb(25 34 30 / 96%);
+  color: var(--text-tertiary);
+  font-size: 12px;
+  backdrop-filter: blur(12px);
+}
+.crc-shell .map-feature-inspector-path button {
+  width: auto;
+  max-width: 62%;
+  min-height: auto;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  color: var(--action-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.map-feature-inspector-path strong {
+  color: var(--text-secondary);
+  font-weight: 650;
 }
 .map-feature-inspector-heading,
 .map-feature-inspector-body,
@@ -3664,8 +3701,8 @@ summary {
   gap: 12px;
 }
 .map-feature-inspector-heading h2 {
-  margin: 2px 0;
-  font-size: 17px;
+  margin: 4px 0;
+  font-size: 22px;
   text-transform: capitalize;
 }
 .map-feature-inspector-heading small,
@@ -3676,11 +3713,15 @@ summary {
   line-height: 1.5;
 }
 .map-feature-inspector-body {
-  margin-top: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  margin-top: 16px;
 }
 .map-feature-inspector-body > div {
   min-width: 0;
-  flex: 1;
+  padding: 14px 0;
+  border-top: 1px solid var(--border-subtle);
 }
 .map-feature-inspector-body p {
   margin: 4px 0;
@@ -3766,7 +3807,11 @@ summary {
 }
 @media (max-width: 760px) {
   .map-feature-inspector {
-    padding: 10px 12px;
+    padding: 0 12px 16px;
+  }
+  .crc-shell .map-feature-inspector-path {
+    margin-inline: -12px;
+    padding-inline: 12px;
   }
   .map-feature-inspector-body {
     display: block;

@@ -152,6 +152,14 @@ export default function Home() {
   const analysisCloseButton = useRef<HTMLButtonElement>(null);
   const reopenAnalysisButton = useRef<HTMLButtonElement>(null);
   const dossierFocusIntent = useRef<'close' | 'reopen' | null>(null);
+  const previousAssetId = useRef<string | null>(null);
+  const assetReturnFocusIntent = useRef(false);
+  const siteReturnPosition = useRef<{
+    siteId: string;
+    assessmentId: string | null;
+    tab: WorkspaceTab;
+    top: number;
+  } | null>(null);
   const historyRequestFence = useRef(createLatestRequestFence());
   const operatingPicture = useOperatingPictureState();
   const projectEntityIndex = useInfrastructureEntities();
@@ -307,6 +315,10 @@ export default function Home() {
     dossierFocusIntent.current = 'close';
     setPanelOpen(true);
   }
+  function returnToSiteDiligence() {
+    assetReturnFocusIntent.current = true;
+    mapEvidence.clearSelection();
+  }
   function selectSiteAssessment(id: string | null) {
     if (id) workspace.selectAssessment(id);
     else workspace.returnToLatest();
@@ -336,11 +348,49 @@ export default function Home() {
   ].filter((item) => item.failure);
   const showRefreshNotice = refreshFailures.length > 0 && !criticalRead;
   useEffect(() => {
+    if (mapEvidence.selectedObjectId) return;
     analysisPanel.current?.scrollTo({ top: 0 });
-    analysisPanel.current
-      ?.closest<HTMLElement>('.entity-dossier')
-      ?.scrollTo({ top: 0 });
-  }, [tab, assessment?.id, mapEvidence.selectedObjectId]);
+  }, [tab, assessment?.id, current?.id, mapEvidence.selectedObjectId]);
+  useEffect(() => {
+    const nextAssetId = mapEvidence.selectedObjectId;
+    const priorAssetId = previousAssetId.current;
+    let animation = 0;
+    if (!priorAssetId && nextAssetId) {
+      siteReturnPosition.current = current
+        ? {
+            siteId: current.id,
+            assessmentId: assessment?.id || null,
+            tab,
+            top: analysisPanel.current?.scrollTop || 0,
+          }
+        : null;
+      analysisPanel.current?.scrollTo({ top: 0 });
+    } else if (priorAssetId && !nextAssetId) {
+      const returnPosition = siteReturnPosition.current;
+      const shouldRestore =
+        !!returnPosition &&
+        !!current &&
+        returnPosition.siteId === current.id &&
+        returnPosition.assessmentId === (assessment?.id || null) &&
+        returnPosition.tab === tab;
+      const returnTop =
+        shouldRestore && returnPosition ? returnPosition.top : 0;
+      animation = requestAnimationFrame(() => {
+        analysisPanel.current?.scrollTo({ top: returnTop });
+        if (assetReturnFocusIntent.current) {
+          analysisPanel.current
+            ?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+            ?.focus();
+          assetReturnFocusIntent.current = false;
+        }
+      });
+      siteReturnPosition.current = null;
+    } else if (priorAssetId && nextAssetId && priorAssetId !== nextAssetId) {
+      analysisPanel.current?.scrollTo({ top: 0 });
+    }
+    previousAssetId.current = nextAssetId;
+    return () => cancelAnimationFrame(animation);
+  }, [assessment?.id, current, mapEvidence.selectedObjectId, tab]);
   useEffect(() => {
     const intent = dossierFocusIntent.current;
     if (!intent) return;
@@ -1305,7 +1355,43 @@ export default function Home() {
                 ref={analysisPanel}
                 hidden={!panelOpen}
               >
-                <div className="analysis-panel-heading">
+                {refreshNotice}
+                {mapEvidence.selectedObjectId && (
+                  <div className="asset-intelligence-view">
+                    {mapEvidence.selectedObject && mapEvidence.scene ? (
+                      <MapFeatureInspector
+                        feature={mapEvidence.selectedObject}
+                        layer={mapEvidence.scene.layers.find(
+                          (layer) =>
+                            layer.id ===
+                            mapEvidence.selectedObject?.properties.layer_id,
+                        )}
+                        sources={mapEvidence.scene.sources}
+                        limitations={mapEvidence.scene.limitations}
+                        siteName={current.name}
+                        relatedVisible={operatingState.showRelated}
+                        onToggleRelated={() =>
+                          operatingPicture.transition((currentState) => ({
+                            ...currentState,
+                            showRelated: !currentState.showRelated,
+                          }))
+                        }
+                        onLocate={() =>
+                          mapEvidence.locateObject(
+                            mapEvidence.selectedObject!.id,
+                          )
+                        }
+                        onReturnToSite={returnToSiteDiligence}
+                      />
+                    ) : (
+                      <WorkspaceLoading />
+                    )}
+                  </div>
+                )}
+                <div
+                  className="analysis-panel-heading"
+                  hidden={!!mapEvidence.selectedObjectId}
+                >
                   <span>
                     <strong>Site evidence and reasoning</strong>
                     <small>
@@ -1314,6 +1400,7 @@ export default function Home() {
                   </span>
                 </div>
                 <Tabs
+                  hidden={!!mapEvidence.selectedObjectId}
                   value={tab}
                   onValueChange={(value) =>
                     changeSiteSection(value as WorkspaceTab)
@@ -1328,30 +1415,6 @@ export default function Home() {
                     <TabsTrigger value="models">Models</TabsTrigger>
                     <TabsTrigger value="history">History</TabsTrigger>
                   </TabsList>
-                  {mapEvidence.selectedObject && mapEvidence.scene && (
-                    <MapFeatureInspector
-                      feature={mapEvidence.selectedObject}
-                      layer={mapEvidence.scene.layers.find(
-                        (layer) =>
-                          layer.id ===
-                          mapEvidence.selectedObject?.properties.layer_id,
-                      )}
-                      sources={mapEvidence.scene.sources}
-                      limitations={mapEvidence.scene.limitations}
-                      relatedVisible={operatingState.showRelated}
-                      onToggleRelated={() =>
-                        operatingPicture.transition((currentState) => ({
-                          ...currentState,
-                          showRelated: !currentState.showRelated,
-                        }))
-                      }
-                      onLocate={() =>
-                        mapEvidence.locateObject(mapEvidence.selectedObject!.id)
-                      }
-                      onClose={mapEvidence.clearSelection}
-                    />
-                  )}
-                  {refreshNotice}
                   <TabsContent value="overview">
                     {assessment ? (
                       <ScreeningContextPanel

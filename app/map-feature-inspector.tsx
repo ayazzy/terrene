@@ -1,6 +1,6 @@
 'use client';
 
-import { Link2, LocateFixed, X } from 'lucide-react';
+import { ArrowLeft, Link2, LocateFixed } from 'lucide-react';
 import {
   mapFeatureName,
   mapLayerLabel,
@@ -15,10 +15,11 @@ type Props = {
   layer?: InfrastructureSceneLayer;
   sources: SceneSource[];
   limitations: string[];
+  siteName: string;
   relatedVisible: boolean;
   onToggleRelated: () => void;
   onLocate: () => void;
-  onClose: () => void;
+  onReturnToSite: () => void;
 };
 
 export default function MapFeatureInspector({
@@ -26,10 +27,11 @@ export default function MapFeatureInspector({
   layer,
   sources,
   limitations,
+  siteName,
   relatedVisible,
   onToggleRelated,
   onLocate,
-  onClose,
+  onReturnToSite,
 }: Props) {
   const properties = feature.properties;
   const classification =
@@ -41,26 +43,26 @@ export default function MapFeatureInspector({
   );
   const height = properties.height;
   return (
-    <section
-      className="map-feature-inspector"
-      aria-label="Selected map evidence"
-    >
+    <section className="map-feature-inspector" aria-label="Asset intelligence">
+      <nav
+        className="map-feature-inspector-path"
+        aria-label="Asset intelligence context"
+      >
+        <button className="text-btn" onClick={onReturnToSite}>
+          <ArrowLeft size={14} /> {siteName}
+        </button>
+        <span aria-hidden="true">›</span>
+        <strong>Asset intelligence</strong>
+      </nav>
       <div className="map-feature-inspector-heading">
         <span>
-          <p className="eyebrow">SELECTED TERRENE EARTH OBJECT</p>
+          <p className="eyebrow">TERRENE EARTH OBJECT</p>
           <h2>{mapFeatureName(feature)}</h2>
           <small>
             {mapLayerLabel(properties.layer_id)} ·{' '}
             {classification.replaceAll('_', ' ')}
           </small>
         </span>
-        <button
-          className="icon-btn"
-          aria-label="Close selected map evidence"
-          onClick={onClose}
-        >
-          <X size={16} />
-        </button>
       </div>
       <div className="map-feature-inspector-body">
         <div>

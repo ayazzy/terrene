@@ -159,10 +159,6 @@
     justify-content: flex-start;
   }
 
-  .body :global(.map-feature-inspector-body) {
-    flex-direction: column;
-  }
-
   .body :global(.map-feature-inspector-body > div) {
     width: 100%;
   }

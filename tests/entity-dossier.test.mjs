@@ -59,12 +59,18 @@ test('both dossiers expose map layers while controlled layer state stays on the 
   assert.match(mapCss, /\.legendPanel\s*\{/);
 });
 
-test('site analysis navigation stays above the optional object inspector', () => {
-  const analysisTabs = page.indexOf('aria-label="Site analysis sections"');
-  const objectInspector = page.indexOf('<MapFeatureInspector', analysisTabs);
-  assert.notEqual(analysisTabs, -1);
-  assert.notEqual(objectInspector, -1);
-  assert.ok(analysisTabs < objectInspector);
+test('asset intelligence replaces Site diligence instead of stacking above it', () => {
+  assert.match(
+    page,
+    /mapEvidence\.selectedObjectId && \([\s\S]*?<MapFeatureInspector/,
+  );
+  assert.match(
+    page,
+    /className="analysis-panel-heading"\s+hidden=\{!!mapEvidence\.selectedObjectId\}/,
+  );
+  assert.match(page, /<Tabs\s+hidden=\{!!mapEvidence\.selectedObjectId\}/);
+  assert.match(page, /onReturnToSite=\{returnToSiteDiligence\}/);
+  assert.match(map, /workflowLevel === 'asset'/);
 });
 
 test('collapse preserves the entity and immutable artifact URL state', () => {
@@ -113,7 +119,7 @@ test('dossier layout responds to its own width and uses one content gutter', () 
   );
   assert.match(
     dossierCss,
-    /@container entity-dossier \(max-width: 42rem\)[\s\S]*?\.map-feature-inspector-body[\s\S]*?flex-direction:\s*column/,
+    /@container entity-dossier \(max-width: 42rem\)[\s\S]*?\.map-feature-inspector-actions[\s\S]*?flex-wrap:\s*wrap/,
   );
   assert.match(dossierCss, /--dossier-gutter:\s*1rem/);
   assert.match(
