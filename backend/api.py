@@ -197,6 +197,11 @@ from backend.project_intelligence_store import (
     ProjectIntelligenceRunSummary, get_project_intelligence_run,
     list_project_intelligence_runs, run_project_intelligence,
 )
+from backend.site_reasoning import (
+    SiteReasoningConflict, SiteReasoningInputCatalogue,
+    SiteReasoningNotFound, SiteReasoningRunRequest,
+    list_site_reasoning_inputs, run_site_reasoning,
+)
 
 
 def screening_operation(operation):
@@ -223,6 +228,49 @@ def map_scene_operation(operation):
     except (LandEvidenceSnapshotError, ImmutableObjectConflict):
         # Never send an internal object key, storage error or credential to clients.
         raise HTTPException(500, 'Infrastructure map scene integrity check failed. Stored evidence is missing or contradictory; history has not been overwritten.')
+
+
+def site_reasoning_operation(operation):
+    try:
+        return operation()
+    except (SiteReasoningNotFound, ModuleRunNotFound, LandEvidenceSnapshotNotFound):
+        raise HTTPException(404, 'Record not found')
+    except (SiteReasoningConflict, ValueError) as error:
+        raise HTTPException(409, str(error))
+    except (ModuleRunError, LandEvidenceSnapshotError, ImmutableObjectConflict):
+        # Never expose private manifest keys, object-store details or credentials.
+        raise HTTPException(
+            500,
+            'Site reasoning integrity check failed. Stored evidence or run content '
+            'is missing or contradictory; history has not been overwritten.',
+        )
+
+
+@app.get(
+    '/api/sites/{id}/reasoning-inputs',
+    response_model=SiteReasoningInputCatalogue,
+)
+def read_site_reasoning_inputs(
+    id: str, response: Response, org=Depends(organization),
+):
+    response.headers['Cache-Control'] = 'no-store'
+    return site_reasoning_operation(
+        lambda: list_site_reasoning_inputs(id, org=org)
+    )
+
+
+@app.post(
+    '/api/sites/{id}/reasoning-runs',
+    response_model=ModuleRunRecord,
+)
+def create_site_reasoning_run(
+    id: str, data: SiteReasoningRunRequest,
+    response: Response, org=Depends(organization),
+):
+    response.headers['Cache-Control'] = 'no-store'
+    return site_reasoning_operation(
+        lambda: run_site_reasoning(id, data, org=org)
+    )
 
 
 @app.post('/api/assessments/{id}/screening-context', response_model=ModuleRunRecord)

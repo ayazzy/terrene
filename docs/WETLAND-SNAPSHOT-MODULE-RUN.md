@@ -57,7 +57,7 @@ Migration 4 adds one `module_runs` table. Each row records:
 
 The deterministic ID covers organisation, snapshot ID, module ID/version, binding version and model signature. The content hash additionally covers site/boundary, evidence content hash, exact model specification and complete output. An identical execution safely returns the first row; changed evidence, binding, module version or model configuration has a different identity. Read-time verification rejects a modified result or identity. No update path is provided.
 
-PostgreSQL migration enables row-level security for `module_runs` and revokes direct browser-role access. All run and snapshot lookups include the organisation. No public API was added.
+PostgreSQL migration enables row-level security for `module_runs` and revokes direct browser-role access. All run and snapshot lookups include the organisation. The original implementation added no public API. The later additive [snapshot-bound Site reasoning contract](SITE-REASONING-INPUT-CONTRACT.md) exposes this same execution primitive through an exact catalogue-published request envelope; it does not change ModuleRun identity or this historical implementation.
 
 ## Parity and separation
 

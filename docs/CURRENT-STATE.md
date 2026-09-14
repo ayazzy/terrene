@@ -22,6 +22,7 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 - View source lineage and exact bounded overlay geometry, compare selected sites, record a current team review status, and export self-contained HTML reports.
 - Project legacy saved assessments into immutable `land_evidence_v1` snapshots without changing the original assessment.
 - Bind a committed snapshot through `wetland_input_binding_v1`, execute the unchanged wetland model, and persist an immutable ModuleRun.
+- Discover verified Site Evidence Snapshots through `site_reasoning_input_catalogue_v1` and explicitly create or reuse a wetland ModuleRun by returning one exact `site_reasoning_run_request_v1` envelope.
 - Intentionally prepare or reuse Screening Context v1 for a selected saved assessment, inspect its non-scoring facts/gaps/provenance in Overview, and download a self-contained HTML review artifact.
 - Read the built-world objects attached to an immutable Evidence Snapshot through authenticated, organization-scoped `infrastructure_map_scene_v1`, without changing their authoritative EPSG:27700 evidence; the historical Screening Context map-feature contract remains available unchanged.
 - View and select persisted buildings, functional sites, railway tracks and railway stations through native MapLibre GeoJSON layers and rendered-feature selection, with truthful per-layer availability, parcel/source inspection and evidence-gated building extrusion. The primary map now uses an operator-grade dark vector presentation, generated evidence legends, one mutually exclusive left-side surface and a responsive docked/bottom-sheet inspector.
@@ -103,6 +104,8 @@ Screening Context is an explicit assessment action: POST creates/reuses a snapsh
 `GET /api/screening-context-runs/{run_id}/map-features` integrity-checks the selected run and committed Evidence Snapshot, then deterministically presents only its persisted Building, FunctionalSite, RailwayTrack and RailwayStation objects as EPSG:4326 GeoJSON. Layer metadata distinguishes available objects, qualified mapped zero, unavailable, partial and unsupported evidence. The response retains safe source, classification, fingerprint, relationship and measurement linkage while omitting raw storage locations and source payloads; it creates no persistence and never substitutes current objects into a historical run.
 
 `GET /api/land-evidence-snapshots/{snapshot_id}/map-scene` is the snapshot-native primary-map read contract. It revalidates the immutable manifest and exact snapshot/site/boundary/content envelope, transforms presentation geometry to WGS84, exposes semantic layer and capability states, and attaches safe source, relationship and object-level height evidence. The GET is tenant-scoped, no-store and read-only. Registry v3 scenes remain selectable with height marked unsupported; registry v4 scenes expose observations or explicit gaps without default values.
+
+`GET /api/sites/{site_id}/reasoning-inputs` now returns a verified, no-write `site_reasoning_input_catalogue_v1` for explicit new Site reasoning. Each snapshot entry carries exact snapshot/content/boundary identity, current-versus-historical boundary state, safe source/release/time summaries, evidence counts and a complete immutable `site_reasoning_run_request_v1`. `POST /api/sites/{site_id}/reasoning-runs` accepts only that unchanged envelope, pins no acquisition, and creates or reuses the existing `wetland_restoration_v0_1` ModuleRun through `wetland_input_binding_v1`. The legacy assessment POST, historical assessments, Screening Context and map-scene contracts are unchanged. See [Snapshot-bound Site reasoning](SITE-REASONING-INPUT-CONTRACT.md).
 
 The Screening Context read lifecycle is finite: stored, absent, unsupported, authentication/authorization and server/network outcomes are distinct; unresolved reads recover to Retry after 15 seconds. Routine workspace refreshes do not restart an unchanged assessment read, and cancelled or stale assessment responses cannot replace the selected assessment's context.
 
@@ -190,6 +193,8 @@ Assessment-timeline verification: all **115 frontend tests**, TypeScript, focuse
 
 Assessment-preflight verification: all **118 frontend tests**, TypeScript, focused component lint and focused formatting passed, and the production build completed with the existing large-chunk advisory. Live Oxford browser QA at 1102×941 opened and cancelled the modal without creating data, confirmed exact boundary identity, accessible dialog structure and deterministic focus return, and exposed the real distinction between five retained map-scene sources and an empty legacy assessment dataset registry. The unavailable Start action is explicit and disabled rather than allowing a failing POST. Backend/PostgreSQL suites were not rerun because the assessment POST and all persistence/evidence contracts are unchanged.
 
+Snapshot-bound Site reasoning contract verification: the new API publishes exact, safe runnable envelopes from committed Site Evidence Snapshots and fails closed on stale input, cross-Site/organization access, corrupt storage and contradictory identities. Exact retries reuse one immutable ModuleRun; catalogue reads create nothing; historical snapshot execution preserves its boundary identity. The complete backend suite passed **197 tests with 63 retained-data skips** on both SQLite and disposable PostgreSQL/PostGIS. The established wetland ModuleRun, Screening Context and infrastructure map-scene regressions remain unchanged. The assessment preflight does not consume this contract yet.
+
 ## Known limitations
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
@@ -204,8 +209,8 @@ Assessment-preflight verification: all **118 frontend tests**, TypeScript, focus
 
 ## Latest meaningful implementation
 
-New Assessment was converted from an immediate POST into an analyst preflight on 14 September 2026. It now discloses the exact current boundary, registered source versions, retention and deduplication behavior, evidence limitations and the distinction between existing Evidence Snapshot context and eligible legacy assessment inputs before allowing a run.
+New Site reasoning now has an explicit immutable backend input boundary. A read-only catalogue publishes verified retained snapshots and exact runnable wetland envelopes; a strict POST creates or reuses only the corresponding snapshot-bound ModuleRun. Legacy assessments and their implicit dataset-acquisition path remain unchanged.
 
 ## Current recommended engineering question
 
-Should new Site assessments bind an explicitly selected immutable Evidence Snapshot instead of the legacy latest-dataset registry, so the sources visible in the operating picture can become exact, reviewable run inputs without silent rebinding?
+How should the assessment preflight present explicit current and historical Evidence Snapshot choices, their source/gap coverage and the distinction between running snapshot-bound reasoning versus acquiring a new legacy assessment?

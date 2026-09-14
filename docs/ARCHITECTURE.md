@@ -74,6 +74,31 @@ Project Intelligence uses the dedicated `project_intelligence_runs` table becaus
 
 The Overview panel is keyed to the selected assessment. Stored facts and rule-generated review items remain separate from mutable team status. The self-contained HTML export contains run/snapshot/boundary identities and inspectable evidence, with current team status labelled as operational state at export. Public raw-reference identities and checksums remain visible; private storage locations and asset paths are omitted.
 
+### Explicit snapshot-bound Site reasoning action
+
+`GET /api/sites/{site_id}/reasoning-inputs` is the organization-scoped,
+read-only discovery contract for new Site reasoning. It integrity-loads every
+committed snapshot for that Site, publishes safe source/release/time summaries
+and exact snapshot/content/boundary identities, and marks current-boundary state
+using both version and geometry fingerprint. For each snapshot it publishes a
+complete `site_reasoning_run_request_v1` envelope. It omits private manifest and
+raw-artifact locations and performs no acquisition or persistence.
+
+`POST /api/sites/{site_id}/reasoning-runs` accepts only an unchanged published
+envelope. The service validates Site ownership, snapshot membership, exact
+snapshot/content/boundary identity, module and binding versions, and the
+complete canonical model specification/signature before calling the existing
+snapshot execution primitive. Snapshot-bound wetland execution explicitly pins
+no environmental acquisition and reuses the deterministic immutable ModuleRun
+on an identical retry. Stale or contradictory envelopes fail closed.
+
+This is additive to the legacy Site assessment POST, which still snapshots the
+latest registered dataset versions and runs its existing worker pipeline. No
+legacy assessment is converted or retargeted. The current public reasoning
+catalogue supports only `wetland_restoration_v0_1` through
+`wetland_input_binding_v1`; newer evidence families remain retained but do not
+silently broaden that historical module.
+
 ### Snapshot-native infrastructure map scene
 
 `GET /api/land-evidence-snapshots/{snapshot_id}/map-scene` is a read-only presentation projection, not a new evidence store. The API authorizes the snapshot by organization, reloads and validates its immutable manifest, checks the relational snapshot envelope and content hash, and only then returns `infrastructure_map_scene_v1`. It includes exact snapshot, Site and boundary identity; semantic layer and capability states; source/release/evidence-time metadata; WGS84 GeoJSON presentation geometry; mapped-object classifications; typed parcel relationships; and object-linked height evidence or gaps. Authoritative geometry identity and measurements remain EPSG:27700.
@@ -146,4 +171,4 @@ The current UI implements early screening, portfolio navigation and evidence rev
 - Add new entities, versions and bindings when meaning changes; do not silently mutate historical records.
 - Do not optimize the current architecture around 3D visualization.
 
-Detailed implementation references: [Land Intelligence Foundation](LAND-INTELLIGENCE-FOUNDATION.md), [Evidence Snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [wetland binding and ModuleRuns](WETLAND-SNAPSHOT-MODULE-RUN.md), [Priority Habitats](PRIORITY-HABITATS-EVIDENCE.md), [OpenMap Local built world](OPENMAP-LOCAL-BUILT-WORLD.md), [EA LIDAR building heights](EA-LIDAR-BUILDING-HEIGHTS.md), [Screening Context v1](SCREENING-CONTEXT-V1.md), and [Project Evidence v1](PROJECT-EVIDENCE-V1.md).
+Detailed implementation references: [Land Intelligence Foundation](LAND-INTELLIGENCE-FOUNDATION.md), [Evidence Snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [wetland binding and ModuleRuns](WETLAND-SNAPSHOT-MODULE-RUN.md), [snapshot-bound Site reasoning](SITE-REASONING-INPUT-CONTRACT.md), [Priority Habitats](PRIORITY-HABITATS-EVIDENCE.md), [OpenMap Local built world](OPENMAP-LOCAL-BUILT-WORLD.md), [EA LIDAR building heights](EA-LIDAR-BUILDING-HEIGHTS.md), [Screening Context v1](SCREENING-CONTEXT-V1.md), and [Project Evidence v1](PROJECT-EVIDENCE-V1.md).

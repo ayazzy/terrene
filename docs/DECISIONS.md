@@ -214,3 +214,23 @@ The spatial UI defaults to top-down 2D. It may offer a 55-degree perspective onl
 **Rationale:** A third-party cartographic dependency must not hide evidence Terrene can still verify, while a missing or stale evidence response must not be made plausible with current objects, zero values or default heights. Keeping these boundaries visible preserves analyst continuity without weakening historical or scientific integrity.
 
 **References:** [Architecture](ARCHITECTURE.md), [Sprint 005 Task 5 spatial overhaul certification](SPRINT-005-TASK-5-SPATIAL-OVERHAUL-CERTIFICATION.md).
+
+## 2026-09-14 — New Site reasoning binds one explicit Evidence Snapshot
+
+**Decision:** Publish `site_reasoning_input_catalogue_v1` as the read-only
+organization-scoped inventory of verified Site snapshots and supported modules.
+For each snapshot, publish a complete `site_reasoning_run_request_v1` envelope
+containing exact Site, snapshot content, boundary, binding and model identities.
+Accept a new reasoning run only when the client returns that envelope unchanged;
+then create or reuse the existing immutable ModuleRun. Pin snapshot execution to
+no acquisition. Keep the legacy assessment POST and its latest registered
+dataset selection unchanged as a compatibility path.
+
+**Rationale:** A map-visible source is not automatically a model input, and an
+implicit “latest” lookup cannot support reviewable historical reasoning. An
+explicit immutable envelope lets an analyst choose known retained evidence,
+detects stale or contradictory client state and makes retries deterministic
+without rewriting assessment history or allowing newer registry families to
+silently alter `wetland_restoration_v0_1`.
+
+**References:** [Snapshot-bound Site reasoning](SITE-REASONING-INPUT-CONTRACT.md), [Architecture](ARCHITECTURE.md), [wetland binding and ModuleRuns](WETLAND-SNAPSHOT-MODULE-RUN.md).
