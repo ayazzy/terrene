@@ -18,7 +18,7 @@ from sqlalchemy.exc import IntegrityError
 from backend import core
 from backend.acquisition_contracts import (
     AcquisitionError, AcquisitionRequest, BinaryArtifact, digest, encode,
-    MAX_REQUEST_BYTES, SCOTLAND_ADAPTER_VERSION, DTM_ADAPTER_VERSION,
+    MAX_REQUEST_BYTES, SCOTLAND_ADAPTER_VERSION, RASTER_ADAPTERS,
 )
 from backend.acquisition_sources import (
     ADAPTER_COVERAGE, source_descriptor, fetch_sssi, prepare_coverage, validate_capabilities, load_coverage,
@@ -159,9 +159,9 @@ def acquire(org: str, request: AcquisitionRequest | dict, *, client=None) -> dic
     state, error_code = 'succeeded', None
     try:
         validate_capabilities(request)
-        if request.adapter_version == DTM_ADAPTER_VERSION:
-            from backend.acquisition_rasters import fetch_dtm
-            result = fetch_dtm(request, client=client, artifacts=artifacts, diagnostics=diagnostics)
+        if request.adapter_version in RASTER_ADAPTERS:
+            from backend.acquisition_rasters import fetch_raster
+            result = fetch_raster(request, client=client, artifacts=artifacts, diagnostics=diagnostics)
         else:
             result = fetch_sssi(request, client=client, artifacts=artifacts, diagnostics=diagnostics)
     except AcquisitionError as exc:
@@ -183,7 +183,7 @@ def acquire(org: str, request: AcquisitionRequest | dict, *, client=None) -> dic
                        'artifact_hash_semantics': 'Canonical assembled JSON; response hashes are decoded HTTP bytes.'},
         'artifacts': {},
     }
-    if request.adapter_version == DTM_ADAPTER_VERSION:
+    if request.adapter_version in RASTER_ADAPTERS:
         import rasterio
         manifest['processing'].update(
             rasterio=rasterio.__version__, gdal=rasterio.__gdal_version__,
@@ -262,7 +262,7 @@ def read_acquisition(org: str, acquisition_id: str, *, attempt_id: str | None = 
                         'normalized_selection', 'normalization_lineage'}
             if request.adapter_version == SCOTLAND_ADAPTER_VERSION:
                 required |= {'provider_item_before', 'provider_item_after'}
-            if request.adapter_version == DTM_ADAPTER_VERSION:
+            if request.adapter_version in RASTER_ADAPTERS:
                 required = {'provider_description_before', 'provider_description_after', 'native_raster', 'raster_coverage'}
                 for name, kind in [('native_raster', 'image/tiff'), ('provider_description_before', 'application/xml'),
                                    ('provider_description_after', 'application/xml')]:
@@ -317,6 +317,10 @@ def main(argv=None):
     read.add_argument('--org', required=True)
     read.add_argument('--id', required=True)
     read.add_argument('--attempt-id')
+    pair = commands.add_parser('pair-lidar')
+    pair.add_argument('--org', required=True)
+    pair.add_argument('--dtm-id', required=True)
+    pair.add_argument('--dsm-id', required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == 'sources':
@@ -329,6 +333,9 @@ def main(argv=None):
             if len(data) > MAX_REQUEST_BYTES:
                 raise AcquisitionError('request_payload_limit')
             result = acquire(args.org, AcquisitionRequest.model_validate_json(data))
+        elif args.command == 'pair-lidar':
+            from backend.lidar_pairing import read_lidar_pair
+            result = read_lidar_pair(args.org, dtm_acquisition_id=args.dtm_id, dsm_acquisition_id=args.dsm_id)
         else:
             result = read_acquisition(args.org, args.id, attempt_id=args.attempt_id)
         print(json.dumps(result, indent=2, allow_nan=False))

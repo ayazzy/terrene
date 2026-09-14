@@ -228,11 +228,11 @@ The intended shared capabilities are:
   public. Purchased data must retain usage terms and acquisition-cost context.
 
 Independent acquisition now includes England and Scotland SSSI and bounded EA
-terrain raster capture. On 14 September 2026 the founder deferred Wales and
+terrain and last-return surface raster capture. On 14 September 2026 the founder deferred Wales and
 Northern Ireland designation adapters to prioritize additional data families,
 starting with LIDAR. UK-wide capability remains the broader objective, with
-source-family coverage and gaps kept explicit. Surface-model acquisition, dated
-imagery and historical weather are subsequent candidates in bounded iterations,
+source-family coverage and gaps kept explicit. Dated imagery and historical
+weather are subsequent candidates in bounded iterations,
 alongside the separate application-access work. Radar, climate projections,
 commercial feeds and richer workflows remain later candidates. This direction
 does not establish those integrations, customer demand or authorization to buy data.
@@ -284,6 +284,22 @@ centre-in-polygon complete/partial/no-valid-cell availability, respecting holes.
 It does not clip, resample, fill missing pixels, run terrain models or bind new
 captures into assessments. Local survey dates remain unknown and source composite
 semantics remain separate from capture time. See [independent LIDAR acquisition](EA-LIDAR-GEOGRAPHIC-ACQUISITION.md).
+
+`environment_agency.lidar_dsm_last_return_1m` / `ea_lidar_dsm_wcs_v1` adds
+independent surface elevation with its own coverage identifier and processing
+version. It shares the bounded raster transport and grid validation, while DTM
+defaults, source descriptors and historical artifact identities stay unchanged.
+DSM values include surface objects and cannot be labelled height above ground.
+
+`lidar_pair_compatibility_v1` is a read-only check over two explicitly supplied
+capture IDs in one organization. It requires the DTM/DSM roles, matching request
+geometry and coverage-profile hash, validates retained metadata, replays each
+native raster's coverage and checks grid/unit/datum agreement. Joint availability
+uses the intersection of valid-cell masks inside the polygon, not the smaller
+of two coverage fractions. The returned fingerprint includes exact manifest,
+attempt and raster identities. The check establishes neither survey-date
+equivalence nor model suitability, and creates no pair entity, Evidence Snapshot,
+height estimate or model binding. See [independent DSM acquisition](EA-DSM-GEOGRAPHIC-ACQUISITION.md).
 
 Migration 9 adds organization-scoped requests and append-only terminal attempts.
 Operational claims use optimistic concurrency, expiring leases and fenced

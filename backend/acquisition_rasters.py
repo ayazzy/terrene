@@ -1,4 +1,4 @@
-"""Independent EA terrain capture: retain native bytes and report cell availability.
+"""Independent EA terrain/surface capture: native bytes and cell availability.
 
 No slope, height, flood, suitability or other model is executed by acquisition.
 """
@@ -15,6 +15,7 @@ from shapely.ops import transform
 
 from backend.acquisition_contracts import (
     AcquisitionError, BinaryArtifact, DTM_SOURCE_ID, DTM_ADAPTER_VERSION,
+    DSM_SOURCE_ID, DSM_ADAPTER_VERSION,
 )
 
 SERVICE = 'https://environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs'
@@ -22,6 +23,10 @@ COVERAGE = '13787b9a-26a4-4775-8523-806d13af58fc__Lidar_Composite_Elevation_DTM_
 CATALOGUE = 'https://www.data.gov.uk/dataset/01b3ee39-da3f-47b6-83da-dc98e73a461f/lidar-composite-digital-terrain-model-dtm-1m'
 COVERAGE_PROFILE_VERSION = 'ons_england_dec2024_bfe_v1'
 PROCESSING_VERSION = 'ea_dtm_native_cell_coverage_v1'
+DSM_SERVICE = 'https://environment.data.gov.uk/spatialdata/lidar-composite-digital-surface-model-last-return-dsm-1m/wcs'
+DSM_COVERAGE = '9ba4d5ac-d596-445a-9056-dae3ddec0178__Lidar_Composite_Elevation_LZ_DSM_1m'
+DSM_CATALOGUE = 'https://www.data.gov.uk/dataset/cf3f1137-c12b-44a1-a835-e80fe4a60b92/lidar-composite-digital-surface-model-dsm-1m'
+DSM_PROCESSING_VERSION = 'ea_dsm_native_cell_coverage_v1'
 MAX_CELLS = 4_000_000
 MAX_DIMENSION = 4096
 LIMITS = {'max_window_cells': MAX_CELLS, 'max_dimension_pixels': MAX_DIMENSION,
@@ -33,7 +38,27 @@ NS = {'wcs': 'http://www.opengis.net/wcs/2.0', 'gml': 'http://www.opengis.net/gm
       'swe': 'http://www.opengis.net/swe/2.0'}
 
 
-def descriptor():
+def definition(adapter_version=DTM_ADAPTER_VERSION):
+    if adapter_version == DTM_ADAPTER_VERSION:
+        return SERVICE, COVERAGE, PROCESSING_VERSION
+    if adapter_version == DSM_ADAPTER_VERSION:
+        return DSM_SERVICE, DSM_COVERAGE, DSM_PROCESSING_VERSION
+    raise AcquisitionError('unsupported_adapter')
+
+
+def descriptor(adapter_version=DTM_ADAPTER_VERSION):
+    definition(adapter_version)
+    if adapter_version == DSM_ADAPTER_VERSION:
+        value = descriptor()
+        value.update(source_id=DSM_SOURCE_ID, adapter_version=DSM_ADAPTER_VERSION,
+                     capability_version='england_current_surface_raster_v1',
+                     normalization_version=DSM_PROCESSING_VERSION,
+                     endpoint=DSM_SERVICE, coverage_id=DSM_COVERAGE, catalogue_url=DSM_CATALOGUE,
+                     vertical_semantics_source=DSM_CATALOGUE,
+                     surface_semantics='Last-return composite surface elevation including terrain, buildings, vegetation and vehicles; not height above ground.')
+        value['limitations'][0] = 'Historical last-return surface composite, not bare-earth terrain, raw point clouds or a current survey.'
+        value['limitations'].append('Matching DTM/DSM grids do not establish common local survey dates or valid building-height interpretation.')
+        return value
     return {
         'source_id': DTM_SOURCE_ID, 'adapter_version': DTM_ADAPTER_VERSION,
         'capability_version': 'england_current_terrain_raster_v1',
@@ -75,18 +100,19 @@ def request_window(area):
     return polygon, bounds
 
 
-def describe_parameters():
-    return {'service': 'WCS', 'version': '2.0.1', 'request': 'DescribeCoverage', 'coverageId': COVERAGE}
+def describe_parameters(adapter_version=DTM_ADAPTER_VERSION):
+    return {'service': 'WCS', 'version': '2.0.1', 'request': 'DescribeCoverage', 'coverageId': definition(adapter_version)[1]}
 
 
-def raster_parameters(bounds):
+def raster_parameters(bounds, adapter_version=DTM_ADAPTER_VERSION):
     west, south, east, north = bounds
     return [('service', 'WCS'), ('version', '2.0.1'), ('request', 'GetCoverage'),
-            ('coverageId', COVERAGE), ('format', 'image/tiff'),
+            ('coverageId', definition(adapter_version)[1]), ('format', 'image/tiff'),
             ('subset', f'E({west},{east})'), ('subset', f'N({south},{north})')]
 
 
-def validate_description(content, bounds):
+def validate_description(content, bounds, adapter_version=DTM_ADAPTER_VERSION):
+    coverage_id = definition(adapter_version)[1]
     try:
         if b'<!DOCTYPE' in content.upper() or b'<!ENTITY' in content.upper():
             raise ValueError('xml_declaration')
@@ -97,7 +123,7 @@ def validate_description(content, bounds):
         item = descriptions[0]
         envelope = item.find('gml:boundedBy/gml:Envelope', NS)
         vectors = [tuple(map(float, n.text.split())) for n in item.findall('.//gml:offsetVector', NS)]
-        if (item.findtext('wcs:CoverageId', namespaces=NS) != COVERAGE
+        if (item.findtext('wcs:CoverageId', namespaces=NS) != coverage_id
                 or envelope.attrib.get('srsName') != 'http://www.opengis.net/def/crs/EPSG/0/27700'
                 or envelope.attrib.get('axisLabels') != 'E N'
                 or vectors != [(1.0, 0.0), (0.0, -1.0)]
@@ -118,8 +144,9 @@ def validate_description(content, bounds):
         raise AcquisitionError('raster_source_schema_changed') from exc
 
 
-def inspect_raster(content, area, bounds):
+def inspect_raster(content, area, bounds, adapter_version=DTM_ADAPTER_VERSION):
     """Validate native grid before allocation; count only the requested area cells."""
+    processing_version = definition(adapter_version)[2]
     if content[:4] not in (b'II*\x00', b'MM\x00*', b'II+\x00', b'MM\x00+'):
         raise AcquisitionError('invalid_raster_response')
     polygon, expected_bounds = request_window(area)
@@ -151,7 +178,7 @@ def inspect_raster(content, area, bounds):
                 raise AcquisitionError('no_sample_cell_centres')
             available = int((inside & valid).sum())
             return {
-                'contract_version': 'geographic_raster_coverage_v1', 'processing_version': PROCESSING_VERSION,
+                'contract_version': 'geographic_raster_coverage_v1', 'processing_version': processing_version,
                 'crs': 'EPSG:27700', 'resolution_m': 1, 'band_count': 1, 'dtype': 'float32',
                 'vertical_unit': 'metre', 'vertical_datum': 'Ordnance Datum Newlyn',
                 'width': dataset.width, 'height': dataset.height, 'transform': list(affine),
@@ -169,8 +196,10 @@ def inspect_raster(content, area, bounds):
         raise AcquisitionError('invalid_raster_response') from exc
 
 
-def fetch_dtm(request, *, client=None, artifacts=None, diagnostics=None):
+def fetch_raster(request, *, client=None, artifacts=None, diagnostics=None):
     from backend.acquisition_sources import BoundedClient
+    adapter_version = request.adapter_version
+    endpoint, coverage_id, _ = definition(adapter_version)
     artifacts = artifacts if artifacts is not None else {}
     diagnostics = diagnostics if diagnostics is not None else {}
     reader = BoundedClient(client, max_response=LIMITS['max_response_bytes'], max_total=LIMITS['max_total_bytes'],
@@ -178,19 +207,19 @@ def fetch_dtm(request, *, client=None, artifacts=None, diagnostics=None):
     try:
         _, bounds = request_window(request.area)
         diagnostics['requested_bounds_27700'] = bounds
-        before = reader.get_bytes(SERVICE, describe_parameters(), max_bytes=LIMITS['max_metadata_bytes'])
+        before = reader.get_bytes(endpoint, describe_parameters(adapter_version), max_bytes=LIMITS['max_metadata_bytes'])
         artifacts['provider_description_before'] = BinaryArtifact(before, 'application/xml')
-        validate_description(before, bounds)
-        raster = reader.get_bytes(SERVICE, raster_parameters(bounds))
+        validate_description(before, bounds, adapter_version)
+        raster = reader.get_bytes(endpoint, raster_parameters(bounds, adapter_version))
         artifacts['native_raster'] = BinaryArtifact(raster, 'image/tiff')
-        coverage = inspect_raster(raster, request.area, bounds)
+        coverage = inspect_raster(raster, request.area, bounds, adapter_version)
         artifacts['raster_coverage'] = coverage
-        after = reader.get_bytes(SERVICE, describe_parameters(), max_bytes=LIMITS['max_metadata_bytes'])
+        after = reader.get_bytes(endpoint, describe_parameters(adapter_version), max_bytes=LIMITS['max_metadata_bytes'])
         artifacts['provider_description_after'] = BinaryArtifact(after, 'application/xml')
-        validate_description(after, bounds)
+        validate_description(after, bounds, adapter_version)
         if before != after:
             raise AcquisitionError('source_changed_during_capture')
-        return {'data_family': 'raster', 'raster': coverage, 'publisher_coverage_id': COVERAGE,
+        return {'data_family': 'raster', 'raster': coverage, 'publisher_coverage_id': coverage_id,
                 'publisher_release_id': None, 'observation_time': None, 'publication_time': None,
                 'completeness': 'complete_bounded_response',
                 'time_semantics': 'Current WCS composite capture; local constituent survey date is unknown.'}
@@ -198,3 +227,10 @@ def fetch_dtm(request, *, client=None, artifacts=None, diagnostics=None):
         diagnostics['responses'] = reader.responses
         diagnostics['decoded_bytes_received'] = reader.bytes_received
         reader.close()
+
+
+def fetch_dtm(request, **kwargs):
+    """Preserve the terrain-only internal entry point and reject role confusion."""
+    if request.adapter_version != DTM_ADAPTER_VERSION:
+        raise AcquisitionError('source_adapter_mismatch')
+    return fetch_raster(request, **kwargs)

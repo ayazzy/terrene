@@ -10,7 +10,7 @@ import json
 
 from backend import core
 from backend.acquisition import read_acquisition
-from backend.acquisition_contracts import AcquisitionError, SCOTLAND_SOURCE_ID, DTM_SOURCE_ID
+from backend.acquisition_contracts import AcquisitionError, SCOTLAND_SOURCE_ID, RASTER_ADAPTERS
 from backend.acquisition_sources import BoundedClient, source_descriptor
 
 
@@ -18,7 +18,7 @@ def verify(org, acquisition_id):
     summary = read_acquisition(org, acquisition_id)
     if summary['state'] != 'succeeded':
         raise AcquisitionError('successful_capture_required')
-    if summary['request']['source_id'] == DTM_SOURCE_ID:
+    if summary['request']['adapter_version'] in RASTER_ADAPTERS:
         from scripts.verify_lidar_acquisition import verify_raster
         return verify_raster(org, summary)
     endpoint = source_descriptor(summary['request']['adapter_version'])['endpoint']

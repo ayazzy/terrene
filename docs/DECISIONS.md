@@ -386,3 +386,26 @@ coverage. Surface models, imagery, weather and application access remain separat
 subsequent iterations. No market-validation or purchasing decision is implied.
 
 **Reference:** [Independent LIDAR acquisition](EA-LIDAR-GEOGRAPHIC-ACQUISITION.md).
+
+## 2026-09-15 — Separate surface elevation from terrain and qualify raster pairing
+
+**Decision:** Add EA last-return DSM as an independent registered raster source,
+sharing bounded transport/grid checks with DTM while retaining separate source,
+coverage and processing identities. Do not label DSM elevation as ground height,
+building height or a contemporary observation.
+
+**Pairing:** Require explicit retained DTM and DSM capture IDs, matching area and
+coverage-profile identity, correct source roles and compatible verified native
+grids/units/datums. Report intersecting valid cells and missing pairs. Do not
+infer joint availability from the minimum of marginal coverage fractions, or
+infer matching survey dates from matching grids or catalogue composite labels.
+Expose pairing as a deterministic read-only compatibility contract with exact
+input references; it creates no model result or new persisted evidence record.
+
+**Compatibility:** Existing DTM/vector requests, source descriptors, profile and
+artifact hashes, legacy terrain/height methods, assessments, snapshots and model
+inputs remain unchanged. A future surface-minus-terrain interpretation requires
+its own versioned binding and explicit assumptions. No commercial-workflow
+validation or broader UK publisher coverage is implied.
+
+**Reference:** [DSM acquisition and pairing](EA-DSM-GEOGRAPHIC-ACQUISITION.md).

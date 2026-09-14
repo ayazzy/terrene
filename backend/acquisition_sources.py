@@ -10,7 +10,7 @@ from backend import core
 from backend.acquisition_contracts import (
     AcquisitionError, ADAPTER_VERSION, FULL_EXTENT_ADAPTER_VERSION, SOURCE_ID, MAX_AREA_HA, digest, encode,
     SCOTLAND_SOURCE_ID, SCOTLAND_ADAPTER_VERSION,
-    DTM_ADAPTER_VERSION,
+    DTM_ADAPTER_VERSION, DSM_ADAPTER_VERSION, RASTER_ADAPTERS,
 )
 
 SSSI_URL = ('https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/'
@@ -41,6 +41,7 @@ ADAPTER_COVERAGE = {
     FULL_EXTENT_ADAPTER_VERSION: FULL_EXTENT_COVERAGE_VERSION,
     SCOTLAND_ADAPTER_VERSION: SCOTLAND_COVERAGE_VERSION,
     DTM_ADAPTER_VERSION: FULL_EXTENT_COVERAGE_VERSION,
+    DSM_ADAPTER_VERSION: FULL_EXTENT_COVERAGE_VERSION,
 }
 LIMITS = {'max_area_ha': MAX_AREA_HA, 'max_features': 2_000, 'batch_size': 100,
           'max_response_bytes': 20_000_000, 'max_total_bytes': 60_000_000,
@@ -70,9 +71,9 @@ DESCRIPTOR = {
 
 
 def source_descriptor(adapter_version=ADAPTER_VERSION):
-    if adapter_version == DTM_ADAPTER_VERSION:
+    if adapter_version in RASTER_ADAPTERS:
         from backend.acquisition_rasters import descriptor
-        return descriptor()
+        return descriptor(adapter_version)
     if adapter_version == SCOTLAND_ADAPTER_VERSION:
         return {
             'source_id': SCOTLAND_SOURCE_ID, 'adapter_version': SCOTLAND_ADAPTER_VERSION,

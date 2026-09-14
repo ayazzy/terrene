@@ -2,7 +2,7 @@
 
 > Repository implementation is authoritative where this document is stale.
 
-This is an operational map of what exists on 14 September 2026. Inspect the relevant code, tests and linked implementation reports before changing it.
+This is an operational map of what exists on 15 September 2026. Inspect the relevant code, tests and linked implementation reports before changing it.
 
 ## Product architecture
 
@@ -21,6 +21,8 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 - Acquire NatureScot's current Scottish SSSI publication through the same independent service, with a separately pinned Scottish footprint, publisher identity/terms checks and native component/designation identities. Source adapters and national coverage profiles cannot be interchanged. See [NatureScot acquisition](NATURESCOT-SSSI-ACQUISITION.md).
 
 - Acquire EA 1 m bare-earth terrain independently for a supported bounded England area, retain original XML/GeoTIFF artifacts, read their verified bytes internally, and report native cell availability separately from acquisition success. Live Oxford and East Anglia captures and independent pixel queries pass. See [independent LIDAR acquisition](EA-LIDAR-GEOGRAPHIC-ACQUISITION.md).
+
+- Acquire EA 1 m last-return surface elevation independently and explicitly check a retained DSM/DTM pair for common area, profile, grid and joint valid-cell coverage. Pairing is read-only and leaves local survey-date equivalence unverified. See [independent DSM acquisition](EA-DSM-GEOGRAPHIC-ACQUISITION.md).
 
 - Create sites from a drawn or uploaded Polygon/MultiPolygon in a contextual editor over the persistent operating map; validate, version and preserve boundary history.
 - Submit deterministic assessments with pinned dataset/model configuration, deduplication, worker leases/retries/fencing and immutable saved results.
@@ -46,6 +48,7 @@ Connected sources include:
 
 - Environment Agency LIDAR Composite DTM 1m: legacy elevation/slope summaries plus independent native-raster captures with explicit cell availability; the two paths do not silently exchange evidence.
 - Paired Environment Agency LIDAR Composite DSM/DTM 1m: object-linked historical surface-height estimates for retained mapped buildings, with exact WCS provenance and explicit per-building gaps.
+- Environment Agency LIDAR Composite last-return DSM 1m: separate independent native-raster captures and read-only pairing with retained DTM; these captures do not feed the historical height model automatically.
 - OS Open Rivers: watercourse intersection, proximity and distance.
 - ESA WorldCover 2021 v200: mapped land-cover distribution and derived mapped fractions.
 - Environment Agency Flood Map for Planning Zones 2/3 within a bounded Oxford corridor.
@@ -221,7 +224,7 @@ produced no new browser warnings or errors.
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
 - Most legacy acquisition is bounded to the Oxford pilot; flood coverage is narrower. Independent SSSI acquisition supports bounded areas wholly inside the selected publisher's pinned England or Scotland footprint. England BFE v2 resolves the verified Broads tidal exclusion; historical BFC v1 retains its original limits. No profile establishes complete marine or legal designation coverage. Wales, Northern Ireland, cross-border composition and customer-facing acquisition remain incomplete. Source-specific mapped absence never proves real-world absence.
-- Independent LIDAR currently serves EA terrain in England only, capped at 4 million cells per requested bounding window and 4,096 pixels per axis. This is a historical composite raster, not point clouds, a current survey or national bulk ingestion. Surface-model acquisition remains assessment-specific; no independent raster map layer or terrain-to-model binding is implemented.
+- Independent LIDAR currently serves EA terrain and last-return surface elevation in England only, capped at 4 million cells per requested bounding window and 4,096 pixels per axis. These are historical composite rasters, not point clouds, current surveys or national bulk ingestion. Pairing checks grid compatibility and joint availability but does not establish survey-date equivalence or scientific suitability. No independent raster map layer or raster-to-model binding is implemented.
 - The wetland model is unvalidated and cannot yet rank the retained real locations defensibly.
 - Hosted Supabase/Render/R2 credentials and end-to-end tenant acceptance have not been configured or verified; the reserved Sites frontend is not a deployed product.
 - Team review status is not yet an immutable historical Decision record.
@@ -233,28 +236,30 @@ produced no new browser warnings or errors.
 
 ## Latest meaningful implementation
 
-Independent geographic acquisition now supports a raster family through
-`environment_agency.lidar_dtm_1m` / `ea_lidar_dtm_wcs_v1`. It uses the existing
-England BFE operational profile, validates the WCS coverage identity and native
-single-band EPSG:27700 1 m grid, and retains original XML/GeoTIFF bytes with
-organization-scoped hashes. Native cell coverage respects the requested polygon
-and holes; all-nodata, partial coverage and genuine zero elevation remain distinct.
-Acquisition does not execute or change the existing slope, height or wetland models.
+`environment_agency.lidar_dsm_last_return_1m` / `ea_lidar_dsm_wcs_v1` adds
+independent DSM capture with a separate native coverage identity and processing
+version. Shared bounded raster machinery preserves DTM defaults and historic
+outputs. `lidar_pair_compatibility_v1` and the operator `pair-lidar` command check
+two explicit retained capture IDs without fetching provider data or persisting
+another evidence/model record. The result pins exact source/attempt/manifest/raster
+identities and counts the intersection of valid-cell masks, with survey-date
+compatibility explicitly unverified.
 
-Live Oxford and East Anglia requests each contain 25,600 valid area cells in a
-retained 167 × 167 raster window. All six independent one-cell WCS comparisons
-match, offline coverage replay matches, and fresh-process reads/offline retries
-retain the same identities. All six earlier England/Scotland vector capture
-summaries remain unchanged. The affected acquisition, terrain and height suites
-pass 148 tests on each of SQLite and PostgreSQL/PostGIS. See [implementation and verification](EA-LIDAR-GEOGRAPHIC-ACQUISITION.md).
+Live Oxford and East Anglia DSM captures each contain 25,600 valid requested-area
+cells and match three independent live one-cell requests. Both align with their
+existing DTM captures and provide 25,600 jointly valid cells. Fresh-process reads,
+offline retries and pairing fingerprints match. All eight earlier DTM/vector
+capture summaries remain unchanged. The affected acquisition, pairing, terrain
+and height suites pass 171 tests on each of SQLite and PostgreSQL/PostGIS. See
+[DSM implementation and verification](EA-DSM-GEOGRAPHIC-ACQUISITION.md).
 
 ## Current recommended engineering question
 
 The founder has deferred Wales and Northern Ireland designation adapters to
-prioritize additional data such as LIDAR. The next bounded acquisition candidate
-is independent EA surface-model (DSM) capture, with explicit compatibility and
-pairing rules for retained terrain rasters. Dated imagery and historical weather
-can follow as separate data-family iterations. Customer-facing acquisition and
+prioritize additional data such as LIDAR. With independent DTM and DSM capture
+implemented, the next bounded data-family candidate is dated satellite imagery,
+with explicit observation time, scene/asset identity, cloud and nodata semantics.
+Historical weather can follow separately. Customer-facing acquisition and
 raster/map assembly also remain separate work. Keep UK-wide capability as the
 broader objective and each source's national gaps explicit. The initial commercial
 market remains undecided and unvalidated.

@@ -14,10 +14,12 @@ from backend.acquisition_sources import BoundedClient
 def verify_raster(org, summary):
     acquisition_id = summary['acquisition_id']
     area = summary['request']['area']
+    adapter_version = summary['request']['adapter_version']
+    endpoint, coverage_id, _ = raster.definition(adapter_version)
     content = read_acquisition_artifact(org, acquisition_id, 'native_raster')
     description = read_acquisition_artifact(org, acquisition_id, 'provider_description_before')
     saved = summary['result']['raster']
-    replay = raster.inspect_raster(content, area, saved['bounds_27700'])
+    replay = raster.inspect_raster(content, area, saved['bounds_27700'], adapter_version)
     if replay != saved:
         raise AcquisitionError('raster_replay_mismatch')
     samples = []
@@ -38,16 +40,16 @@ def verify_raster(org, summary):
                             'valid':bool(valid), 'elevation_m':float(values.data[row,col]) if valid else None})
     reader = BoundedClient(max_response=2_000_000, max_total=12_000_000, seconds=180, request_timeout=45)
     try:
-        before = reader.get_bytes(raster.SERVICE, raster.describe_parameters())
+        before = reader.get_bytes(endpoint, raster.describe_parameters(adapter_version))
         if before != description:
             raise AcquisitionError('provider_changed_since_capture')
         for sample in samples:
             left,bottom,right,top = sample['bounds_27700']
             # Separate one-cell requests; never substitute the retained full raster.
             params = [('service','WCS'),('version','2.0.1'),('request','GetCoverage'),
-                      ('coverageId',raster.COVERAGE),('format','image/tiff'),
+                      ('coverageId',coverage_id),('format','image/tiff'),
                       ('subset',f'E({left},{right})'),('subset',f'N({bottom},{top})')]
-            data = reader.get_bytes(raster.SERVICE, params)
+            data = reader.get_bytes(endpoint, params)
             try:
                 with MemoryFile(data) as memory, memory.open() as ds:
                     if (ds.driver != 'GTiff' or ds.count != 1 or ds.shape != (1,1)
@@ -64,7 +66,7 @@ def verify_raster(org, summary):
             except rasterio.errors.RasterioError as exc:
                 raise AcquisitionError('independent_raster_sample_mismatch') from exc
             sample['independent_match'] = True
-        after = reader.get_bytes(raster.SERVICE, raster.describe_parameters())
+        after = reader.get_bytes(endpoint, raster.describe_parameters(adapter_version))
         if before != after:
             raise AcquisitionError('provider_changed_since_capture')
         return {'verification_version':'geographic_raster_live_verification_v1',
