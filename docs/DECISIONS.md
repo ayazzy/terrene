@@ -188,3 +188,11 @@ conclusions remain visibly and navigably separate.
 **Rationale:** A building identity comes from the declared OpenMap Local release, while DSM-derived surface height has separate source dates, artifacts, coverage, processing and uncertainty. Placing height directly on the object would conceal that independent lineage and encourage a later source or method to rewrite historical object state. A dedicated observation preserves multiple future measurements without introducing a general graph database or treating a historical composite as a current survey.
 
 **References:** [EA LIDAR building heights](EA-LIDAR-BUILDING-HEIGHTS.md), [OpenMap Local built world](OPENMAP-LOCAL-BUILT-WORLD.md), [Architecture](ARCHITECTURE.md).
+
+## 2026-09-14 — The primary map is a projection of one immutable Evidence Snapshot
+
+**Decision:** Define `infrastructure_map_scene_v1` as an authenticated, organization-scoped, read-only presentation projection of one exact committed Land Evidence Snapshot. Validate the snapshot manifest and identity envelope before returning safe WGS84 features, semantic layer and capability states, source metadata, typed parcel relationships and object-level height evidence. Render that contract through native MapLibre GeoJSON sources, rendered-feature queries and feature state. Preserve `screening_context_map_features_v1` unchanged and keep temporary SVG geometry only in the isolated boundary editor.
+
+**Rationale:** The operating picture needs object-centric interaction without making the map another evidence store or coupling spatial presentation to one reasoning module. A snapshot-native projection keeps selection, historical state and height eligibility tied to immutable evidence, while native MapLibre layers provide reliable layer ordering, hit testing and future perspective rendering. Keeping the historical response avoids silently changing existing Screening Context consumers.
+
+**References:** [Architecture](ARCHITECTURE.md), [Sprint 005 Task 2](SPRINT-005-TASK-2-NATIVE-INFRASTRUCTURE-MAP.md), [EA LIDAR building heights](EA-LIDAR-BUILDING-HEIGHTS.md).
