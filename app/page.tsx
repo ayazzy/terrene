@@ -15,6 +15,7 @@ import {
 import OverlayFindings from './overlay-findings';
 import ScreeningContextPanel from './screening-context-panel';
 import MapFeatureInspector from './map-feature-inspector';
+import SiteEditorPanel from './site-editor-panel';
 import {
   useSiteWorkspaceState,
   type WorkspaceTab,
@@ -57,9 +58,7 @@ import {
   MapPin,
   Download,
   Play,
-  Upload,
   PenLine,
-  Check,
   Info,
   RefreshCw,
   FileText,
@@ -151,6 +150,7 @@ export default function Home() {
   const analysisPanel = useRef<HTMLDivElement>(null);
   const analysisCloseButton = useRef<HTMLButtonElement>(null);
   const reopenAnalysisButton = useRef<HTMLButtonElement>(null);
+  const siteNameInput = useRef<HTMLInputElement>(null);
   const dossierFocusIntent = useRef<'close' | 'reopen' | null>(null);
   const previousAssetId = useRef<string | null>(null);
   const assetReturnFocusIntent = useRef(false);
@@ -187,6 +187,7 @@ export default function Home() {
     [notes, setNotes] = useState(''),
     [geometry, setGeometry] = useState<any>(null),
     [drawing, setDrawing] = useState(false),
+    [drawSession, setDrawSession] = useState(0),
     [editing, setEditing] = useState(false),
     [query, setQuery] = useState(''),
     [filter, setFilter] = useState('all'),
@@ -582,7 +583,30 @@ export default function Home() {
     setNotes('');
     setGeometry(null);
     setRawGeometry(null);
+    setDrawing(false);
+    setError('');
+    operatingPicture.transition(
+      (currentState) => ({
+        ...currentState,
+        mode: 'map',
+        selection: null,
+        artifact: null,
+        assetId: null,
+        showRelated: false,
+        section: 'overview',
+        dossierOpen: true,
+      }),
+      'push',
+    );
     setNewSite(true);
+  }
+  function closeSiteEditor() {
+    setNewSite(false);
+    setDrawing(false);
+    setEditing(false);
+    setGeometry(null);
+    setRawGeometry(null);
+    setError('');
   }
   async function save() {
     await act(async () => {
@@ -596,8 +620,7 @@ export default function Home() {
           ...(editing ? { expected_version: current.version } : {}),
         },
       );
-      setNewSite(false);
-      setDrawing(false);
+      closeSiteEditor();
       workspace.resetForSite();
       operatingPicture.selectEntity({ kind: 'site', id: s.id }, 'site');
     });
@@ -626,6 +649,11 @@ export default function Home() {
       setError(e.message);
     }
   }
+  useEffect(() => {
+    if (!newSite) return;
+    const frame = requestAnimationFrame(() => siteNameInput.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [newSite]);
   async function report() {
     if (!assessment) return;
     await act(async () => {
@@ -725,6 +753,7 @@ export default function Home() {
           }
         : null;
   const spatialView =
+    newSite ||
     (view === 'workspace' && sitesView === 'map') ||
     view === 'site' ||
     view === 'project-intelligence';
@@ -734,6 +763,9 @@ export default function Home() {
         ? assessment?.geometry || null
         : current.geometry
       : selectedInfrastructureEntity?.geometry || null;
+  const editorMapGeometry = newSite
+    ? geometry || (editing ? current?.geometry || null : null)
+    : selectedMapGeometry;
   function openInfrastructureEntity(entity: InfrastructureEntity) {
     setQuery('');
     if (entity.kind === 'site') openSite(entity.site);
@@ -810,15 +842,29 @@ export default function Home() {
         {spatialView && (
           <div className="operating-spatial-map">
             <SiteMap
-              geometry={selectedMapGeometry}
+              geometry={editorMapGeometry}
               findings={view === 'site' ? result?.findings : []}
               selected={view === 'site' ? mapFocus?.key : undefined}
               focusRequest={view === 'site' ? mapFocus?.request : undefined}
               boundaryLabel={
-                view === 'site' && current
-                  ? `Boundary v${viewingHistorical ? assessment?.version : current.version}${viewingHistorical ? ' · historical assessment' : ''}`
-                  : 'Current saved Site boundaries'
+                newSite
+                  ? geometry
+                    ? 'Staged Site boundary'
+                    : editing
+                      ? `Reference boundary v${current?.version}`
+                      : 'New Site boundary'
+                  : view === 'site' && current
+                    ? `Boundary v${viewingHistorical ? assessment?.version : current.version}${viewingHistorical ? ' · historical assessment' : ''}`
+                    : 'Current saved Site boundaries'
               }
+              draw={newSite && drawing}
+              drawSession={drawSession}
+              boundaryEditing={newSite}
+              onDraw={(nextGeometry) => {
+                setRawGeometry(null);
+                setGeometry(nextGeometry);
+                setDrawing(false);
+              }}
               onInspect={(finding) => {
                 if (view !== 'site') return;
                 showOnMap(finding.key);
@@ -885,8 +931,9 @@ export default function Home() {
                   : undefined
               }
               dossierOpen={
-                (view === 'site' || view === 'project-intelligence') &&
-                panelOpen
+                newSite ||
+                ((view === 'site' || view === 'project-intelligence') &&
+                  panelOpen)
               }
               openDossierButtonRef={reopenAnalysisButton}
             />
@@ -948,7 +995,7 @@ export default function Home() {
                 </TabsTrigger>
               </TabsList>
               <button className="primary" onClick={startNew}>
-                <Plus size={18} /> New site
+                <Plus size={18} /> Add site
               </button>
             </div>
             <TabsContent value="map" className="sites-map-panel">
@@ -1832,78 +1879,33 @@ export default function Home() {
             </div>
           </>
         )}
+        {newSite && (
+          <SiteEditorPanel
+            editing={editing}
+            name={name}
+            notes={notes}
+            stagedGeometry={geometry}
+            existingBoundaryLabel={
+              editing && current
+                ? `Saved boundary v${current.version}`
+                : undefined
+            }
+            drawing={drawing}
+            busy={busy}
+            error={error}
+            nameInputRef={siteNameInput}
+            onNameChange={setName}
+            onNotesChange={setNotes}
+            onStartDrawing={() => {
+              setDrawSession((session) => session + 1);
+              setDrawing(true);
+            }}
+            onUpload={(file) => void upload(file)}
+            onCancel={closeSiteEditor}
+            onSave={() => void save()}
+          />
+        )}
       </section>
-      <Dialog
-        open={newSite}
-        onOpenChange={(v) => {
-          setNewSite(v);
-          if (!v) setDrawing(false);
-        }}
-      >
-        <DialogContent className="site-dialog">
-          <DialogHeader>
-            <DialogTitle>{editing ? 'Edit site' : 'Create a site'}</DialogTitle>
-            <DialogDescription>
-              {editing
-                ? 'Boundary changes preserve prior assessments as history.'
-                : 'Start with a name and an exact site boundary.'}
-            </DialogDescription>
-          </DialogHeader>
-          <label>
-            Site name
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Lower Windrush meadow"
-              maxLength={160}
-            />
-          </label>
-          <label>
-            Notes <span className="optional">optional</span>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ownership, current use, questions to investigate…"
-              maxLength={5000}
-            />
-          </label>
-          <div className="boundary-tools">
-            <button
-              onClick={() => {
-                setNewSite(false);
-                setDrawing(true);
-              }}
-            >
-              <PenLine size={16} /> Draw boundary
-            </button>
-            <label className="upload-btn">
-              <Upload size={16} /> Upload GeoJSON
-              <input
-                type="file"
-                accept=".json,.geojson,application/geo+json,application/json"
-                onChange={(e) => upload(e.target.files?.[0])}
-              />
-            </label>
-          </div>
-          {geometry && (
-            <div className="boundary-ready">
-              <Check size={16} /> {geometry.type} boundary ready for validation
-            </div>
-          )}
-          {error && <div className="alert error">{error}</div>}
-          <p className="fineprint">
-            WGS84 Polygon or MultiPolygon, up to 500 KB. Boundaries are
-            validated on save and never silently repaired.
-          </p>
-          <button
-            className="primary"
-            disabled={busy || !name.trim() || (!geometry && !editing)}
-            onClick={save}
-          >
-            {busy ? 'Saving…' : 'Save site'}
-          </button>
-        </DialogContent>
-      </Dialog>
       <Dialog
         open={!!workspace.reportHtml}
         onOpenChange={(v) => {
@@ -1944,43 +1946,6 @@ export default function Home() {
           />
         </DialogContent>
       </Dialog>
-      {drawing && (
-        <div className="draw-screen">
-          <div className="draw-heading">
-            <div>
-              <h2>Draw site boundary</h2>
-              <p>
-                Zoom to the land, click each corner, then finish the boundary.
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                setDrawing(false);
-                setNewSite(true);
-              }}
-            >
-              Cancel drawing
-            </button>
-          </div>
-          <SiteMap
-            geometry={geometry || (editing ? current?.geometry : null)}
-            boundaryLabel={
-              geometry
-                ? 'Staged boundary'
-                : editing
-                  ? `Reference boundary v${current?.version}`
-                  : 'Draft boundary'
-            }
-            draw
-            onDraw={(g) => {
-              setRawGeometry(null);
-              setGeometry(g);
-              setDrawing(false);
-              setNewSite(true);
-            }}
-          />
-        </div>
-      )}
       <Sheet open={!!finding} onOpenChange={(v) => !v && setFinding(null)}>
         <SheetContent className="evidence-sheet">
           <SheetHeader>

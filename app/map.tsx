@@ -540,6 +540,8 @@ type Props = {
   findings?: OverlayFinding[];
   selected?: string;
   draw?: boolean;
+  drawSession?: number;
+  boundaryEditing?: boolean;
   focusRequest?: number;
   boundaryLabel?: string;
   onInspect?: (finding: OverlayFinding) => void;
@@ -581,6 +583,8 @@ export default function SiteMap({
   findings = [],
   selected,
   draw = false,
+  drawSession = 0,
+  boundaryEditing = false,
   onDraw,
   focusRequest,
   boundaryLabel = 'Site boundary',
@@ -617,7 +621,10 @@ export default function SiteMap({
   const relatedNativeFeatures = useRef<{ source: string; id: string }[]>([]);
   const [projection, setProjection] = useState<maplibregl.Map | null>(null),
     [readyMs, setReadyMs] = useState<number | null>(null),
-    [points, setPoints] = useState<number[][]>([]),
+    [draftVertices, setDraftVertices] = useState<{
+      session: number;
+      points: number[][];
+    }>({ session: drawSession, points: [] }),
     [revision, setRevision] = useState(0),
     [localHiddenLayerIds, setLocalHiddenLayerIds] = useState<string[]>([]),
     [localLayersOpen, setLocalLayersOpen] = useState(false),
@@ -629,6 +636,7 @@ export default function SiteMap({
     [error, setError] = useState('');
   const [basemapState, setBasemapState] = useState<BasemapState>('loading');
   const drawRef = useRef(draw);
+  const drawSessionRef = useRef(drawSession);
   const geometryRef = useRef(geometry);
   const dossierOpenRef = useRef(dossierOpen);
   const lastOverlayFocus = useRef('');
@@ -656,6 +664,9 @@ export default function SiteMap({
   useEffect(() => {
     dossierOpenRef.current = dossierOpen;
   }, [dossierOpen]);
+  useEffect(() => {
+    drawSessionRef.current = drawSession;
+  }, [drawSession]);
   const ready = !!projection;
   const layerPanelOpen = layersOpen ?? localLayersOpen;
   const setLayerPanelOpen = (open: boolean) => {
@@ -721,26 +732,40 @@ export default function SiteMap({
     if (!currentMap || !nextGeometry) return;
     const bounds = geometryBounds(nextGeometry);
     const mapRect = el.current?.getBoundingClientRect();
-    const dossier = dossierOpenRef.current
+    const reservedSurface = dossierOpenRef.current
       ? el.current
           ?.closest('.spatial-main')
           ?.querySelector<HTMLElement>(
-            '.entity-dossier:not(.dossier-collapsed)',
+            '.entity-dossier:not(.dossier-collapsed), [data-map-reserved-surface="right"]',
           )
       : null;
-    const dossierRect = dossier?.getBoundingClientRect();
+    const reservedRect = reservedSurface?.getBoundingClientRect();
     const sideDockOverlap =
       mapRect &&
-      dossierRect &&
-      dossierRect.width < mapRect.width * 0.8 &&
-      dossierRect.left > mapRect.left
-        ? Math.max(0, mapRect.right - dossierRect.left)
+      reservedRect &&
+      reservedRect.width < mapRect.width * 0.8 &&
+      reservedRect.left > mapRect.left
+        ? Math.max(0, mapRect.right - reservedRect.left)
+        : 0;
+    const bottomDockOverlap =
+      mapRect &&
+      reservedRect &&
+      reservedRect.width >= mapRect.width * 0.8 &&
+      reservedRect.top > mapRect.top
+        ? Math.max(0, mapRect.bottom - reservedRect.top)
         : 0;
     if (!bounds.isEmpty())
       currentMap.fitBounds(bounds, {
         padding: sideDockOverlap
           ? { top: 65, right: sideDockOverlap + 48, bottom: 65, left: 65 }
-          : 65,
+          : bottomDockOverlap
+            ? {
+                top: 48,
+                right: 48,
+                bottom: bottomDockOverlap + 48,
+                left: 48,
+              }
+            : 65,
         maxZoom: 16,
         duration: 400,
       });
@@ -857,7 +882,15 @@ export default function SiteMap({
     });
     m.on('click', (e) => {
       if (drawRef.current) {
-        setPoints((vertices) => [...vertices, [e.lngLat.lng, e.lngLat.lat]]);
+        setDraftVertices((current) => ({
+          session: drawSessionRef.current,
+          points: [
+            ...(current.session === drawSessionRef.current
+              ? current.points
+              : []),
+            [e.lngLat.lng, e.lngLat.lat],
+          ],
+        }));
       } else {
         const hit = m.queryRenderedFeatures(e.point, {
           layers: [...HIT_LAYER_IDS],
@@ -934,12 +967,30 @@ export default function SiteMap({
         },
       ];
     });
-    if (!siteFeatures.length && geometry) {
+    if (!siteFeatures.length && geometry && !boundaryEditing) {
       siteFeatures.push({
         type: 'Feature',
         id: 'site:current-boundary',
         geometry,
         properties: { entity_kind: null, entity_id: null },
+      });
+    }
+    if (
+      boundaryEditing &&
+      geometry &&
+      selectedEntity?.kind !== 'site' &&
+      !siteFeatures.some((feature) => feature.id === 'site:draft-boundary')
+    ) {
+      siteFeatures.push({
+        type: 'Feature',
+        id: 'site:draft-boundary',
+        geometry,
+        properties: {
+          entity_kind: null,
+          entity_id: null,
+          name: 'Draft Site boundary',
+          boundary_version: null,
+        },
       });
     }
     const projectFeatures: Feature<Point>[] = linkedProjects.flatMap(
@@ -1032,6 +1083,7 @@ export default function SiteMap({
     findings,
     mapScene,
     hiddenLayerSet,
+    boundaryEditing,
   ]);
   useEffect(() => {
     const currentMap = map.current;
@@ -1126,11 +1178,18 @@ export default function SiteMap({
     );
   }, []);
   useEffect(() => {
-    if (ready) fit(geometry);
-  }, [geometry, ready, projection, fit]);
-  useEffect(() => {
-    if (ready && entities.length && !selectedEntity) fitAllEntities();
-  }, [ready, entities.length, selectedEntity, fitAllEntities]);
+    if (!ready) return;
+    if (geometry) fit(geometry);
+    else if (entities.length && !selectedEntity) fitAllEntities();
+  }, [
+    geometry,
+    ready,
+    projection,
+    fit,
+    entities.length,
+    selectedEntity,
+    fitAllEntities,
+  ]);
   useEffect(() => {
     if (ready) {
       const focusKey = `${selected ?? ''}:${focusRequest}`;
@@ -1212,8 +1271,8 @@ export default function SiteMap({
       currentMap.off('idle', synchronizeVisibility);
     };
   }, [hiddenLayerSet, ready, projection, perspectiveActive]);
-  // The isolated boundary editor retains its temporary SVG drawing surface.
-  // The primary operating picture uses only native GeoJSON sources and layers.
+  // Boundary editing uses temporary SVG vertices over the persistent map.
+  // Saved Site and evidence geometry continue to use native GeoJSON sources.
   function path(g: Geometry | null): string {
     if (!g || !projection || !ready) return '';
     const ring = (coords: number[][], close = true) =>
@@ -1234,6 +1293,8 @@ export default function SiteMap({
       return g.geometries.map(path).join(' ');
     return '';
   }
+  const points =
+    draftVertices.session === drawSession ? draftVertices.points : [];
   const draft: LineString | null =
     points.length > 1 ? { type: 'LineString', coordinates: points } : null;
   const builtFeatures = (mapScene?.features || []).filter((feature) =>
@@ -2104,7 +2165,10 @@ export default function SiteMap({
           <button
             disabled={!points.length}
             onClick={() => {
-              setPoints((vertices) => vertices.slice(0, -1));
+              setDraftVertices({
+                session: drawSession,
+                points: points.slice(0, -1),
+              });
             }}
           >
             Undo
@@ -2112,12 +2176,14 @@ export default function SiteMap({
           <button
             disabled={points.length < 3}
             className="primary"
-            onClick={() =>
-              onDraw?.({
+            onClick={() => {
+              const completedBoundary: Polygon = {
                 type: 'Polygon',
                 coordinates: [[...points, points[0]]],
-              })
-            }
+              };
+              setDraftVertices({ session: drawSession, points: [] });
+              onDraw?.(completedBoundary);
+            }}
           >
             Finish boundary
           </button>

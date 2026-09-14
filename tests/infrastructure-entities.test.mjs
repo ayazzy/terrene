@@ -118,8 +118,8 @@ test('one primary map owns Sites, linked projects, unlocated roster and evidence
   assert.doesNotMatch(page, /import\('\.\/portfolio-map'\)|<PortfolioMap/);
   assert.equal(
     (page.match(/<SiteMap/g) || []).length,
-    2,
-    'one primary map plus the isolated boundary editor',
+    1,
+    'one persistent map owns portfolio, evidence and boundary editing',
   );
   assert.doesNotMatch(page, /key=\{assessment\?\.id \|\| current\.id\}/);
   assert.match(map, /data-primary-map="infrastructure-operating-picture"/);

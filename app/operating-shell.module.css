@@ -583,6 +583,33 @@
   visibility: hidden;
 }
 
+.shell :global(.spatial-main > .site-creation-panel) {
+  position: absolute;
+  z-index: 20;
+  top: calc(var(--topbar-height) + 3.5rem);
+  right: 0;
+  bottom: 0;
+  width: min(27rem, 36%);
+  overflow: hidden;
+}
+
+.shell :global(.spatial-main > .site-creation-panel.is-editing-site) {
+  top: var(--topbar-height);
+  width: min(48rem, 48%);
+}
+
+@media (min-width: 80rem) {
+  .shell :global(.spatial-main > .site-creation-panel.is-editing-site) {
+    width: min(48rem, 40%);
+  }
+}
+
+.shell
+  :global(.spatial-main:has(> .site-creation-panel) .map-toolbar) {
+  max-width: calc(64% - 1.5rem);
+  flex-wrap: wrap;
+}
+
 .shell
   :global(
     .spatial-main:has(> .entity-dossier:not(.dossier-collapsed)) .map-toolbar
@@ -902,6 +929,28 @@
     border-left: 0;
     border-radius: 0.75rem 0.75rem 0 0;
     box-shadow: 0 -12px 26px rgb(0 0 0 / 24%);
+  }
+
+  .shell :global(.spatial-main > .site-creation-panel),
+  .shell :global(.spatial-main > .site-creation-panel.is-editing-site) {
+    top: 42%;
+    width: 100%;
+    border-top: 1px solid #4a554f;
+    border-left: 0;
+    border-radius: 0.75rem 0.75rem 0 0;
+    box-shadow: 0 -12px 26px rgb(0 0 0 / 24%);
+  }
+
+  .shell
+    :global(
+      .spatial-main:has(> .site-creation-panel) .operating-spatial-map
+    ) {
+    bottom: 58%;
+  }
+
+  .shell
+    :global(.spatial-main:has(> .site-creation-panel) .map-toolbar) {
+    max-width: calc(100% - 4.25rem);
   }
 
   .shell

@@ -48,10 +48,14 @@ test('the retained map exposes local readiness without claiming live telemetry',
   assert.doesNotMatch(map, /real[- ]?time|latency|telemetry/i);
 });
 
-test('drawing map is part of the stable client module graph', () => {
+test('boundary drawing reuses the stable primary map module', () => {
   assert.match(page, /import SiteMap from '\.\/map';/);
   assert.doesNotMatch(page, /dynamic\(\(\) => import\('\.\/map'\)/);
-  assert.match(page, /<SiteMap[\s\S]*?\bdraw\b[\s\S]*?onDraw=/);
+  assert.equal((page.match(/<SiteMap/g) || []).length, 1);
+  assert.match(page, /draw=\{newSite && drawing\}/);
+  assert.match(page, /drawSession=\{drawSession\}/);
+  assert.match(page, /boundaryEditing=\{newSite\}/);
+  assert.doesNotMatch(page, /draw-screen|site-dialog/);
 });
 
 test('the primary map prefers a dark vector style with a legacy raster fallback', () => {
