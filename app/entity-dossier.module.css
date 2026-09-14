@@ -20,7 +20,8 @@
   gap: 0.75rem;
   padding: 0.75rem var(--dossier-gutter);
   border-bottom: 1px solid var(--border-default);
-  border-radius: calc(var(--radius-panel) - 1px) calc(var(--radius-panel) - 1px) 0 0;
+  border-radius: calc(var(--radius-panel) - 1px) calc(var(--radius-panel) - 1px)
+    0 0;
   background: #222825;
 }
 
@@ -32,7 +33,7 @@
 .kind {
   margin: 0 0 0.2rem;
   color: var(--text-tertiary);
-  font-size: 0.625rem;
+  font-size: var(--font-size-micro);
   font-weight: 720;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -42,7 +43,7 @@
   margin: 0;
   overflow: hidden;
   color: var(--text-primary);
-  font-size: 1.0625rem;
+  font-size: var(--font-size-lg);
   font-weight: 620;
   letter-spacing: -0.015em;
   text-overflow: ellipsis;
@@ -56,7 +57,7 @@
   gap: 0.25rem 0.6rem;
   margin-top: 0.35rem;
   color: var(--text-secondary);
-  font-size: 0.6875rem;
+  font-size: var(--font-size-micro);
 }
 
 .envelope > span {
@@ -89,7 +90,7 @@
   border-bottom: 1px solid #6d5b38;
   background: #302a20;
   color: #c8b88e;
-  font-size: 0.7rem;
+  font-size: var(--font-size-micro);
 }
 
 .history span {

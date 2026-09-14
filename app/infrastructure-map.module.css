@@ -58,7 +58,7 @@
   background: rgb(13 20 18 / 95%);
   box-shadow: 0 10px 28px rgb(0 0 0 / 34%);
   color: #bdc9c3;
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   line-height: 1.4;
   backdrop-filter: blur(12px);
 }
@@ -86,7 +86,7 @@
   background: rgb(34 27 14 / 95%);
   box-shadow: 0 10px 28px rgb(0 0 0 / 34%);
   color: #e6cfaa;
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   line-height: 1.4;
   pointer-events: none;
   backdrop-filter: blur(12px);
@@ -111,7 +111,7 @@
   box-shadow: 0 10px 28px rgb(0 0 0 / 34%);
   color: #84948c;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--font-size-micro);
   backdrop-filter: blur(12px);
 }
 
@@ -169,7 +169,7 @@
   margin-top: 0.1rem;
   overflow: hidden;
   color: #7f9188;
-  font-size: 0.625rem;
+  font-size: var(--font-size-micro);
   font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -306,7 +306,7 @@
   background: #101815;
   color: #eef4f0;
   box-shadow: 0 8px 22px rgb(0 0 0 / 42%);
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
 }
 
 .operatingMap :global(.terrene-map-hover .maplibregl-popup-tip) {
@@ -335,7 +335,7 @@
   background: #262b28eb;
   color: #f2dfbf;
   box-shadow: 0 2px 8px rgb(0 0 0 / 35%);
-  font-size: 0.6875rem;
+  font-size: var(--font-size-micro);
   font-weight: 600;
 }
 
@@ -398,14 +398,14 @@
 }
 
 .roster > header strong {
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .roster > header small {
   color: #89958e;
-  font-size: 0.625rem;
+  font-size: var(--font-size-micro);
 }
 
 .roster > header button {
@@ -435,7 +435,7 @@
   outline: 0;
   background: transparent;
   color: #e5ebe7;
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
 }
 
 .roster > p,
@@ -443,7 +443,7 @@
   margin: 0;
   padding: 0.75rem;
   color: #a9b3ad;
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   line-height: 1.45;
 }
 
@@ -455,7 +455,7 @@
 .rosterRows h3 {
   margin: 0.75rem 0.35rem 0.35rem;
   color: #829087;
-  font-size: 0.625rem;
+  font-size: var(--font-size-micro);
   font-weight: 650;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -536,7 +536,7 @@
 .legendPanel > header strong,
 .legendBody h3 {
   color: #e5ede8;
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -544,7 +544,7 @@
 
 .legendPanel > header small {
   color: #84948c;
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
 }
 
 .legendPanel > header button {
@@ -577,7 +577,7 @@
 .legendBody p {
   margin: 0;
   color: #92a199;
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
 }
 
 .legendRow,
@@ -591,7 +591,7 @@
 .legendRow {
   min-height: 2rem;
   color: #cbd6d0;
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
 }
 
 .legendLine,
@@ -618,7 +618,7 @@
 
 .legendLayer b {
   color: #d8e2dc;
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   font-weight: 570;
 }
 
@@ -626,7 +626,7 @@
   display: block;
   margin: 0.2rem 0 0 1.3rem;
   color: #84948c;
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   line-height: 1.35;
 }
 
@@ -652,7 +652,7 @@
 .railKey span {
   gap: 0.35rem;
   color: #92a199;
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
 }
 
 .railKey i {
@@ -674,7 +674,7 @@
   border-color: transparent;
   background: transparent;
   color: #c5d0ca;
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   text-align: left;
 }
 
@@ -701,7 +701,7 @@
 .objectIndexNote {
   margin: -0.2rem 0 0.55rem;
   color: #84948c;
-  font-size: 0.6875rem;
+  font-size: var(--font-size-micro);
   line-height: 1.45;
 }
 
@@ -722,29 +722,29 @@
 
 .sourceList strong {
   color: #cdd8d2;
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
 }
 
 .sourceList span,
 .sourceList time {
   color: #829188;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
 }
 
 .rosterRows strong {
   color: #e7ede9;
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
 }
 
 .rosterRows small {
   color: #9aa69f;
-  font-size: 0.65rem;
+  font-size: var(--font-size-micro);
 }
 
 .rosterRows em {
   color: #77837c;
-  font-size: 0.625rem;
+  font-size: var(--font-size-micro);
   font-style: normal;
 }
 

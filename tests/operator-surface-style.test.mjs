@@ -17,6 +17,59 @@ const [globalCss, shellCss, mapCss, dossierCss] = await Promise.all([
     'utf8',
   ),
 ]);
+const operatingCss = [globalCss, shellCss, mapCss, dossierCss].join('\n');
+
+test('operating typography uses one readable semantic scale', () => {
+  assert.match(globalCss, /--font-size-micro: 0\.6875rem;/);
+  assert.match(globalCss, /--font-size-title: 1\.25rem;/);
+  assert.match(globalCss, /--font-size-display: 1\.625rem;/);
+  assert.doesNotMatch(
+    operatingCss,
+    /font-size:\s*(?:10px|11px|0?\.(?:5|5625|625|65|6875|7)rem)/,
+  );
+  assert.match(
+    dossierCss,
+    /\.kind \{[\s\S]*?font-size: var\(--font-size-micro\)/,
+  );
+  assert.match(
+    globalCss,
+    /\.brief-section > h3 \{[^}]*font-size: var\(--font-size-lg\)/,
+  );
+  assert.match(
+    shellCss,
+    /@media \(max-width: 74rem\)[\s\S]*?\.viewIdentity span \{[\s\S]*?display: none;/,
+  );
+});
+
+test('secondary state text and keyboard states remain readable', () => {
+  assert.match(globalCss, /--text-tertiary: #89978f;/);
+  assert.match(globalCss, /--status-warning: #d0a45c;/);
+  assert.match(globalCss, /--status-danger: #e08a80;/);
+  assert.match(globalCss, /button:disabled \{[\s\S]*?opacity: 0\.62;/);
+  assert.match(
+    globalCss,
+    /\[role='tab'\]:focus-visible,[\s\S]*?summary:focus-visible,[\s\S]*?outline: 2px solid var\(--focus-ring\)/,
+  );
+  assert.match(
+    globalCss,
+    /\.brief-rows > button:hover,[\s\S]*?\.brief-rows > button:focus-visible,[\s\S]*?background: var\(--surface-selected\)/,
+  );
+});
+
+test('high-frequency dossier spacing follows the shared rhythm', () => {
+  assert.match(
+    globalCss,
+    /\.screening-overview \{ padding: var\(--space-5\) var\(--space-5\) var\(--space-6\); \}/,
+  );
+  assert.match(
+    globalCss,
+    /\.brief-rows > button,[\s\S]*?gap: var\(--space-4\);[\s\S]*?padding: var\(--space-3\) 0;/,
+  );
+  assert.match(
+    globalCss,
+    /\.evidence-register-overview \{[\s\S]*?margin-top: var\(--space-5\);[\s\S]*?padding: var\(--space-4\) 0;/,
+  );
+});
 
 test('operator surfaces use a restrained shared radius scale', () => {
   assert.match(globalCss, /--radius-small: 0\.375rem;/);
