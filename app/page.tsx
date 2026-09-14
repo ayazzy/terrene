@@ -18,7 +18,12 @@ import MapFeatureInspector from './map-feature-inspector';
 import SiteEditorPanel from './site-editor-panel';
 import SiteModelCatalogue from './site-model-catalogue';
 import SiteAssessmentTimeline from './site-assessment-timeline';
-import AssessmentPreflight from './assessment-preflight';
+import AssessmentPreflight, {
+  type ReasoningReadState,
+  type SiteReasoningCatalogue,
+  type SiteReasoningRun,
+  type SiteReasoningRunRequest,
+} from './assessment-preflight';
 import {
   useSiteWorkspaceState,
   type WorkspaceTab,
@@ -164,6 +169,7 @@ export default function Home() {
     top: number;
   } | null>(null);
   const historyRequestFence = useRef(createLatestRequestFence());
+  const reasoningRequestFence = useRef(createLatestRequestFence());
   const operatingPicture = useOperatingPictureState();
   const projectEntityIndex = useInfrastructureEntities();
   const operatingState = operatingPicture.state;
@@ -201,6 +207,15 @@ export default function Home() {
     [password, setPassword] = useState(''),
     [rawGeometry, setRawGeometry] = useState<any>(null),
     [assessmentPreflightOpen, setAssessmentPreflightOpen] = useState(false),
+    [reasoningRetry, setReasoningRetry] = useState(0),
+    [reasoningRead, setReasoningRead] = useState<{
+      siteId: string | null;
+      state: ReasoningReadState;
+      catalogue: SiteReasoningCatalogue | null;
+      error: string;
+    }>({ siteId: null, state: 'idle', catalogue: null, error: '' }),
+    [completedReasoningRun, setCompletedReasoningRun] =
+      useState<SiteReasoningRun | null>(null),
     [navigationCompact, setNavigationCompact] = useState(true),
     [mobileNavigation, setMobileNavigation] = useState(false),
     [mapLayersOpen, setMapLayersOpen] = useState(false);
@@ -432,6 +447,43 @@ export default function Home() {
   useEffect(() => {
     void reload();
   }, [reload]);
+  useEffect(() => {
+    const requestFence = reasoningRequestFence.current;
+    if (!assessmentPreflightOpen || !active) {
+      requestFence.invalidate();
+      return;
+    }
+    const request = requestFence.begin();
+    void readResource<SiteReasoningCatalogue>(async () => {
+      const catalogue = await api(`/sites/${active}/reasoning-inputs`);
+      if (
+        catalogue.contract_version !== 'site_reasoning_input_catalogue_v1' ||
+        catalogue.site_id !== active
+      )
+        throw new Error(
+          'The reasoning catalogue does not match the selected Site.',
+        );
+      return catalogue;
+    }).then((read) => {
+      if (!requestFence.isCurrent(request)) return;
+      if (read.failure) {
+        setReasoningRead({
+          siteId: active,
+          state: 'unavailable',
+          catalogue: null,
+          error: read.failure.message,
+        });
+      } else {
+        setReasoningRead({
+          siteId: active,
+          state: 'ready',
+          catalogue: read.data,
+          error: '',
+        });
+      }
+    });
+    return () => requestFence.invalidate();
+  }, [active, assessmentPreflightOpen, reasoningRetry]);
   useEffect(() => {
     const requestFence = historyRequestFence.current;
     const request = requestFence.begin();
@@ -676,14 +728,70 @@ export default function Home() {
       await workspace.exportWetlandReport(() => r.text());
     });
   }
-  async function createAssessment() {
+  function openAssessmentPreflight() {
+    if (!active) return;
+    setError('');
+    setCompletedReasoningRun(null);
+    setReasoningRead({
+      siteId: active,
+      state: 'loading',
+      catalogue: null,
+      error: '',
+    });
+    setAssessmentPreflightOpen(true);
+  }
+  function changeAssessmentPreflightOpen(next: boolean) {
+    if (next) openAssessmentPreflight();
+    else {
+      setAssessmentPreflightOpen(false);
+      setCompletedReasoningRun(null);
+    }
+  }
+  function retrySiteReasoningInputs() {
+    if (!active) return;
+    setReasoningRead({
+      siteId: active,
+      state: 'loading',
+      catalogue: null,
+      error: '',
+    });
+    setReasoningRetry((retry) => retry + 1);
+  }
+  async function createLegacyAssessment() {
     let submitted = false;
     await act(async () => {
       await api('/sites/' + active + '/assessments', 'POST');
       workspace.resetForSite();
       submitted = true;
     });
-    if (submitted) setAssessmentPreflightOpen(false);
+    if (submitted) changeAssessmentPreflightOpen(false);
+  }
+  async function createSnapshotReasoningRun(request: SiteReasoningRunRequest) {
+    await act(async () => {
+      if (!active || request.site_id !== active)
+        throw new Error(
+          'The selected reasoning input belongs to another Site.',
+        );
+      const run: SiteReasoningRun = await api(
+        `/sites/${active}/reasoning-runs`,
+        'POST',
+        request,
+      );
+      if (
+        run.site_id !== request.site_id ||
+        run.evidence_snapshot_id !== request.evidence_snapshot_id ||
+        run.evidence_content_hash !== request.evidence_content_hash ||
+        run.boundary_version !== request.boundary_version ||
+        run.module_id !== request.module_id ||
+        run.module_version !== request.module_version ||
+        run.input_binding_version !== request.input_binding_version ||
+        run.model_signature !== request.model_signature
+      )
+        throw new Error(
+          'The returned ModuleRun does not match the selected immutable input.',
+        );
+      setCompletedReasoningRun(run);
+    });
   }
   const filtered = sites.filter(
     (s) =>
@@ -1339,16 +1447,11 @@ export default function Home() {
                 </span>
                 <button
                   className="assessment-action"
-                  disabled={
-                    busy ||
-                    ['queued', 'running'].includes(current.assessment?.state)
-                  }
-                  onClick={() => setAssessmentPreflightOpen(true)}
+                  disabled={busy}
+                  onClick={openAssessmentPreflight}
                 >
                   <Play size={15} />
-                  {['queued', 'running'].includes(current.assessment?.state)
-                    ? current.assessment.state + '…'
-                    : 'New assessment'}
+                  New analysis
                 </button>
                 <details className="site-actions-menu">
                   <summary>
@@ -1356,6 +1459,13 @@ export default function Home() {
                     <span className="sr-only">Site actions</span>
                   </summary>
                   <div>
+                    <button
+                      className="text-btn mobile-assessment-action"
+                      disabled={busy}
+                      onClick={openAssessmentPreflight}
+                    >
+                      <Play size={14} /> New analysis
+                    </button>
                     <button
                       className="text-btn"
                       onClick={() => {
@@ -1523,18 +1633,18 @@ export default function Home() {
                           </dl>
                         </section>
                         <section className="context-preparation-note">
-                          <h3>Establish saved evidence</h3>
+                          <h3>Choose an evidence path</h3>
                           <p>
-                            Create an assessment to retain the current boundary
-                            and available source evidence. Screening Context can
-                            then prepare the concise brief without changing the
-                            original assessment.
+                            Run a versioned model from retained evidence, or
+                            acquire a new assessment when registered datasets
+                            are available. Existing evidence and history remain
+                            unchanged.
                           </p>
                           <button
-                            onClick={() => void createAssessment()}
+                            onClick={openAssessmentPreflight}
                             disabled={busy}
                           >
-                            <Play size={14} /> Create assessment
+                            <Play size={14} /> Choose analysis input
                           </button>
                         </section>
                       </section>
@@ -1897,13 +2007,13 @@ export default function Home() {
       </section>
       {current && (
         <AssessmentPreflight
+          key={`${current.id}:${assessmentPreflightOpen ? 'open' : 'closed'}`}
           open={assessmentPreflightOpen}
           siteId={current.id}
           siteName={current.name}
           boundaryVersion={current.version}
           boundaryType={current.geometry?.type || ''}
           sources={datasets}
-          retainedSceneSources={retainedSceneSources}
           sourceReadState={
             loading && !datasets.length
               ? 'loading'
@@ -1913,10 +2023,22 @@ export default function Home() {
                   ? 'partial'
                   : 'ready'
           }
-          viewingHistorical={viewingHistorical}
+          reasoningCatalogue={
+            reasoningRead.siteId === current.id ? reasoningRead.catalogue : null
+          }
+          reasoningReadState={
+            reasoningRead.siteId === current.id ? reasoningRead.state : 'idle'
+          }
+          reasoningError={
+            reasoningRead.siteId === current.id ? reasoningRead.error : ''
+          }
+          operationError={error}
+          completedRun={completedReasoningRun}
           busy={busy}
-          onOpenChange={setAssessmentPreflightOpen}
-          onConfirm={() => void createAssessment()}
+          onOpenChange={changeAssessmentPreflightOpen}
+          onRetryReasoning={retrySiteReasoningInputs}
+          onRunSnapshot={(request) => void createSnapshotReasoningRun(request)}
+          onRunAcquisition={() => void createLegacyAssessment()}
         />
       )}
       <Dialog

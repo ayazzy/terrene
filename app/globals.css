@@ -3165,6 +3165,7 @@ summary {
   background: #26332d;
   color: #f1f6f3;
 }
+.mobile-assessment-action { display: none !important; }
 
 .screening-overview { padding: var(--space-5) var(--space-5) var(--space-6); }
 .screening-overview .screening-heading { padding-bottom: var(--space-3); border-bottom: 1px solid var(--border-subtle); }
@@ -3698,6 +3699,7 @@ summary {
 
 @media (max-width: 760px) {
   .site-actions-menu { flex: 0 0 auto; }
+  .site-actions-menu .mobile-assessment-action { display: inline-flex !important; }
   .screening-overview { padding: 14px; }
   .screening-overview > .nature-muted { display: none; }
   .site-picture-facts,
@@ -4174,7 +4176,9 @@ summary {
 }
 
 /* Assessment creation preflight */
+[data-slot='dialog-overlay'] { z-index: 90 !important; }
 .assessment-preflight-dialog {
+  z-index: 100 !important;
   width: min(42rem, calc(100vw - 2rem)) !important;
   max-width: 42rem !important;
   max-height: min(48rem, calc(100dvh - 2rem));
@@ -4281,6 +4285,173 @@ summary {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.assessment-mode-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.assessment-mode-picker > label {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-color: var(--border-default);
+  border-radius: var(--radius-panel);
+  background: var(--surface-subtle);
+  color: var(--text-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+.assessment-mode-picker > label svg {
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+}
+.assessment-mode-picker > label span {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+.assessment-mode-picker > label strong {
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 630;
+}
+.assessment-mode-picker > label small {
+  color: var(--text-tertiary);
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+}
+.assessment-mode-picker > label.is-selected {
+  border-color: color-mix(in srgb, var(--action-primary) 54%, var(--border-default));
+  background: var(--surface-selected);
+  color: var(--action-primary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--action-primary) 12%, transparent);
+}
+.assessment-mode-picker > label:has(input:disabled) {
+  background: var(--surface-subtle);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+.assessment-mode-picker input,
+.assessment-snapshot-options input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.assessment-mode-picker > label:focus-within,
+.assessment-snapshot-options > label:focus-within {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.assessment-snapshot-options {
+  display: grid;
+  gap: var(--space-2);
+  max-height: 14rem;
+  margin-top: var(--space-4);
+  overflow-y: auto;
+}
+.assessment-snapshot-options > label {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-color: var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+.assessment-snapshot-options > label.is-selected {
+  border-color: color-mix(in srgb, var(--action-primary) 48%, var(--border-default));
+  background: color-mix(in srgb, var(--surface-selected) 72%, var(--surface-raised));
+}
+.assessment-snapshot-choice {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.assessment-snapshot-choice > span:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+.assessment-snapshot-choice strong {
+  color: var(--text-primary);
+  font-size: var(--font-size-xs);
+  font-weight: 620;
+}
+.assessment-snapshot-choice small,
+.assessment-snapshot-counts {
+  overflow: hidden;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-micro);
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.assessment-radio-dot {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface-overlay);
+}
+.assessment-snapshot-options > label.is-selected .assessment-radio-dot {
+  border: 0.25rem solid var(--action-primary);
+}
+.assessment-snapshot-counts {
+  padding-left: calc(0.85rem + var(--space-2));
+}
+.assessment-selected-snapshot {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+.assessment-selected-snapshot .assessment-preflight-message {
+  margin-top: 0;
+  margin-bottom: var(--space-3);
+}
+.assessment-selected-model {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.assessment-selected-model > span {
+  display: grid;
+  gap: 0.1rem;
+}
+.assessment-selected-model small,
+.assessment-run-complete small {
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-micro);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+}
+.assessment-selected-model strong { font-size: var(--font-size-sm); }
+.assessment-selected-model code {
+  overflow-wrap: anywhere;
+  color: var(--text-secondary);
+  font-size: var(--font-size-micro);
+  text-align: right;
+}
+.assessment-snapshot-source-list {
+  max-height: 9rem;
+  margin-top: var(--space-3);
+}
 .assessment-source-summary,
 .assessment-source-state {
   min-height: 1.5rem;
@@ -4361,6 +4532,13 @@ summary {
 .assessment-preflight-message svg {
   flex: 0 0 auto;
 }
+.assessment-preflight-message .text-btn {
+  min-height: auto;
+  margin-top: var(--space-2);
+  padding: 0;
+  border: 0;
+  color: inherit;
+}
 .assessment-preflight-caveat,
 .assessment-preflight-retention > p {
   margin: var(--space-3) 0 0;
@@ -4368,56 +4546,61 @@ summary {
   font-size: var(--font-size-xs);
   line-height: 1.5;
 }
-.assessment-retained-context {
-  margin-top: var(--space-4);
-  padding: var(--space-3);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-control);
-  background: var(--surface-raised);
+.assessment-run-complete {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid color-mix(in srgb, var(--status-success) 42%, var(--border-default));
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--status-success) 8%, var(--surface-subtle));
 }
-.assessment-retained-context > div {
-  display: grid;
-  gap: 0.15rem;
+.assessment-run-complete-icon {
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--status-success) 16%, transparent);
+  color: var(--status-success);
 }
-.assessment-retained-context > div strong {
+.assessment-run-complete h3 {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-lg);
+}
+.assessment-run-complete p {
+  margin: var(--space-1) 0 0;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
   font-size: var(--font-size-xs);
-  font-weight: 620;
 }
-.assessment-retained-context > div small {
+.assessment-run-identities {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+.assessment-run-identities > div {
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-subtle);
+}
+.assessment-run-identities dt {
   color: var(--text-tertiary);
   font-size: var(--font-size-micro);
-  line-height: 1.45;
+  text-transform: uppercase;
 }
-.assessment-retained-context ul {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-2);
-  margin: var(--space-3) 0 0;
-  padding: 0;
-  list-style: none;
-}
-.assessment-retained-context li {
-  min-width: 0;
-  display: grid;
-  gap: 0.1rem;
-  padding: var(--space-2);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-small);
-}
-.assessment-retained-context li span,
-.assessment-retained-context li small {
+.assessment-run-identities dd {
+  margin: var(--space-1) 0 0;
   overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.assessment-retained-context li span {
-  font-size: var(--font-size-micro);
-  font-weight: 600;
-}
-.assessment-retained-context li small {
-  color: var(--text-tertiary);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-micro);
 }
 .assessment-preflight-retention ul {
   display: grid;
@@ -4463,7 +4646,7 @@ summary {
     width: calc(100vw - var(--space-4)) !important;
     max-width: none !important;
     max-height: calc(100dvh - var(--space-4));
-    transform: translateX(-50%) !important;
+    translate: -50% 0 !important;
   }
   .assessment-preflight-heading,
   .assessment-preflight-body,
@@ -4473,7 +4656,8 @@ summary {
   .assessment-preflight-scope dl {
     grid-template-columns: 1fr;
   }
-  .assessment-retained-context ul {
+  .assessment-mode-picker,
+  .assessment-run-identities {
     grid-template-columns: 1fr;
   }
   .assessment-preflight-actions {

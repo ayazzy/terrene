@@ -65,6 +65,23 @@ Historical snapshots remain runnable when their exact saved boundary object is
 available and matches the retained fingerprint. `current_boundary=false` is a
 presentation fact, not a reason to retarget the snapshot to the latest boundary.
 
+## Application consumption
+
+The Site dossier's **New Analysis** action consumes the catalogue through an
+explicit preflight. It defaults to the newest exact current-boundary snapshot,
+while keeping any historical snapshots individually selectable and visibly
+qualified. Before execution it shows evidence time, registry version,
+observation/gap/source counts, the wetland model and binding, and the safe source
+release list. The client submits the selected snapshot's published `run_request`
+unchanged and verifies the returned ModuleRun against the submitted Site,
+snapshot, content, boundary, module, binding and model identities.
+
+The retained-snapshot path and legacy acquisition path are separate choices.
+Unavailable catalogues and failed runs remain visible in the modal and do not
+fall through to acquisition. On narrow screens the action is available through
+the Site actions menu. A completed run is confirmed immediately; durable
+ModuleRun discovery in the Models view remains a separate follow-up contract.
+
 ## Error and compatibility behavior
 
 - Missing, unauthorized and cross-Site identities return a non-disclosing 404.
