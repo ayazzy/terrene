@@ -2,23 +2,28 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [page, project, dossier, map, shell, mapCss] = await Promise.all([
-  readFile(new URL('../app/page.tsx', import.meta.url), 'utf8'),
-  readFile(
-    new URL('../app/project-intelligence-workspace.tsx', import.meta.url),
-    'utf8',
-  ),
-  readFile(new URL('../app/entity-dossier.tsx', import.meta.url), 'utf8'),
-  readFile(new URL('../app/map.tsx', import.meta.url), 'utf8'),
-  readFile(
-    new URL('../app/operating-shell.module.css', import.meta.url),
-    'utf8',
-  ),
-  readFile(
-    new URL('../app/infrastructure-map.module.css', import.meta.url),
-    'utf8',
-  ),
-]);
+const [page, project, dossier, dossierCss, map, shell, mapCss] =
+  await Promise.all([
+    readFile(new URL('../app/page.tsx', import.meta.url), 'utf8'),
+    readFile(
+      new URL('../app/project-intelligence-workspace.tsx', import.meta.url),
+      'utf8',
+    ),
+    readFile(new URL('../app/entity-dossier.tsx', import.meta.url), 'utf8'),
+    readFile(
+      new URL('../app/entity-dossier.module.css', import.meta.url),
+      'utf8',
+    ),
+    readFile(new URL('../app/map.tsx', import.meta.url), 'utf8'),
+    readFile(
+      new URL('../app/operating-shell.module.css', import.meta.url),
+      'utf8',
+    ),
+    readFile(
+      new URL('../app/infrastructure-map.module.css', import.meta.url),
+      'utf8',
+    ),
+  ]);
 
 test('Sites and Project Subjects use one docked entity dossier contract', () => {
   assert.match(page, /<EntityDossier\s+className="site-workspace"/);
@@ -66,4 +71,39 @@ test('project conclusions and questions navigate to exact retained assertions', 
   assert.match(project, /exact_passage/);
   assert.match(project, /source_record_id/);
   assert.match(project, /source_version/);
+});
+
+test('the dossier owns one bounded scroll chain and cannot shrink its identity header', () => {
+  assert.match(dossier, /className=\{`\$\{styles\.dossier\} entity-dossier/);
+  assert.match(dossierCss, /\.dossier\s*\{[\s\S]*?display:\s*flex/);
+  assert.match(dossierCss, /\.header\s*\{[\s\S]*?flex:\s*0 0 auto/);
+  assert.match(
+    dossierCss,
+    /\.body\s*\{[\s\S]*?flex:\s*1 1 auto[\s\S]*?overflow:\s*auto/,
+  );
+  assert.match(
+    dossierCss,
+    /\.body > :global\(\.investigation\)\s*\{[\s\S]*?flex:\s*1 1 0[\s\S]*?min-height:\s*0[\s\S]*?overflow:\s*hidden/,
+  );
+  assert.match(
+    dossierCss,
+    /\.body :global\(\.findings-panel\)\s*\{[\s\S]*?height:\s*100%[\s\S]*?overflow-y:\s*auto/,
+  );
+});
+
+test('dossier layout responds to its own width and uses one content gutter', () => {
+  assert.match(dossierCss, /container-name:\s*entity-dossier/);
+  assert.match(
+    dossierCss,
+    /@container entity-dossier \(max-width: 42rem\)[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\)/,
+  );
+  assert.match(
+    dossierCss,
+    /@container entity-dossier \(max-width: 42rem\)[\s\S]*?\.map-feature-inspector-body[\s\S]*?flex-direction:\s*column/,
+  );
+  assert.match(dossierCss, /--dossier-gutter:\s*1rem/);
+  assert.match(
+    dossierCss,
+    /\.dossier:global\(\.site-workspace\) \.identity\s*\{\s*padding-right:\s*10rem/,
+  );
 });

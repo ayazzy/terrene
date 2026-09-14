@@ -46,7 +46,7 @@ export default function EntityDossier({
 }: EntityDossierProps) {
   return (
     <section
-      className={`entity-dossier ${className}${open ? '' : ' dossier-collapsed'}`}
+      className={`${styles.dossier} entity-dossier ${className}${open ? '' : ' dossier-collapsed'}`}
       aria-label={ariaLabel}
       aria-hidden={!open}
       data-entity-dossier={entityKind.toLocaleLowerCase('en-GB')}

@@ -1,11 +1,23 @@
+.dossier {
+  --dossier-gutter: 1rem;
+
+  container-name: entity-dossier;
+  container-type: inline-size;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .header {
+  flex: 0 0 auto;
   min-height: 5.25rem;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.8rem 1rem;
+  padding: 0.8rem var(--dossier-gutter);
   border-bottom: 1px solid var(--border-default);
   background: #222825;
 }
@@ -74,11 +86,12 @@
 }
 
 .history {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.55rem 1rem;
+  padding: 0.55rem var(--dossier-gutter);
   border-bottom: 1px solid #6d5b38;
   background: #302a20;
   color: #c8b88e;
@@ -96,7 +109,99 @@
 }
 
 .body {
+  flex: 1 1 auto;
   min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.dossier:global(.site-workspace) .body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dossier:global(.site-workspace) .body > :global(.alert),
+.dossier:global(.site-workspace) .body > :global(.data-update-note) {
+  flex: 0 0 auto;
+}
+
+.dossier:global(.site-workspace) .body > :global(.investigation) {
+  flex: 1 1 0;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dossier:global(.site-workspace) .body :global(.findings-panel) {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.body :global(.analysis-panel-heading),
+.body :global(.map-feature-inspector),
+.body :global(.screening-context) {
+  padding-inline: var(--dossier-gutter);
+}
+
+@container entity-dossier (max-width: 42rem) {
+  .header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .actions {
+    min-width: 0;
+    justify-content: flex-start;
+  }
+
+  .body :global(.map-feature-inspector-body) {
+    flex-direction: column;
+  }
+
+  .body :global(.map-feature-inspector-body > div) {
+    width: 100%;
+  }
+
+  .body :global(.map-feature-inspector-actions) {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+}
+
+@container entity-dossier (max-width: 32rem) {
+  .header {
+    gap: 0.5rem;
+    padding-block: 0.65rem;
+  }
+
+  .actions :global(.back) {
+    width: 2rem;
+    padding-inline: 0;
+    font-size: 0;
+  }
+
+  .actions :global(.back svg) {
+    margin: 0;
+  }
+
+  .actions :global(.compact-team-review small) {
+    display: none;
+  }
+
+  .actions :global(.text-btn) {
+    width: 2rem;
+    padding-inline: 0;
+    font-size: 0;
+  }
+
+  .actions :global(.text-btn svg) {
+    margin: 0;
+  }
 }
 
 @media (max-width: 47.5rem) {
@@ -108,6 +213,10 @@
 
   .identity {
     padding-right: 4.75rem;
+  }
+
+  .dossier:global(.site-workspace) .identity {
+    padding-right: 10rem;
   }
 
   .actions {

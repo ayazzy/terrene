@@ -598,7 +598,7 @@
 }
 
 .shell :global(.spatial-main > .project-intelligence-workspace) {
-  overflow: auto;
+  overflow: hidden;
 }
 
 .shell :global(.portfolio-main > .sites-views) {
