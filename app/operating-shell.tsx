@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react';
 import {
   Clock3,
-  Crosshair,
   Database,
   FileSearch,
   GitCompareArrows,
@@ -12,11 +11,8 @@ import {
   Menu,
   Orbit,
   PanelLeft,
-  PanelLeftClose,
-  PanelLeftOpen,
   RefreshCw,
   Search,
-  X,
 } from 'lucide-react';
 import styles from './operating-shell.module.css';
 
@@ -33,12 +29,6 @@ export type ShellSearchResult = {
   kind: 'site' | 'project_subject';
   detail: string;
   evidenceState: string;
-};
-
-export type ShellSelection = {
-  kind: 'site' | 'project_subject';
-  label: string;
-  id: string;
 };
 
 type OperatingRailProps = {
@@ -88,16 +78,9 @@ export function OperatingRail({
       aria-label="Primary navigation"
     >
       <div className={styles.brand}>
-        <span className={styles.brandMark} aria-hidden="true">
-          <Orbit />
-        </span>
-        <span className={styles.brandIdentity}>
-          <strong>Terrene</strong>
-          <small>Infrastructure intelligence</small>
-        </span>
         <button
           ref={closeButton}
-          className={styles.railToggle}
+          className={styles.brandToggle}
           aria-label={
             mobileOpen
               ? 'Close navigation'
@@ -113,17 +96,16 @@ export function OperatingRail({
                 : 'Collapse navigation'
           }
           aria-controls="primary-navigation"
-          aria-expanded={!compact}
+          aria-expanded={mobileOpen || !compact}
+          data-expanded={mobileOpen || !compact}
           onClick={mobileOpen ? onMobileClose : onCompactChange}
         >
-          {mobileOpen ? (
-            <X />
-          ) : compact ? (
-            <PanelLeftOpen />
-          ) : (
-            <PanelLeftClose />
-          )}
+          <Orbit aria-hidden="true" />
         </button>
+        <span className={styles.brandIdentity}>
+          <strong>Terrene</strong>
+          <small>Infrastructure intelligence</small>
+        </span>
       </div>
 
       <nav className={styles.navigation} aria-label="Operating picture">
@@ -177,7 +159,6 @@ type OperatingCommandBarProps = {
   sourceStatus: string;
   sourceAsOf: string;
   sourceState: 'loading' | 'available' | 'partial' | 'unavailable';
-  selection: ShellSelection | null;
   refreshing: boolean;
   onRefresh: () => void;
 };
@@ -193,7 +174,6 @@ export function OperatingCommandBar({
   sourceStatus,
   sourceAsOf,
   sourceState,
-  selection,
   refreshing,
   onRefresh,
 }: OperatingCommandBarProps) {
@@ -278,13 +258,6 @@ export function OperatingCommandBar({
       </form>
 
       <div className={styles.commandContext}>
-        <div className={`${styles.contextItem} ${styles.scope}`}>
-          <MapPin aria-hidden="true" />
-          <span>
-            <small>Scope</small>
-            <strong>Oxfordshire</strong>
-          </span>
-        </div>
         <div
           className={styles.contextItem}
           data-state={sourceState}
@@ -302,14 +275,6 @@ export function OperatingCommandBar({
             <small>Source records</small>
             <strong>{sourceAsOf}</strong>
           </span>
-        </div>
-        <div className={`${styles.contextItem} ${styles.selection}`}>
-          <Crosshair aria-hidden="true" />
-          <span>
-            <small>Selection</small>
-            <strong>{selection?.label || 'No entity selected'}</strong>
-          </span>
-          {selection && <code>{selection.id.slice(-8).toUpperCase()}</code>}
         </div>
         <button
           className={styles.refresh}

@@ -25,6 +25,10 @@ test('operating rail has one React-owned compact state and defaults narrow', () 
   );
   assert.match(shellCss, /--sidebar-compact: 3\.75rem/);
   assert.doesNotMatch(
+    shellCss,
+    /\.rail:not\(\.railCompact\)[\s\S]*?width: var\(--sidebar-compact\)/,
+  );
+  assert.doesNotMatch(
     css,
     /\.crc-shell:has\(\.analysis-main\)[^{]*\{[^}]*--sidebar-width/s,
   );
@@ -34,13 +38,19 @@ test('operating rail has one React-owned compact state and defaults narrow', () 
   );
 });
 
-test('rail toggle and compact navigation remain labelled without visible text', () => {
+test('animated brand mark owns the labelled rail toggle', () => {
   assert.equal((shell.match(/'Expand navigation'/g) || []).length, 2);
   assert.equal((shell.match(/'Collapse navigation'/g) || []).length, 2);
+  assert.match(shell, /className=\{styles\.brandToggle\}/);
   assert.match(shell, /aria-controls="primary-navigation"/);
-  assert.match(shell, /aria-expanded=\{!compact\}/);
-  assert.match(shell, /mobileOpen \? \([\s\S]*<X \/>/);
-  assert.match(shell, /compact \? \([\s\S]*<PanelLeftOpen \/>/);
+  assert.match(shell, /aria-expanded=\{mobileOpen \|\| !compact\}/);
+  assert.match(shell, /data-expanded=\{mobileOpen \|\| !compact\}/);
+  assert.match(shell, /<Orbit aria-hidden="true" \/>/);
+  assert.doesNotMatch(shell, /PanelLeftOpen|PanelLeftClose/);
+  assert.match(
+    shellCss,
+    /\.brandToggle\[data-expanded='true'\] svg \{[\s\S]*?transform: rotate\(135deg\)/,
+  );
   assert.match(shell, /aria-label=\{item\.label\}/);
   assert.match(shellCss, /button:focus-visible::after/);
 });

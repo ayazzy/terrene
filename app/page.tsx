@@ -26,7 +26,6 @@ import {
   OperatingCommandBar,
   OperatingRail,
   type ShellSearchResult,
-  type ShellSelection,
 } from './operating-shell';
 import shellStyles from './operating-shell.module.css';
 import { useOperatingPictureState } from './use-operating-picture-state';
@@ -740,22 +739,6 @@ export default function Home() {
       entity.kind === operatingState.selection?.kind &&
       entity.id === operatingState.selection.id,
   );
-  const commandSelection: ShellSelection | null =
-    operatingState.selection?.kind === 'site'
-      ? {
-          kind: 'site',
-          id: operatingState.selection.id,
-          label:
-            sites.find((site) => site.id === operatingState.selection?.id)
-              ?.name || 'Selected site',
-        }
-      : operatingState.selection?.kind === 'project_subject'
-        ? {
-            kind: 'project_subject',
-            id: operatingState.selection.id,
-            label: selectedInfrastructureEntity?.name || 'Project Subject',
-          }
-        : null;
   const spatialView =
     newSite ||
     (view === 'workspace' && sitesView === 'map') ||
@@ -828,7 +811,6 @@ export default function Home() {
           sourceStatus={sourceStatus}
           sourceAsOf={sourceAsOf}
           sourceState={sourceState}
-          selection={commandSelection}
           refreshing={refreshing}
           onRefresh={retryReads}
         />

@@ -24,22 +24,19 @@ test('shell identifies Terrene as infrastructure intelligence', () => {
   assert.doesNotMatch(shell, /Operational|Live evidence|SYSTEM STATUS/);
 });
 
-test('command bar exposes entity search, scope, source records, and selection', () => {
+test('command bar exposes search and source records without redundant context', () => {
   assert.match(shell, /aria-label="Search infrastructure entities"/);
   assert.match(shell, /Search Sites and Project Subjects/);
   assert.match(shell, /entity\.kind === 'site'/);
-  assert.match(
-    shell,
-    /<small>Scope<\/small>[\s\S]*<strong>Oxfordshire<\/strong>/,
-  );
   assert.match(shell, /<small>Sources<\/small>[\s\S]*\{sourceStatus\}/);
   assert.match(shell, /<small>Source records<\/small>[\s\S]*\{sourceAsOf\}/);
-  assert.match(shell, /<small>Selection<\/small>/);
+  assert.doesNotMatch(shell, /<small>Scope<\/small>/);
+  assert.doesNotMatch(shell, /<small>Selection<\/small>/);
+  assert.doesNotMatch(page, /selection=\{commandSelection\}/);
   assert.match(page, /datasets\.map\(\(dataset\) => dataset\.retrieved\)/);
   assert.match(page, /dataset\.state === 'available'/);
   assert.match(page, /mapEvidence\.scene\?\.sources \|\| \[\]/);
   assert.match(page, /`\$\{retainedSceneSources\.length\} retained`/);
-  assert.match(page, /operatingState\.selection\?\.kind === 'site'/);
 });
 
 test('responsive shell keeps context explicit without claiming telemetry', () => {
