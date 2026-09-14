@@ -997,41 +997,54 @@ export default function SiteMap({
   }, [mapObjectFocusRequest, ready, projection, fit]);
   useEffect(() => {
     const currentMap = map.current;
-    if (!ready || !currentMap?.isStyleLoaded()) return;
-    const visibility = (layerId: string, hidden: boolean) =>
-      currentMap.setLayoutProperty(
-        layerId,
-        'visibility',
-        hidden ? 'none' : 'visible',
+    if (!ready || !currentMap) return;
+    const synchronizeVisibility = () => {
+      const visibility = (layerId: string, hidden: boolean) =>
+        currentMap.setLayoutProperty(
+          layerId,
+          'visibility',
+          hidden ? 'none' : 'visible',
+        );
+      for (const layerId of basemapLayerIds.current)
+        visibility(layerId, hiddenLayerSet.has('basemap'));
+      visibility(
+        NATIVE_LAYER_IDS.sitesFill,
+        hiddenLayerSet.has('site-boundary'),
       );
-    for (const layerId of basemapLayerIds.current)
-      visibility(layerId, hiddenLayerSet.has('basemap'));
-    visibility(NATIVE_LAYER_IDS.sitesFill, hiddenLayerSet.has('site-boundary'));
-    visibility(NATIVE_LAYER_IDS.sitesLine, hiddenLayerSet.has('site-boundary'));
-    visibility(
-      NATIVE_LAYER_IDS.projects,
-      hiddenLayerSet.has('project-subjects'),
-    );
-    const semanticLayers: Record<InfrastructureLayerId, string[]> = {
-      buildings: [
-        NATIVE_LAYER_IDS.buildingFill,
-        NATIVE_LAYER_IDS.buildingLine,
-        NATIVE_LAYER_IDS.buildingFlatLine,
-      ],
-      functional_sites: [
-        NATIVE_LAYER_IDS.functionalFill,
-        NATIVE_LAYER_IDS.functionalLine,
-      ],
-      railway_tracks: [NATIVE_LAYER_IDS.railwayTracks],
-      railway_stations: [NATIVE_LAYER_IDS.railwayStations],
+      visibility(
+        NATIVE_LAYER_IDS.sitesLine,
+        hiddenLayerSet.has('site-boundary'),
+      );
+      visibility(
+        NATIVE_LAYER_IDS.projects,
+        hiddenLayerSet.has('project-subjects'),
+      );
+      const semanticLayers: Record<InfrastructureLayerId, string[]> = {
+        buildings: [
+          NATIVE_LAYER_IDS.buildingFill,
+          NATIVE_LAYER_IDS.buildingLine,
+          NATIVE_LAYER_IDS.buildingFlatLine,
+        ],
+        functional_sites: [
+          NATIVE_LAYER_IDS.functionalFill,
+          NATIVE_LAYER_IDS.functionalLine,
+        ],
+        railway_tracks: [NATIVE_LAYER_IDS.railwayTracks],
+        railway_stations: [NATIVE_LAYER_IDS.railwayStations],
+      };
+      for (const [layerId, renderedLayers] of Object.entries(semanticLayers))
+        for (const renderedLayer of renderedLayers)
+          visibility(renderedLayer, hiddenLayerSet.has(`built:${layerId}`));
+      visibility(
+        NATIVE_LAYER_IDS.buildingExtrusion,
+        hiddenLayerSet.has('built:buildings') || !perspectiveActive,
+      );
     };
-    for (const [layerId, renderedLayers] of Object.entries(semanticLayers))
-      for (const renderedLayer of renderedLayers)
-        visibility(renderedLayer, hiddenLayerSet.has(`built:${layerId}`));
-    visibility(
-      NATIVE_LAYER_IDS.buildingExtrusion,
-      hiddenLayerSet.has('built:buildings') || !perspectiveActive,
-    );
+    if (currentMap.isStyleLoaded()) synchronizeVisibility();
+    else currentMap.once('idle', synchronizeVisibility);
+    return () => {
+      currentMap.off('idle', synchronizeVisibility);
+    };
   }, [hiddenLayerSet, ready, projection, perspectiveActive]);
   // The isolated boundary editor retains its temporary SVG drawing surface.
   // The primary operating picture uses only native GeoJSON sources and layers.

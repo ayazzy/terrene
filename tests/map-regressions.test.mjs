@@ -81,6 +81,24 @@ test('operator controls preserve 2D truth and mutually exclusive left surfaces',
   assert.match(map, /className: 'terrene-map-hover'/);
 });
 
+test('perspective visibility is synchronized while the map camera is moving', () => {
+  const visibilityEffect = map.match(
+    /useEffect\(\(\) => \{\s+const currentMap = map\.current;\s+if \(!ready \|\| !currentMap\) return;[\s\S]*?NATIVE_LAYER_IDS\.buildingExtrusion,[\s\S]*?!perspectiveActive,[\s\S]*?\}, \[hiddenLayerSet, ready, projection, perspectiveActive\]\);/,
+  );
+  assert.ok(
+    visibilityEffect,
+    'expected the scene visibility synchronization effect',
+  );
+  assert.match(
+    visibilityEffect[0],
+    /if \(currentMap\.isStyleLoaded\(\)\) synchronizeVisibility\(\);\s+else currentMap\.once\('idle', synchronizeVisibility\);/,
+  );
+  assert.match(
+    visibilityEffect[0],
+    /return \(\) => \{\s+currentMap\.off\('idle', synchronizeVisibility\);\s+\};/,
+  );
+});
+
 test('saved entities expose identity, location and evidence state without hover', () => {
   assert.match(map, /\[rosterOpen, setRosterOpen\] = useState\(false\)/);
   assert.match(map, /infrastructureEntityLabel\(entity\)/);
