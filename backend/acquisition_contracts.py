@@ -40,9 +40,9 @@ class AcquisitionError(RuntimeError):
 
 @dataclass(frozen=True)
 class BinaryArtifact:
-    """Original decoded HTTP bytes; never serialize rasters or XML as JSON."""
+    """Binary evidence bytes; the adapter records whether original or derived."""
     content: bytes
-    media_type: Literal['image/tiff', 'application/xml']
+    media_type: Literal['image/tiff', 'application/xml', 'application/octet-stream']
 
 
 def encode(value) -> bytes:
@@ -137,3 +137,13 @@ class AcquisitionRequest(Contract):
     @property
     def geometry_fingerprint(self) -> str:
         return digest(encode(self.area))
+
+
+def parse_request(value):
+    """Dispatch explicitly without adding defaults to historical request hashes."""
+    if isinstance(value, BaseModel):
+        value = value.model_dump()
+    if isinstance(value, dict) and value.get('contract_version') == 'geographic_satellite_request_v1':
+        from backend.acquisition_satellite import SatelliteRequest
+        return SatelliteRequest.model_validate(value)
+    return AcquisitionRequest.model_validate(value)

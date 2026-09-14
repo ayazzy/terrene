@@ -71,6 +71,9 @@ DESCRIPTOR = {
 
 
 def source_descriptor(adapter_version=ADAPTER_VERSION):
+    if adapter_version == 'sentinel2_c1_native_window_v1':
+        from backend.acquisition_satellite import descriptor
+        return descriptor()
     if adapter_version in RASTER_ADAPTERS:
         from backend.acquisition_rasters import descriptor
         return descriptor(adapter_version)

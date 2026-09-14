@@ -1,0 +1,1152 @@
+{
+  "verification_version": "sentinel2_acquisition_acceptance_v1",
+  "recorded_at": "2026-09-14T23:40:41.238083+00:00",
+  "captures": {
+    "oxford": {
+      "acquisition_id": "92609ac8-defb-4cd9-b009-3439377faaf3",
+      "manifest_sha256": "baa59fb262942a53888103de0b4327dfb9aefb44d8aa45d972d3947e6642be00",
+      "request": {
+        "contract_version": "geographic_satellite_request_v1",
+        "source_id": "copernicus.sentinel2_c1_l2a_earthsearch",
+        "adapter_version": "sentinel2_c1_native_window_v1",
+        "area": {
+          "coordinates": [
+            [
+              [
+                -1.26,
+                51.74
+              ],
+              [
+                -1.26,
+                51.75
+              ],
+              [
+                -1.25,
+                51.75
+              ],
+              [
+                -1.25,
+                51.74
+              ],
+              [
+                -1.26,
+                51.74
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "temporal": {
+          "mode": "interval",
+          "start": "2025-06-01T00:00:00Z",
+          "end": "2025-06-30T23:59:59Z"
+        },
+        "scene_id": "S2C_T30UXC_20250619T110803_L2A",
+        "scene_metadata_sha256": "4c751a1d8dd9b30fa63c1167c890f6bfdc6a41c5773f7aa950c33ffb62750665",
+        "idempotency_key": "oxford-2025-06-v1"
+      },
+      "capture_started": "2026-09-14T23:30:17.343136+00:00",
+      "capture_completed": "2026-09-14T23:30:47.880255+00:00",
+      "result": {
+        "bands": {
+          "blue": {
+            "area_cell_count": 7681,
+            "asset_key": "blue",
+            "calibration": {
+              "data_type": "uint16",
+              "nodata": 0,
+              "offset": -0.1,
+              "scale": 0.0001,
+              "spatial_resolution": 10
+            },
+            "coverage_state": "complete",
+            "crs": "EPSG:32630",
+            "dtype": "uint16",
+            "missing_cell_count": 0,
+            "nodata": 0,
+            "resolution_m": 10,
+            "sampling": "Native cell centres within request polygon, holes excluded; no resampling or nodata filling.",
+            "source_file_checksum": "1220c05c90f8da2aeb6d09d5f3bc61b48041460bc7be40c3b9143493e5a5007ef079",
+            "source_file_checksum_verified": false,
+            "source_href": "https://e84-earth-search-sentinel-data.s3.us-west-2.amazonaws.com/sentinel-2-c1-l2a/30/U/XC/2025/6/S2C_T30UXC_20250619T110803_L2A/B02.tif",
+            "source_window": [
+              2011,
+              6533,
+              72,
+              114
+            ],
+            "transform": [
+              10.0,
+              0.0,
+              620110.0,
+              0.0,
+              -10.0,
+              5734690.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "valid_cell_count": 7681
+          },
+          "green": {
+            "area_cell_count": 7681,
+            "asset_key": "green",
+            "calibration": {
+              "data_type": "uint16",
+              "nodata": 0,
+              "offset": -0.1,
+              "scale": 0.0001,
+              "spatial_resolution": 10
+            },
+            "coverage_state": "complete",
+            "crs": "EPSG:32630",
+            "dtype": "uint16",
+            "missing_cell_count": 0,
+            "nodata": 0,
+            "resolution_m": 10,
+            "sampling": "Native cell centres within request polygon, holes excluded; no resampling or nodata filling.",
+            "source_file_checksum": "1220c12e5732718cf4befcee9e458901f259267dcb3f692e617cef8a4f235c4efce8",
+            "source_file_checksum_verified": false,
+            "source_href": "https://e84-earth-search-sentinel-data.s3.us-west-2.amazonaws.com/sentinel-2-c1-l2a/30/U/XC/2025/6/S2C_T30UXC_20250619T110803_L2A/B03.tif",
+            "source_window": [
+              2011,
+              6533,
+              72,
+              114
+            ],
+            "transform": [
+              10.0,
+              0.0,
+              620110.0,
+              0.0,
+              -10.0,
+              5734690.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "valid_cell_count": 7681
+          },
+          "nir": {
+            "area_cell_count": 7681,
+            "asset_key": "nir",
+            "calibration": {
+              "data_type": "uint16",
+              "nodata": 0,
+              "offset": -0.1,
+              "scale": 0.0001,
+              "spatial_resolution": 10
+            },
+            "coverage_state": "complete",
+            "crs": "EPSG:32630",
+            "dtype": "uint16",
+            "missing_cell_count": 0,
+            "nodata": 0,
+            "resolution_m": 10,
+            "sampling": "Native cell centres within request polygon, holes excluded; no resampling or nodata filling.",
+            "source_file_checksum": "12204bbdd285cf73fc3c61fbeef27209de631495a19ee6abef33bfad0bca5c39af2a",
+            "source_file_checksum_verified": false,
+            "source_href": "https://e84-earth-search-sentinel-data.s3.us-west-2.amazonaws.com/sentinel-2-c1-l2a/30/U/XC/2025/6/S2C_T30UXC_20250619T110803_L2A/B08.tif",
+            "source_window": [
+              2011,
+              6533,
+              72,
+              114
+            ],
+            "transform": [
+              10.0,
+              0.0,
+              620110.0,
+              0.0,
+              -10.0,
+              5734690.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "valid_cell_count": 7681
+          },
+          "red": {
+            "area_cell_count": 7681,
+            "asset_key": "red",
+            "calibration": {
+              "data_type": "uint16",
+              "nodata": 0,
+              "offset": -0.1,
+              "scale": 0.0001,
+              "spatial_resolution": 10
+            },
+            "coverage_state": "complete",
+            "crs": "EPSG:32630",
+            "dtype": "uint16",
+            "missing_cell_count": 0,
+            "nodata": 0,
+            "resolution_m": 10,
+            "sampling": "Native cell centres within request polygon, holes excluded; no resampling or nodata filling.",
+            "source_file_checksum": "122049c008eb84dbfa45c7b6c6b5781f0645710df947bfb474724df2b062bf7036f0",
+            "source_file_checksum_verified": false,
+            "source_href": "https://e84-earth-search-sentinel-data.s3.us-west-2.amazonaws.com/sentinel-2-c1-l2a/30/U/XC/2025/6/S2C_T30UXC_20250619T110803_L2A/B04.tif",
+            "source_window": [
+              2011,
+              6533,
+              72,
+              114
+            ],
+            "transform": [
+              10.0,
+              0.0,
+              620110.0,
+              0.0,
+              -10.0,
+              5734690.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "valid_cell_count": 7681
+          },
+          "scl": {
+            "area_cell_count": 1918,
+            "asset_key": "scl",
+            "calibration": {
+              "data_type": "uint8",
+              "nodata": 0,
+              "spatial_resolution": 20
+            },
+            "class_counts": {
+              "cloud_high_probability": 0,
+              "cloud_medium_probability": 0,
+              "cloud_shadows": 0,
+              "no_data": 0,
+              "not_vegetated": 605,
+              "saturated_or_defective": 0,
+              "snow_or_ice": 0,
+              "thin_cirrus": 0,
+              "topographic_cast_shadows": 0,
+              "unclassified": 19,
+              "vegetation": 1294,
+              "water": 0
+            },
+            "classification_semantics": "Provider SCL at 20 m; classes are not field observations or a model suitability score.",
+            "coverage_state": "complete",
+            "crs": "EPSG:32630",
+            "dtype": "uint8",
+            "missing_cell_count": 0,
+            "nodata": 0,
+            "resolution_m": 20,
+            "sampling": "Native cell centres within request polygon, holes excluded; no resampling or nodata filling.",
+            "source_file_checksum": "1220e40fc00743a92272edb4df0bb15a7d8c6ca896c3b80274a00e15e8b9759330f6",
+            "source_file_checksum_verified": false,
+            "source_href": "https://e84-earth-search-sentinel-data.s3.us-west-2.amazonaws.com/sentinel-2-c1-l2a/30/U/XC/2025/6/S2C_T30UXC_20250619T110803_L2A/SCL.tif",
+            "source_window": [
+              1005,
+              3266,
+              37,
+              58
+            ],
+            "transform": [
+              20.0,
+              0.0,
+              620100.0,
+              0.0,
+              -20.0,
+              5734700.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "valid_cell_count": 1918
+          }
+        },
+        "collection": "sentinel-2-c1-l2a",
+        "completeness": "selected_scene_bounded_windows",
+        "data_family": "satellite",
+        "observation_time": "2025-06-19T11:17:06.796000Z",
+        "processing_baseline": "05.11",
+        "processing_version": "sentinel2_native_dn_and_scl_v1",
+        "product_uri": "S2C_MSIL2A_20250619T110641_N0511_R137_T30UXC_20250619T151116.SAFE",
+        "quality_semantics": "Successful acquisition does not imply clear ground, accurate classification or model suitability.",
+        "scene_cloud_cover_percent": 0.247,
+        "scene_id": "S2C_T30UXC_20250619T110803_L2A",
+        "time_semantics": "Observation time from STAC datetime; capture, product generation and catalogue update are separate."
+      },
+      "window_artifacts": {
+        "blue_window": {
+          "sha256": "1f4fb0c22e4eda49bc46729368863211c2a51713cc78a06960ec206116739265",
+          "bytes": 12670,
+          "media_type": "image/tiff"
+        },
+        "green_window": {
+          "sha256": "533e30f116a05b6a84bf9faa23aba834d0b0eced4f3b3bb2767b63aefed9b582",
+          "bytes": 12736,
+          "media_type": "image/tiff"
+        },
+        "nir_window": {
+          "sha256": "a2f8c9ab595cdf61f6d546d647d49d408ec578babf6b60db50b1c68949f19206",
+          "bytes": 14684,
+          "media_type": "image/tiff"
+        },
+        "red_window": {
+          "sha256": "205e39801b80eb50be0b68360cfb2e2ff9bc06c1302ffc7574d9a3207ab9122c",
+          "bytes": 13065,
+          "media_type": "image/tiff"
+        },
+        "scl_window": {
+          "sha256": "4c2aa0a3c797356cecf046dcaab5049b9de584c689ce5f2871de45244b2d626b",
+          "bytes": 683,
+          "media_type": "image/tiff"
+        }
+      },
+      "source_range_counts": {
+        "blue": 21,
+        "green": 21,
+        "nir": 21,
+        "red": 21,
+        "scl": 15
+      },
+      "capture_decoded_bytes": 12067997,
+      "verification": {
+        "verification_version": "satellite_native_capture_verification_v1",
+        "verified_at": "2026-09-14T23:35:25.340572+00:00",
+        "acquisition_id": "92609ac8-defb-4cd9-b009-3439377faaf3",
+        "manifest_sha256": "baa59fb262942a53888103de0b4327dfb9aefb44d8aa45d972d3947e6642be00",
+        "scene_id": "S2C_T30UXC_20250619T110803_L2A",
+        "observation_time": "2025-06-19T11:17:06.796000Z",
+        "offline_source_range_replay_match": true,
+        "live_sample_match": true,
+        "samples": [
+          {
+            "asset": "blue",
+            "row": 1,
+            "column": 40,
+            "source_row": 6534,
+            "source_column": 2051,
+            "native_value": 1146,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "blue",
+            "row": 57,
+            "column": 13,
+            "source_row": 6590,
+            "source_column": 2024,
+            "native_value": 1352,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "blue",
+            "row": 113,
+            "column": 8,
+            "source_row": 6646,
+            "source_column": 2019,
+            "native_value": 1053,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "green",
+            "row": 1,
+            "column": 40,
+            "source_row": 6534,
+            "source_column": 2051,
+            "native_value": 1488,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "green",
+            "row": 57,
+            "column": 13,
+            "source_row": 6590,
+            "source_column": 2024,
+            "native_value": 1501,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "green",
+            "row": 113,
+            "column": 8,
+            "source_row": 6646,
+            "source_column": 2019,
+            "native_value": 1085,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "red",
+            "row": 1,
+            "column": 40,
+            "source_row": 6534,
+            "source_column": 2051,
+            "native_value": 1283,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "red",
+            "row": 57,
+            "column": 13,
+            "source_row": 6590,
+            "source_column": 2024,
+            "native_value": 1491,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "red",
+            "row": 113,
+            "column": 8,
+            "source_row": 6646,
+            "source_column": 2019,
+            "native_value": 1061,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "nir",
+            "row": 1,
+            "column": 40,
+            "source_row": 6534,
+            "source_column": 2051,
+            "native_value": 4108,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "nir",
+            "row": 57,
+            "column": 13,
+            "source_row": 6590,
+            "source_column": 2024,
+            "native_value": 3070,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "nir",
+            "row": 113,
+            "column": 8,
+            "source_row": 6646,
+            "source_column": 2019,
+            "native_value": 1068,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "scl",
+            "row": 1,
+            "column": 10,
+            "source_row": 3267,
+            "source_column": 1015,
+            "native_value": 5,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "scl",
+            "row": 29,
+            "column": 5,
+            "source_row": 3295,
+            "source_column": 1010,
+            "native_value": 4,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "scl",
+            "row": 56,
+            "column": 35,
+            "source_row": 3322,
+            "source_column": 1040,
+            "native_value": 4,
+            "is_nodata": false,
+            "independent_match": true
+          }
+        ],
+        "live_decoded_bytes_received": 12067997,
+        "method": "Offline source-range reconstruction and native window/coverage replay; fresh live per-band single-cell comparisons when requested.",
+        "limits": "Not a complete second download, whole-object checksum verification, ground-truth validation or change model."
+      }
+    },
+    "edinburgh": {
+      "acquisition_id": "4f31b4de-8925-4e02-a9cb-bdfb36e34660",
+      "manifest_sha256": "b8b170fb74fa936640ae3be8a5b5ba7bcf09df23d9cbfc6ae742f206904ab062",
+      "request": {
+        "contract_version": "geographic_satellite_request_v1",
+        "source_id": "copernicus.sentinel2_c1_l2a_earthsearch",
+        "adapter_version": "sentinel2_c1_native_window_v1",
+        "area": {
+          "coordinates": [
+            [
+              [
+                -3.2,
+                55.94
+              ],
+              [
+                -3.2,
+                55.95
+              ],
+              [
+                -3.19,
+                55.95
+              ],
+              [
+                -3.19,
+                55.94
+              ],
+              [
+                -3.2,
+                55.94
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "temporal": {
+          "mode": "interval",
+          "start": "2024-06-01T00:00:00Z",
+          "end": "2024-06-30T23:59:59Z"
+        },
+        "scene_id": "S2B_T30VVH_20240602T112114_L2A",
+        "scene_metadata_sha256": "baa3d4b5b068d20d7300321801fa0707c1154a4c25b195ae43ea930c66efee3c",
+        "idempotency_key": "edinburgh-2024-06-v1"
+      },
+      "capture_started": "2026-09-14T23:35:30.373712+00:00",
+      "capture_completed": "2026-09-14T23:35:53.510077+00:00",
+      "result": {
+        "bands": {
+          "blue": {
+            "area_cell_count": 6882,
+            "asset_key": "blue",
+            "calibration": {
+              "data_type": "uint16",
+              "nodata": 0,
+              "offset": -0.1,
+              "scale": 0.0001,
+              "spatial_resolution": 10
+            },
+            "coverage_state": "complete",
+            "crs": "EPSG:32630",
+            "dtype": "uint16",
+            "missing_cell_count": 0,
+            "nodata": 0,
+            "resolution_m": 10,
+            "sampling": "Native cell centres within request polygon, holes excluded; no resampling or nodata filling.",
+            "source_file_checksum": "1220041dab84db332c7de130a6e3a232f06d1198fc41c46c684d13162d2c80bfe769",
+            "source_file_checksum_verified": false,
+            "source_href": "https://e84-earth-search-sentinel-data.s3.us-west-2.amazonaws.com/sentinel-2-c1-l2a/30/V/VH/2024/6/S2B_T30VVH_20240602T112114_L2A/B02.tif",
+            "source_window": [
+              8754,
+              9946,
+              64,
+              113
+            ],
+            "transform": [
+              10.0,
+              0.0,
+              487500.0,
+              0.0,
+              -10.0,
+              6200540.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "valid_cell_count": 6882
+          },
+          "green": {
+            "area_cell_count": 6882,
+            "asset_key": "green",
+            "calibration": {
+              "data_type": "uint16",
+              "nodata": 0,
+              "offset": -0.1,
+              "scale": 0.0001,
+              "spatial_resolution": 10
+            },
+            "coverage_state": "complete",
+            "crs": "EPSG:32630",
+            "dtype": "uint16",
+            "missing_cell_count": 0,
+            "nodata": 0,
+            "resolution_m": 10,
+            "sampling": "Native cell centres within request polygon, holes excluded; no resampling or nodata filling.",
+            "source_file_checksum": "1220f518eb6ec40a4dbf406fe47760a5e0c2b278b380d3f4e07382a874044469af5f",
+            "source_file_checksum_verified": false,
+            "source_href": "https://e84-earth-search-sentinel-data.s3.us-west-2.amazonaws.com/sentinel-2-c1-l2a/30/V/VH/2024/6/S2B_T30VVH_20240602T112114_L2A/B03.tif",
+            "source_window": [
+              8754,
+              9946,
+              64,
+              113
+            ],
+            "transform": [
+              10.0,
+              0.0,
+              487500.0,
+              0.0,
+              -10.0,
+              6200540.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "valid_cell_count": 6882
+          },
+          "nir": {
+            "area_cell_count": 6882,
+            "asset_key": "nir",
+            "calibration": {
+              "data_type": "uint16",
+              "nodata": 0,
+              "offset": -0.1,
+              "scale": 0.0001,
+              "spatial_resolution": 10
+            },
+            "coverage_state": "complete",
+            "crs": "EPSG:32630",
+            "dtype": "uint16",
+            "missing_cell_count": 0,
+            "nodata": 0,
+            "resolution_m": 10,
+            "sampling": "Native cell centres within request polygon, holes excluded; no resampling or nodata filling.",
+            "source_file_checksum": "122078cf0508058a3debf5c31916e3312b33cab6aeaeb8d320153114a104cb45dd6d",
+            "source_file_checksum_verified": false,
+            "source_href": "https://e84-earth-search-sentinel-data.s3.us-west-2.amazonaws.com/sentinel-2-c1-l2a/30/V/VH/2024/6/S2B_T30VVH_20240602T112114_L2A/B08.tif",
+            "source_window": [
+              8754,
+              9946,
+              64,
+              113
+            ],
+            "transform": [
+              10.0,
+              0.0,
+              487500.0,
+              0.0,
+              -10.0,
+              6200540.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "valid_cell_count": 6882
+          },
+          "red": {
+            "area_cell_count": 6882,
+            "asset_key": "red",
+            "calibration": {
+              "data_type": "uint16",
+              "nodata": 0,
+              "offset": -0.1,
+              "scale": 0.0001,
+              "spatial_resolution": 10
+            },
+            "coverage_state": "complete",
+            "crs": "EPSG:32630",
+            "dtype": "uint16",
+            "missing_cell_count": 0,
+            "nodata": 0,
+            "resolution_m": 10,
+            "sampling": "Native cell centres within request polygon, holes excluded; no resampling or nodata filling.",
+            "source_file_checksum": "12209403b88aee66c276507c5aa9a4ec09fda4b61d130f71b039ebc2db1831d7ec2b",
+            "source_file_checksum_verified": false,
+            "source_href": "https://e84-earth-search-sentinel-data.s3.us-west-2.amazonaws.com/sentinel-2-c1-l2a/30/V/VH/2024/6/S2B_T30VVH_20240602T112114_L2A/B04.tif",
+            "source_window": [
+              8754,
+              9946,
+              64,
+              113
+            ],
+            "transform": [
+              10.0,
+              0.0,
+              487500.0,
+              0.0,
+              -10.0,
+              6200540.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "valid_cell_count": 6882
+          },
+          "scl": {
+            "area_cell_count": 1786,
+            "asset_key": "scl",
+            "calibration": {
+              "data_type": "uint8",
+              "nodata": 0,
+              "spatial_resolution": 20
+            },
+            "class_counts": {
+              "cloud_high_probability": 0,
+              "cloud_medium_probability": 0,
+              "cloud_shadows": 573,
+              "no_data": 0,
+              "not_vegetated": 448,
+              "saturated_or_defective": 0,
+              "snow_or_ice": 0,
+              "thin_cirrus": 0,
+              "topographic_cast_shadows": 0,
+              "unclassified": 0,
+              "vegetation": 765,
+              "water": 0
+            },
+            "classification_semantics": "Provider SCL at 20 m; classes are not field observations or a model suitability score.",
+            "coverage_state": "complete",
+            "crs": "EPSG:32630",
+            "dtype": "uint8",
+            "missing_cell_count": 0,
+            "nodata": 0,
+            "resolution_m": 20,
+            "sampling": "Native cell centres within request polygon, holes excluded; no resampling or nodata filling.",
+            "source_file_checksum": "1220da97b87c81bfc00ac6a52112652a646293f31126703dc4e72911aabfde87230a",
+            "source_file_checksum_verified": false,
+            "source_href": "https://e84-earth-search-sentinel-data.s3.us-west-2.amazonaws.com/sentinel-2-c1-l2a/30/V/VH/2024/6/S2B_T30VVH_20240602T112114_L2A/SCL.tif",
+            "source_window": [
+              4377,
+              4973,
+              32,
+              57
+            ],
+            "transform": [
+              20.0,
+              0.0,
+              487500.0,
+              0.0,
+              -20.0,
+              6200540.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "valid_cell_count": 1786
+          }
+        },
+        "collection": "sentinel-2-c1-l2a",
+        "completeness": "selected_scene_bounded_windows",
+        "data_family": "satellite",
+        "observation_time": "2024-06-02T11:25:43.130000Z",
+        "processing_baseline": "05.10",
+        "processing_version": "sentinel2_native_dn_and_scl_v1",
+        "product_uri": "S2B_MSIL2A_20240602T112119_N0510_R037_T30VVH_20240602T125034.SAFE",
+        "quality_semantics": "Successful acquisition does not imply clear ground, accurate classification or model suitability.",
+        "scene_cloud_cover_percent": 20.955274,
+        "scene_id": "S2B_T30VVH_20240602T112114_L2A",
+        "time_semantics": "Observation time from STAC datetime; capture, product generation and catalogue update are separate."
+      },
+      "window_artifacts": {
+        "blue_window": {
+          "sha256": "885ad1f6f2e8c179f2c7ce2c0d627d6adfceaaf6e1816705a3df78476ee925cd",
+          "bytes": 11542,
+          "media_type": "image/tiff"
+        },
+        "green_window": {
+          "sha256": "4c03247ed5ccef96683e442064efcef15bde4f64d0a9d1c600abf047d187a071",
+          "bytes": 11409,
+          "media_type": "image/tiff"
+        },
+        "nir_window": {
+          "sha256": "c54f7a3de0612e6b77f1c301e627cad67124a536846b04f5c53d00b79b4bc2d8",
+          "bytes": 12157,
+          "media_type": "image/tiff"
+        },
+        "red_window": {
+          "sha256": "9f12f389a89b24327e73fbfd0852b9676de21b2b8bc345f61a2dbc40abb2f9e1",
+          "bytes": 11630,
+          "media_type": "image/tiff"
+        },
+        "scl_window": {
+          "sha256": "b4abbe188729a32de8ca966e83b759927793e46d6693aeb1bf9be8f73de3a007",
+          "bytes": 598,
+          "media_type": "image/tiff"
+        }
+      },
+      "source_range_counts": {
+        "blue": 19,
+        "green": 19,
+        "nir": 19,
+        "red": 19,
+        "scl": 14
+      },
+      "capture_decoded_bytes": 5582305,
+      "verification": {
+        "verification_version": "satellite_native_capture_verification_v1",
+        "verified_at": "2026-09-14T23:36:15.467316+00:00",
+        "acquisition_id": "4f31b4de-8925-4e02-a9cb-bdfb36e34660",
+        "manifest_sha256": "b8b170fb74fa936640ae3be8a5b5ba7bcf09df23d9cbfc6ae742f206904ab062",
+        "scene_id": "S2B_T30VVH_20240602T112114_L2A",
+        "observation_time": "2024-06-02T11:25:43.130000Z",
+        "offline_source_range_replay_match": true,
+        "live_sample_match": true,
+        "samples": [
+          {
+            "asset": "blue",
+            "row": 1,
+            "column": 1,
+            "source_row": 9947,
+            "source_column": 8755,
+            "native_value": 1266,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "blue",
+            "row": 56,
+            "column": 32,
+            "source_row": 10002,
+            "source_column": 8786,
+            "native_value": 1455,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "blue",
+            "row": 111,
+            "column": 62,
+            "source_row": 10057,
+            "source_column": 8816,
+            "native_value": 1250,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "green",
+            "row": 1,
+            "column": 1,
+            "source_row": 9947,
+            "source_column": 8755,
+            "native_value": 1534,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "green",
+            "row": 56,
+            "column": 32,
+            "source_row": 10002,
+            "source_column": 8786,
+            "native_value": 1740,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "green",
+            "row": 111,
+            "column": 62,
+            "source_row": 10057,
+            "source_column": 8816,
+            "native_value": 1605,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "red",
+            "row": 1,
+            "column": 1,
+            "source_row": 9947,
+            "source_column": 8755,
+            "native_value": 1229,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "red",
+            "row": 56,
+            "column": 32,
+            "source_row": 10002,
+            "source_column": 8786,
+            "native_value": 1489,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "red",
+            "row": 111,
+            "column": 62,
+            "source_row": 10057,
+            "source_column": 8816,
+            "native_value": 1238,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "nir",
+            "row": 1,
+            "column": 1,
+            "source_row": 9947,
+            "source_column": 8755,
+            "native_value": 5588,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "nir",
+            "row": 56,
+            "column": 32,
+            "source_row": 10002,
+            "source_column": 8786,
+            "native_value": 4332,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "nir",
+            "row": 111,
+            "column": 62,
+            "source_row": 10057,
+            "source_column": 8816,
+            "native_value": 5296,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "scl",
+            "row": 0,
+            "column": 1,
+            "source_row": 4973,
+            "source_column": 4378,
+            "native_value": 4,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "scl",
+            "row": 28,
+            "column": 3,
+            "source_row": 5001,
+            "source_column": 4380,
+            "native_value": 5,
+            "is_nodata": false,
+            "independent_match": true
+          },
+          {
+            "asset": "scl",
+            "row": 55,
+            "column": 31,
+            "source_row": 5028,
+            "source_column": 4408,
+            "native_value": 4,
+            "is_nodata": false,
+            "independent_match": true
+          }
+        ],
+        "live_decoded_bytes_received": 5582305,
+        "method": "Offline source-range reconstruction and native window/coverage replay; fresh live per-band single-cell comparisons when requested.",
+        "limits": "Not a complete second download, whole-object checksum verification, ground-truth validation or change model."
+      }
+    }
+  },
+  "automated_checks": {
+    "satellite_tests": 40,
+    "affected_suite_sqlite_passed": 211,
+    "affected_suite_postgresql_postgis_passed": 211
+  },
+  "prior_captures": [
+    {
+      "capture": "broads-v2-summary",
+      "manifest_sha256": "5d1062def9f4e92310466ad14e4c03d30d7c3c5928d867e541baeba10b8b208b",
+      "unchanged": true
+    },
+    {
+      "capture": "dsm-east-anglia-summary",
+      "manifest_sha256": "b1a438f8ae92397a322ea5459e54ea9a9687e8bb51a279bf59d20967b099dbf7",
+      "unchanged": true
+    },
+    {
+      "capture": "dsm-oxford-summary",
+      "manifest_sha256": "9173c339b886b8b96fda6e5bec4735a21f1ce3c2e057df3692ff0abf96d1f22f",
+      "unchanged": true
+    },
+    {
+      "capture": "lidar-east-anglia-summary",
+      "manifest_sha256": "881ccb3a2d9cafe75dd5cdc2803801ee244e6a220b6587d453435162de50d8cc",
+      "unchanged": true
+    },
+    {
+      "capture": "lidar-oxford-summary",
+      "manifest_sha256": "e987df4361d227065dbeffcdcc3608f6c81aaf390ab05c91e524e81b9fd97f27",
+      "unchanged": true
+    },
+    {
+      "capture": "norfolk-broads-summary",
+      "manifest_sha256": "16cf6e285142d842bf00809399e4bd864420bbac52bf2cb74a74ada4a709cc16",
+      "unchanged": true
+    },
+    {
+      "capture": "norfolk-summary",
+      "manifest_sha256": "ccc50b567464ebe9c7dde590c6ba2a8f80d96d7950c68fbb0057e6f56bfd37bc",
+      "unchanged": true
+    },
+    {
+      "capture": "oxford-summary",
+      "manifest_sha256": "dbb02b4e051d36e5e953375792ca42be37010b82278152f0c6388c39130bebab",
+      "unchanged": true
+    },
+    {
+      "capture": "scotland-edinburgh-summary",
+      "manifest_sha256": "20c3c2ab8bf68b7f46869a162ff05c83df77fc35dbba5bf1a580c66a53e2ae9f",
+      "unchanged": true
+    },
+    {
+      "capture": "scotland-unst-keen-of-hamar-summary",
+      "manifest_sha256": "6e09cb537a4d2b8710418544c2945034bbb633ad4bb9aaaacb7f55f19f260a21",
+      "unchanged": true
+    }
+  ],
+  "prior_lidar_pair_results_unchanged": true,
+  "fresh_process_checks": {
+    "captures": [
+      {
+        "acquisition_id": "92609ac8-defb-4cd9-b009-3439377faaf3",
+        "manifest_sha256": "baa59fb262942a53888103de0b4327dfb9aefb44d8aa45d972d3947e6642be00",
+        "summary_unchanged": true,
+        "retry_without_provider_access": true,
+        "fresh_process_offline_replay_match": true
+      },
+      {
+        "acquisition_id": "4f31b4de-8925-4e02-a9cb-bdfb36e34660",
+        "manifest_sha256": "b8b170fb74fa936640ae3be8a5b5ba7bcf09df23d9cbfc6ae742f206904ab062",
+        "summary_unchanged": true,
+        "retry_without_provider_access": true,
+        "fresh_process_offline_replay_match": true
+      }
+    ],
+    "table_counts_unchanged": true,
+    "table_counts": {
+      "geographic_acquisitions": 2,
+      "geographic_acquisition_attempts": 2,
+      "sites": 0,
+      "assessments": 0,
+      "datasets": 0,
+      "features": 0,
+      "land_evidence_snapshots": 0,
+      "module_runs": 0
+    }
+  },
+  "additional_discovery_checks": {
+    "cardiff": {
+      "area": {
+        "coordinates": [
+          [
+            [
+              -3.19,
+              51.47
+            ],
+            [
+              -3.19,
+              51.48
+            ],
+            [
+              -3.18,
+              51.48
+            ],
+            [
+              -3.18,
+              51.47
+            ],
+            [
+              -3.19,
+              51.47
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "temporal": {
+        "mode": "interval",
+        "start": "2025-06-01T00:00:00Z",
+        "end": "2025-06-30T23:59:59Z"
+      },
+      "candidate_count": 10,
+      "selection_complete": false,
+      "example_candidate": {
+        "scene_id": "S2C_T30UVC_20250602T112133_L2A",
+        "scene_metadata_sha256": "b50d98a0fb6d421959e4b3d73b6a3df27048052db9e6d5cdd194071472d29aa4",
+        "observation_time": "2025-06-02T11:27:14.202000Z",
+        "scene_cloud_cover_percent": 32.194009
+      },
+      "response_checksums": [
+        {
+          "endpoint": "https://earth-search.aws.element84.com/v1/search",
+          "parameters": {
+            "collections": "sentinel-2-c1-l2a",
+            "bbox": "-3.19,51.47,-3.18,51.48",
+            "datetime": "2025-06-01T00:00:00Z/2025-06-30T23:59:59Z",
+            "limit": 100
+          },
+          "decoded_response_sha256": "17c33098cd4f79af36d6ca8fcb8fe2e9825c8a7f77b7324019d3e4418f3e4ee2",
+          "decoded_bytes": 177234
+        }
+      ],
+      "verification_scope": "Catalogue discovery and validated candidate footprint only; no pixel capture."
+    },
+    "belfast": {
+      "area": {
+        "coordinates": [
+          [
+            [
+              -5.94,
+              54.59
+            ],
+            [
+              -5.94,
+              54.6
+            ],
+            [
+              -5.93,
+              54.6
+            ],
+            [
+              -5.93,
+              54.59
+            ],
+            [
+              -5.94,
+              54.59
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "temporal": {
+        "mode": "interval",
+        "start": "2025-06-01T00:00:00Z",
+        "end": "2025-06-30T23:59:59Z"
+      },
+      "candidate_count": 36,
+      "selection_complete": false,
+      "example_candidate": {
+        "scene_id": "S2B_T30UUF_20250603T114347_L2A",
+        "scene_metadata_sha256": "4b5e031011c69a24b49afbdb098fc3397d01738d91f01e4a6dfad7e95d01f452",
+        "observation_time": "2025-06-03T11:46:09.474000Z",
+        "scene_cloud_cover_percent": 80.67838
+      },
+      "response_checksums": [
+        {
+          "endpoint": "https://earth-search.aws.element84.com/v1/search",
+          "parameters": {
+            "collections": "sentinel-2-c1-l2a",
+            "bbox": "-5.94,54.59,-5.93,54.6",
+            "datetime": "2025-06-01T00:00:00Z/2025-06-30T23:59:59Z",
+            "limit": 100
+          },
+          "decoded_response_sha256": "d89810be71dd5349f283c04aa1eeec918b91d79b97c9229846a45620c0d6ba40",
+          "decoded_bytes": 636667
+        }
+      ],
+      "verification_scope": "Catalogue discovery and validated candidate footprint only; no pixel capture."
+    }
+  },
+  "limitations": [
+    "Two live local captures, not national bulk ingestion or full UK coverage certification.",
+    "SCL is provider classification. Available reflectance-band DN is not clear-ground or model suitability.",
+    "Source range hashes are verified; publisher whole-file checksums are not.",
+    "No map layer, model binding, temporal comparison or forecast.",
+    "Private source bytes and databases remain outside Git."
+  ]
+}

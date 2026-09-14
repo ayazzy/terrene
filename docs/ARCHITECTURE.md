@@ -301,6 +301,28 @@ attempt and raster identities. The check establishes neither survey-date
 equivalence nor model suitability, and creates no pair entity, Evidence Snapshot,
 height estimate or model binding. See [independent DSM acquisition](EA-DSM-GEOGRAPHIC-ACQUISITION.md).
 
+`geographic_satellite_request_v1` adds an explicit dated-scene contract alongside
+the unchanged historical request contract. It pins a Sentinel-2 C1 L2A scene ID
+and canonical STAC Item hash, UTC interval and bounded WGS84 area. Its coverage
+comes from the retained scene footprint and compatible native UTM grids rather
+than a national administrative profile. Discovery is a separate no-write bounded
+catalogue read; it exposes incomplete pagination and never selects a scene
+implicitly. All four UK nations can use this source where compatible scenes exist.
+
+`sentinel2_c1_native_window_v1` retains native 10 m spectral DN and 20 m SCL
+windows with separate acquisition, observation, calibration and classification
+semantics. A custom Rasterio opener uses bounded HTTP ranges through the service's
+HTTP client, pins strong ETags with conditional requests, and refuses redirects,
+unregistered hosts, sidecars, changed/truncated ranges and unbounded reads.
+Original range bytes and their offsets/identities are immutable artifacts;
+window GeoTIFFs are explicitly lossless derived subsets. Whole publisher-file
+checksums remain unverified claims. Offline replay reconstructs captured reads
+without network access; live verification compares separate native pixel samples.
+Non-nodata availability is distinct from clear-ground or model suitability, and
+classification is not promoted to observed land-cover truth. No imagery map,
+mosaic, cloud mask, index, comparison or model binding is implied. See
+[dated satellite acquisition](SENTINEL2-GEOGRAPHIC-ACQUISITION.md).
+
 Migration 9 adds organization-scoped requests and append-only terminal attempts.
 Operational claims use optimistic concurrency, expiring leases and fenced
 publication. Immutable manifests retain exact request/source identities,

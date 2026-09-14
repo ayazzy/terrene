@@ -409,3 +409,29 @@ its own versioned binding and explicit assumptions. No commercial-workflow
 validation or broader UK publisher coverage is implied.
 
 **Reference:** [DSM acquisition and pairing](EA-DSM-GEOGRAPHIC-ACQUISITION.md).
+
+## 2026-09-15 — Pin dated satellite scenes and retain replayable native evidence
+
+**Decision:** Use Copernicus Sentinel-2 Collection 1 L2A through Element 84's
+public COG mirror as the first independent dated imagery source. Keep catalogue
+discovery separate from explicit scene capture. Pin the scene ID and canonical
+metadata hash instead of automatically selecting the latest or least-cloudy scene.
+A selected scene must cover the full request; its footprint and native grids
+establish source coverage without borrowing England/Scotland designation profiles.
+
+**Evidence:** Preserve native blue/green/red/near-infrared DN at 10 m and SCL at
+20 m, together with scale/offset, nodata, product identity, processing baseline
+and observation time. Available DN is not clear-ground evidence; SCL is a provider
+classification. Retain original bounded ETag-pinned source ranges as well as
+lossless derived window GeoTIFFs. Do not claim full-file checksum verification
+from partial reads, or perform silent calibration, resampling or cloud filling.
+
+**Compatibility:** A separate `geographic_satellite_request_v1` uses existing
+organization-scoped immutable attempts and storage without changing historical
+request defaults/hashes or adding a migration. DTM/DSM, vector captures, pairing,
+legacy assessments, snapshots and model inputs remain unchanged. Wales/NI
+satellite discovery does not implement their deferred designation adapters.
+Map rendering, temporal analysis and historical weather remain separate tasks.
+No market-validation or predictive-model claim is made.
+
+**Reference:** [Dated satellite acquisition](SENTINEL2-GEOGRAPHIC-ACQUISITION.md).

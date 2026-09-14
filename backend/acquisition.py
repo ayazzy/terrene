@@ -18,7 +18,7 @@ from sqlalchemy.exc import IntegrityError
 from backend import core
 from backend.acquisition_contracts import (
     AcquisitionError, AcquisitionRequest, BinaryArtifact, digest, encode,
-    MAX_REQUEST_BYTES, SCOTLAND_ADAPTER_VERSION, RASTER_ADAPTERS,
+    MAX_REQUEST_BYTES, SCOTLAND_ADAPTER_VERSION, RASTER_ADAPTERS, parse_request,
 )
 from backend.acquisition_sources import (
     ADAPTER_COVERAGE, source_descriptor, fetch_sssi, prepare_coverage, validate_capabilities, load_coverage,
@@ -43,7 +43,7 @@ def _object_key(org, sha):
 
 def _store(org, value):
     if isinstance(value, BinaryArtifact):
-        if value.media_type not in ('image/tiff', 'application/xml'):
+        if value.media_type not in ('image/tiff', 'application/xml', 'application/octet-stream'):
             raise AcquisitionError('unsupported_artifact_type')
         data = value.content
         sha = digest(data)
@@ -62,7 +62,7 @@ def _load(org, reference):
         key = _object_key(org, reference['sha256'])
         binary = 'media_type' in reference
         if binary:
-            if reference['media_type'] not in ('image/tiff', 'application/xml'):
+            if reference['media_type'] not in ('image/tiff', 'application/xml', 'application/octet-stream'):
                 raise AcquisitionError('integrity_failure')
             key = key.removesuffix('.json') + '.bin'
         if reference['key'] != key:
@@ -150,7 +150,7 @@ def _finish(row, claim, state, error_code, completed, reference):
 def acquire(org: str, request: AcquisitionRequest | dict, *, client=None) -> dict:
     org = _org(org)
     # Revalidate even an existing model: frozen models still contain mutable dictionaries.
-    request = AcquisitionRequest.model_validate(request.model_dump() if isinstance(request, AcquisitionRequest) else request)
+    request = parse_request(request)
     row = _register(org, request)
     claim = _claim(row)
     if claim is None:
@@ -158,11 +158,15 @@ def acquire(org: str, request: AcquisitionRequest | dict, *, client=None) -> dic
     artifacts, diagnostics, result = {}, {}, None
     state, error_code = 'succeeded', None
     try:
-        validate_capabilities(request)
+        if request.contract_version == 'geographic_satellite_request_v1':
+            from backend.acquisition_satellite import fetch_satellite
+            result = fetch_satellite(request, client=client, artifacts=artifacts, diagnostics=diagnostics)
+        else:
+            validate_capabilities(request)
         if request.adapter_version in RASTER_ADAPTERS:
             from backend.acquisition_rasters import fetch_raster
             result = fetch_raster(request, client=client, artifacts=artifacts, diagnostics=diagnostics)
-        else:
+        elif request.contract_version != 'geographic_satellite_request_v1':
             result = fetch_sssi(request, client=client, artifacts=artifacts, diagnostics=diagnostics)
     except AcquisitionError as exc:
         state, error_code = 'failed', exc.code
@@ -183,12 +187,16 @@ def acquire(org: str, request: AcquisitionRequest | dict, *, client=None) -> dic
                        'artifact_hash_semantics': 'Canonical assembled JSON; response hashes are decoded HTTP bytes.'},
         'artifacts': {},
     }
-    if request.adapter_version in RASTER_ADAPTERS:
+    if request.adapter_version in RASTER_ADAPTERS or request.contract_version == 'geographic_satellite_request_v1':
         import rasterio
         manifest['processing'].update(
             rasterio=rasterio.__version__, gdal=rasterio.__gdal_version__,
             artifact_hash_semantics='XML/GeoTIFF hashes cover original decoded HTTP bytes; JSON uses canonical encoding.',
         )
+        if request.contract_version == 'geographic_satellite_request_v1':
+            manifest['processing']['artifact_hash_semantics'] = (
+                'Source ranges hash original HTTP bytes; window GeoTIFFs hash lossless derived native subsets; '
+                'metadata and coverage use canonical JSON. Whole remote file checksums are unverified.')
     try:
         for name, value in artifacts.items():
             manifest['artifacts'][name] = _store(org, value)
@@ -249,7 +257,7 @@ def read_acquisition(org: str, acquisition_id: str, *, attempt_id: str | None = 
                     'completed': attempt['completed'], 'state': attempt['state'], 'error_code': attempt['error_code']}
         if any(manifest.get(k) != v for k, v in expected.items()):
             raise AcquisitionError('integrity_failure')
-        request = AcquisitionRequest.model_validate(manifest['request'])
+        request = parse_request(manifest['request'])
         if manifest.get('geometry_fingerprint') != request.geometry_fingerprint:
             raise AcquisitionError('integrity_failure')
         for name, ref in manifest['artifacts'].items():
@@ -271,10 +279,14 @@ def read_acquisition(org: str, acquisition_id: str, *, attempt_id: str | None = 
                 coverage_ref = manifest['artifacts'].get('raster_coverage', {})
                 if 'media_type' in coverage_ref or _load(org, coverage_ref) != (manifest['result'] or {}).get('raster'):
                     raise AcquisitionError('integrity_failure')
+            if request.contract_version == 'geographic_satellite_request_v1':
+                from backend.acquisition_satellite import validate_retained
+                required = validate_retained(request, manifest, references, lambda ref: _load(org, ref))
             if set(references) != required or manifest['result'] is None or attempt['error_code'] is not None:
                 raise AcquisitionError('integrity_failure')
-            load_coverage(request.coverage_profile_sha256,
-                          expected_version=ADAPTER_COVERAGE[request.adapter_version])
+            if request.contract_version != 'geographic_satellite_request_v1':
+                load_coverage(request.coverage_profile_sha256,
+                              expected_version=ADAPTER_COVERAGE[request.adapter_version])
     elif attempt and attempt['state'] == 'succeeded':
         raise AcquisitionError('integrity_failure')
     return {
@@ -309,7 +321,11 @@ def main(argv=None):
     commands = parser.add_subparsers(dest='command', required=True)
     for name in ('sources', 'prepare-coverage'):
         command = commands.add_parser(name)
-        command.add_argument('--adapter-version', choices=list(ADAPTER_COVERAGE), default='sssi_arcgis_v1')
+        command.add_argument('--adapter-version', choices=list(ADAPTER_COVERAGE) + (['sentinel2_c1_native_window_v1'] if name == 'sources' else []), default='sssi_arcgis_v1')
+    search = commands.add_parser('discover-satellite')
+    search.add_argument('--area', required=True, type=Path)
+    search.add_argument('--start', required=True)
+    search.add_argument('--end', required=True)
     collect = commands.add_parser('acquire')
     collect.add_argument('--org', required=True)
     collect.add_argument('--request', required=True, type=Path)
@@ -327,12 +343,19 @@ def main(argv=None):
             result = source_descriptor(args.adapter_version)
         elif args.command == 'prepare-coverage':
             result = prepare_coverage(adapter_version=args.adapter_version)
+        elif args.command == 'discover-satellite':
+            from backend.acquisition_satellite import discover
+            with args.area.open('rb') as handle:
+                data = handle.read(MAX_REQUEST_BYTES + 1)
+            if len(data) > MAX_REQUEST_BYTES:
+                raise AcquisitionError('request_payload_limit')
+            result = discover(json.loads(data), {'mode':'interval','start':args.start,'end':args.end})
         elif args.command == 'acquire':
             with args.request.open('rb') as handle:
                 data = handle.read(MAX_REQUEST_BYTES + 1)
             if len(data) > MAX_REQUEST_BYTES:
                 raise AcquisitionError('request_payload_limit')
-            result = acquire(args.org, AcquisitionRequest.model_validate_json(data))
+            result = acquire(args.org, parse_request(json.loads(data)))
         elif args.command == 'pair-lidar':
             from backend.lidar_pairing import read_lidar_pair
             result = read_lidar_pair(args.org, dtm_acquisition_id=args.dtm_id, dsm_acquisition_id=args.dsm_id)
