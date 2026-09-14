@@ -75,8 +75,19 @@ test('a failed remote basemap falls back without suppressing Terrene evidence', 
   );
   assert.match(map, /setMissingStyleImageResolver/);
   assert.match(map, /data-basemap-state=\{basemapState\}/);
-  assert.match(map, /Terrene boundary and evidence geometry remain available/);
+  assert.match(map, /Evidence geometry remains visible/);
   assert.match(map, /Initialising spatial evidence/);
+  assert.match(
+    mapCss,
+    /\.mapNotice\s*\{[\s\S]*?width: min\(28rem, calc\(100% - 5rem\)\)[\s\S]*?pointer-events: none/,
+  );
+});
+
+test('collapsed dossier access stays inside the Terrene toolbar', () => {
+  assert.match(map, /<div className="map-toolbar">[\s\S]*?onOpenDossier/);
+  assert.match(page, /openDossierButtonRef=\{reopenAnalysisButton\}/);
+  assert.doesNotMatch(page, /operating-map-reopen|reopen-analysis/);
+  assert.doesNotMatch(shellCss, /operating-map-reopen/);
 });
 
 test('scene status keeps missing, partial, and historical evidence explicit', () => {

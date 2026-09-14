@@ -1450,17 +1450,6 @@ pre,
   border: 1px solid var(--soil);
   background: color-mix(in srgb, var(--soil) 35%, transparent);
 }
-.map-error {
-  position: absolute;
-  right: var(--space-3);
-  bottom: var(--space-3);
-  left: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  background: var(--status-warning-soft);
-  border: 1px solid #e8d7b4;
-  color: var(--status-warning);
-  font-size: var(--font-size-xs);
-}
 .loading {
   display: grid;
   place-items: center;
@@ -2614,12 +2603,6 @@ summary {
   background: var(--surface-selected);
   border-left: 3px solid var(--action-primary);
 }
-.reopen-analysis {
-  position: absolute;
-  top: 12px;
-  right: 52px;
-  box-shadow: var(--shadow-float);
-}
 .map-toolbar {
   position: absolute;
   top: 12px;
@@ -2745,10 +2728,6 @@ summary {
   font-size: 12px;
   border: 1px solid var(--border-default);
   pointer-events: none;
-}
-.map-error {
-  bottom: 85px;
-  z-index: 2;
 }
 .draw-screen .map-boundary-label {
   bottom: 90px;

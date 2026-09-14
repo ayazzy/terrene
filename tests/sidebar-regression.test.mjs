@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [page, shell, shellCss, css] = await Promise.all([
+const [page, shell, shellCss, css, map] = await Promise.all([
   readFile(new URL('../app/page.tsx', import.meta.url), 'utf8'),
   readFile(new URL('../app/operating-shell.tsx', import.meta.url), 'utf8'),
   readFile(
@@ -10,6 +10,7 @@ const [page, shell, shellCss, css] = await Promise.all([
     'utf8',
   ),
   readFile(new URL('../app/globals.css', import.meta.url), 'utf8'),
+  readFile(new URL('../app/map.tsx', import.meta.url), 'utf8'),
 ]);
 
 test('operating rail has one React-owned compact state and defaults narrow', () => {
@@ -59,7 +60,11 @@ test('dossier collapse and reopen preserve keyboard focus', () => {
   assert.match(page, /analysisCloseButton\.current\?\.focus\(\)/);
   assert.match(
     page,
-    /ref=\{reopenAnalysisButton\}[\s\S]*onClick=\{reopenSitePanel\}/,
+    /onOpenDossier=[\s\S]*?reopenSitePanel[\s\S]*?openDossierButtonRef=\{reopenAnalysisButton\}/,
+  );
+  assert.match(
+    map,
+    /<button ref=\{openDossierButtonRef\} onClick=\{onOpenDossier\}>/,
   );
   assert.match(
     page,

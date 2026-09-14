@@ -68,7 +68,8 @@ test('site analysis navigation stays above the optional object inspector', () =>
 });
 
 test('collapse preserves the entity and immutable artifact URL state', () => {
-  assert.match(page, /Open entity dossier/);
+  assert.match(page, /onOpenDossier=/);
+  assert.match(map, /<PanelLeftOpen size=\{16\} \/> Open dossier/);
   assert.match(page, /onCollapse=\{collapseSitePanel\}/g);
   assert.match(dossier, /onClick=\{onCollapse\}/);
   assert.doesNotMatch(

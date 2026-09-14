@@ -1,5 +1,12 @@
 'use client';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Ref,
+} from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -14,6 +21,7 @@ import {
   ArrowUpRight,
   FileSearch,
   MapPin,
+  PanelLeftOpen,
   Search,
   X,
 } from 'lucide-react';
@@ -564,6 +572,8 @@ type Props = {
   workflowAssetLabel?: string;
   onOpenPortfolio?: () => void;
   onOpenSiteDiligence?: () => void;
+  onOpenDossier?: () => void;
+  openDossierButtonRef?: Ref<HTMLButtonElement>;
 };
 export default function SiteMap({
   geometry,
@@ -596,6 +606,8 @@ export default function SiteMap({
   workflowAssetLabel,
   onOpenPortfolio,
   onOpenSiteDiligence,
+  onOpenDossier,
+  openDossierButtonRef,
 }: Props) {
   const el = useRef<HTMLDivElement>(null),
     map = useRef<maplibregl.Map | null>(null);
@@ -777,7 +789,7 @@ export default function SiteMap({
         setError(
           BASEMAP.productionConfigurationMissing
             ? 'Basemap is not configured for production. Evidence geometry remains available.'
-            : 'Basemap could not load. Terrene boundary and evidence geometry remain available on an evidence-only background.',
+            : 'Basemap unavailable. Evidence geometry remains visible on the evidence-only background.',
         );
       } else {
         setBasemapState('available');
@@ -797,7 +809,7 @@ export default function SiteMap({
         )
       ) {
         setError(
-          'A retained evidence layer could not render. The layer is unavailable rather than empty.',
+          'A retained evidence layer could not render. It is unavailable, not empty.',
         );
         return;
       }
@@ -809,14 +821,14 @@ export default function SiteMap({
         evidenceOnlyFallback = true;
         setBasemapState('unavailable');
         setError(
-          'Basemap could not load. Terrene boundary and evidence geometry remain available on an evidence-only background.',
+          'Basemap unavailable. Evidence geometry remains visible on the evidence-only background.',
         );
         m.setStyle(EVIDENCE_ONLY_DARK_STYLE, { diff: false });
         return;
       }
       setBasemapState('degraded');
       setError(
-        'Some basemap tiles could not load. Boundary and evidence remain available.',
+        'Some basemap tiles did not load. Evidence geometry remains visible.',
       );
     });
     m.on('click', (e) => {
@@ -1322,7 +1334,11 @@ export default function SiteMap({
             })}
         </svg>
       )}
-      {error && <div className="map-error">{error}</div>}
+      {error && (
+        <output className={infrastructureStyles.mapNotice} aria-live="polite">
+          {error}
+        </output>
+      )}
       {ready &&
         (mapSceneState === 'loading' ||
           mapSceneState === 'failed' ||
@@ -1354,6 +1370,11 @@ export default function SiteMap({
           </output>
         )}
       <div className="map-toolbar">
+        {onOpenDossier && (
+          <button ref={openDossierButtonRef} onClick={onOpenDossier}>
+            <PanelLeftOpen size={16} /> Open dossier
+          </button>
+        )}
         {!!entities.length && (
           <button
             aria-expanded={rosterOpen}

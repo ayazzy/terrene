@@ -557,12 +557,6 @@
   min-height: 0;
 }
 
-.shell :global(.operating-map-reopen) {
-  z-index: 24;
-  right: 1rem;
-  left: auto;
-}
-
 .shell :global(.spatial-main > .entity-dossier) {
   position: absolute;
   z-index: 18;
@@ -841,8 +835,7 @@
 
 .shell :global(.map-boundary-label),
 .shell :global(.map-selection),
-.shell :global(.layer-control),
-.shell :global(.reopen-analysis) {
+.shell :global(.layer-control) {
   border-radius: 2px;
 }
 

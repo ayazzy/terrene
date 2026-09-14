@@ -62,7 +62,6 @@ import {
   Check,
   Info,
   RefreshCw,
-  PanelLeftOpen,
   FileText,
   Map as MapIcon,
   List,
@@ -831,17 +830,14 @@ export default function Home() {
               }
               onOpenPortfolio={() => setView('workspace')}
               onOpenSiteDiligence={() => mapEvidence.clearSelection()}
+              onOpenDossier={
+                (view === 'site' || view === 'project-intelligence') &&
+                !panelOpen
+                  ? reopenSitePanel
+                  : undefined
+              }
+              openDossierButtonRef={reopenAnalysisButton}
             />
-            {(view === 'site' || view === 'project-intelligence') &&
-              !panelOpen && (
-                <button
-                  ref={reopenAnalysisButton}
-                  className="reopen-analysis operating-map-reopen"
-                  onClick={reopenSitePanel}
-                >
-                  <PanelLeftOpen size={16} /> Open entity dossier
-                </button>
-              )}
           </div>
         )}
         <ProjectIntelligenceWorkspace
