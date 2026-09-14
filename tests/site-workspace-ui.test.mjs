@@ -45,6 +45,36 @@ test('evidence register is an index of compact expandable records', () => {
   assert.match(css, /\.screening-evidence \.evidence-record > summary/);
 });
 
+test('Site brief follows analyst questions without repeating headline facts', () => {
+  assert.match(screening, /const pictureFactIds = new Set/);
+  assert.match(
+    screening,
+    /const supportingFacts = keyFacts\.filter\([\s\S]*?!pictureFactIds\.has\(fact\.id\)/,
+  );
+  const known = screening.indexOf('What we know');
+  const attention = screening.indexOf('What needs attention');
+  const verify = screening.indexOf('What to verify next');
+  const supporting = screening.indexOf('Additional retained evidence');
+  const infrastructure = screening.indexOf('Mapped infrastructure context');
+  assert.ok(known >= 0 && known < attention);
+  assert.ok(attention < verify);
+  assert.ok(verify < supporting);
+  assert.ok(supporting < infrastructure);
+  assert.match(
+    screening,
+    /<details className="diligence-disclosure context-built-world-summary">/,
+  );
+  assert.match(screening, /className="diligence-disclosure-state"/);
+  assert.match(css, /\.diligence-disclosure\[open\][\s\S]*?rotate\(180deg\)/);
+  assert.doesNotMatch(
+    screening,
+    /<details className="screening-section" open>/,
+  );
+  assert.match(screening, /Open full evidence record/);
+  assert.doesNotMatch(page, /Site evidence and reasoning/);
+  assert.match(page, /<TabsTrigger value="overview">Brief<\/TabsTrigger>/);
+});
+
 test('model observations open in a closable drawer without replacing context', () => {
   assert.match(nature, /<Sheet\s/);
   assert.match(nature, /className="nature-evidence evidence-drawer"/);

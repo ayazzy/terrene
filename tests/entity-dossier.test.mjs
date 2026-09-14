@@ -64,10 +64,7 @@ test('asset intelligence replaces Site diligence instead of stacking above it', 
     page,
     /mapEvidence\.selectedObjectId && \([\s\S]*?<MapFeatureInspector/,
   );
-  assert.match(
-    page,
-    /className="analysis-panel-heading"\s+hidden=\{!!mapEvidence\.selectedObjectId\}/,
-  );
+  assert.doesNotMatch(page, /className="analysis-panel-heading"/);
   assert.match(page, /<Tabs\s+hidden=\{!!mapEvidence\.selectedObjectId\}/);
   assert.match(page, /onReturnToSite=\{returnToSiteDiligence\}/);
   assert.match(map, /workflowLevel === 'asset'/);

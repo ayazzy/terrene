@@ -7,6 +7,7 @@ import {
   ArrowUpRight,
   MapPin,
   CircleHelp,
+  ChevronDown,
 } from 'lucide-react';
 import {
   Dialog,
@@ -79,6 +80,10 @@ export default function ScreeningContextPanel({
   const result = run?.result;
   const keyFacts = result ? prioritizeFacts(result) : [];
   const pictureFacts = result ? sitePictureFacts(result) : [];
+  const pictureFactIds = new Set(pictureFacts.map((fact) => fact.id));
+  const supportingFacts = keyFacts.filter(
+    (fact) => !pictureFactIds.has(fact.id),
+  );
   const importantGaps = result ? prioritizeGaps(result) : [];
   const reviewQuestions = result ? prioritizeQuestions(result) : [];
   const allReviewQuestions = result
@@ -192,8 +197,8 @@ export default function ScreeningContextPanel({
         {mapEvidence.features.layers.map((layer) => {
           const features = mapEvidence.features!.features.filter(
             (feature) =>
-              feature.properties.layer_id === layer.id
-              && (layer.state === 'available' || layer.state === 'partial'),
+              feature.properties.layer_id === layer.id &&
+              (layer.state === 'available' || layer.state === 'partial'),
           );
           return (
             <article key={layer.id}>
@@ -239,7 +244,9 @@ export default function ScreeningContextPanel({
                         <button
                           key={feature.id}
                           className="text-btn"
-                          aria-pressed={mapEvidence.selectedObjectId === feature.id}
+                          aria-pressed={
+                            mapEvidence.selectedObjectId === feature.id
+                          }
                           onClick={() => mapEvidence.selectObject(feature.id)}
                         >
                           {mapFeatureName(feature)} <small>#{index + 1}</small>
@@ -250,9 +257,12 @@ export default function ScreeningContextPanel({
                   {!!layer.sources.length && (
                     <p className="nature-muted">
                       Source:{' '}
-                      {layer.sources.map((source) =>
-                        `${source.provider} · ${source.dataset} · ${source.release}`,
-                      ).join('; ')}
+                      {layer.sources
+                        .map(
+                          (source) =>
+                            `${source.provider} · ${source.dataset} · ${source.release}`,
+                        )
+                        .join('; ')}
                     </p>
                   )}
                 </>
@@ -300,16 +310,20 @@ export default function ScreeningContextPanel({
         <span>
           <FileText size={18} />
           <span>
-            <p className="eyebrow">TERRENE EARTH</p>
-            <h2>{mode === 'overview' ? 'Site brief' : 'Evidence register'}</h2>
+            <p className="eyebrow">
+              {mode === 'overview' ? 'SITE DILIGENCE' : 'EVIDENCE RECORD'}
+            </p>
+            <h2>
+              {mode === 'overview' ? 'Analyst brief' : 'Evidence register'}
+            </h2>
           </span>
         </span>
         <output>{status}</output>
       </div>
       <p className="nature-muted">
         {mode === 'overview'
-          ? 'A concise, source-bounded view for human diligence. This context does not score the site or make a team decision.'
-          : 'Detailed observations, gaps, source limitations and provenance for the selected immutable assessment.'}
+          ? 'Source-bounded context for deciding what to inspect next. This brief does not score the site or make a team decision.'
+          : 'Exact observations, gaps, limitations and provenance for the selected immutable assessment.'}
       </p>
       {error && (
         <p role="alert" className="alert">
@@ -352,7 +366,7 @@ export default function ScreeningContextPanel({
             className="site-picture is-basic"
             aria-labelledby="site-picture-basic"
           >
-            <p className="context-kind">Site picture</p>
+            <p className="context-kind">What we know</p>
             <h3 id="site-picture-basic">{site.name}</h3>
             <dl className="site-picture-basics">
               <div>
@@ -390,8 +404,8 @@ export default function ScreeningContextPanel({
             className="site-picture"
             aria-labelledby="site-picture-heading"
           >
-            <p className="context-kind">Site picture</p>
-            <h3 id="site-picture-heading">Mapped context at a glance</h3>
+            <p className="context-kind">What we know</p>
+            <h3 id="site-picture-heading">Current evidence picture</h3>
             <div className="site-picture-facts">
               {pictureFacts.map((fact) => (
                 <div key={fact.id}>
@@ -403,56 +417,11 @@ export default function ScreeningContextPanel({
             </div>
           </section>
           <section
-            className="brief-section"
-            aria-labelledby="key-evidence-heading"
-          >
-            <p className="context-kind">What matters first</p>
-            <h3 id="key-evidence-heading">Key evidence</h3>
-            <div className="brief-rows">
-              {keyFacts.map((fact) => {
-                const showOnMap =
-                  !!fact.mapKey && mapTargets.includes(fact.mapKey);
-                return (
-                  <button
-                    key={fact.id}
-                    aria-label={`${showOnMap ? 'Show on map' : 'View evidence'}: ${siteBriefLabel(fact, mapEvidence.features)}`}
-                    onClick={() =>
-                      showOnMap ? onMap?.(fact.mapKey!) : onEvidence()
-                    }
-                  >
-                    <span className="brief-row-copy">
-                      <span className="brief-row-label">
-                        <small>{fact.category}</small>
-                        {siteBriefLabel(fact, mapEvidence.features)}
-                      </span>
-                      <small>
-                        {fact.availability}
-                        {fact.known_zero ? ' · known source-bounded zero' : ''}
-                      </small>
-                    </span>
-                    <span className="brief-row-value">
-                      <strong>{siteBriefValue(fact)}</strong>
-                      <small>
-                        {showOnMap ? (
-                          <>
-                            <MapPin size={12} /> Show on map
-                          </>
-                        ) : (
-                          'View evidence'
-                        )}
-                      </small>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-          <section
             className="brief-section important-unknowns"
             aria-labelledby="important-unknowns-heading"
           >
-            <p className="context-kind">Evidence to resolve</p>
-            <h3 id="important-unknowns-heading">Important unknowns</h3>
+            <p className="context-kind">What needs attention</p>
+            <h3 id="important-unknowns-heading">Evidence gaps</h3>
             {importantGaps.length ? (
               <div className="unknown-rows">
                 {importantGaps.map((gap) => (
@@ -472,19 +441,14 @@ export default function ScreeningContextPanel({
               </p>
             )}
           </section>
-          <section className="context-built-world-summary">
-            <p className="context-kind">MAP EVIDENCE</p>
-            <h3>Built-world objects</h3>
-            {mappedLayerEvidence(false)}
-          </section>
           <section
             className="brief-section review-questions"
             aria-labelledby="review-questions-heading"
           >
             <p className="context-kind">
-              <CircleHelp size={12} /> Human diligence
+              <CircleHelp size={12} /> What to verify next
             </p>
-            <h3 id="review-questions-heading">Review questions</h3>
+            <h3 id="review-questions-heading">Analyst questions</h3>
             {reviewQuestions.length ? (
               <ol>
                 {reviewQuestions.map((item) => (
@@ -498,11 +462,88 @@ export default function ScreeningContextPanel({
               </p>
             )}
           </section>
+          {supportingFacts.length > 0 && (
+            <details className="diligence-disclosure supporting-evidence">
+              <summary>
+                <span>
+                  <strong>Additional retained evidence</strong>
+                  <small>
+                    Supporting signals not repeated in the headline view
+                  </small>
+                </span>
+                <span className="diligence-disclosure-state">
+                  <small>{supportingFacts.length} signals</small>
+                  <ChevronDown size={15} aria-hidden="true" />
+                </span>
+              </summary>
+              <div className="diligence-disclosure-body brief-rows">
+                {supportingFacts.map((fact) => {
+                  const showOnMap =
+                    !!fact.mapKey && mapTargets.includes(fact.mapKey);
+                  return (
+                    <button
+                      key={fact.id}
+                      aria-label={`${showOnMap ? 'Show on map' : 'View evidence'}: ${siteBriefLabel(fact, mapEvidence.features)}`}
+                      onClick={() =>
+                        showOnMap ? onMap?.(fact.mapKey!) : onEvidence()
+                      }
+                    >
+                      <span className="brief-row-copy">
+                        <span className="brief-row-label">
+                          <small>{fact.category}</small>
+                          {siteBriefLabel(fact, mapEvidence.features)}
+                        </span>
+                        <small>
+                          {fact.availability}
+                          {fact.known_zero
+                            ? ' · known source-bounded zero'
+                            : ''}
+                        </small>
+                      </span>
+                      <span className="brief-row-value">
+                        <strong>{siteBriefValue(fact)}</strong>
+                        <small>
+                          {showOnMap ? (
+                            <>
+                              <MapPin size={12} /> Show on map
+                            </>
+                          ) : (
+                            'View evidence'
+                          )}
+                        </small>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </details>
+          )}
+          <details className="diligence-disclosure context-built-world-summary">
+            <summary>
+              <span>
+                <strong>Mapped infrastructure context</strong>
+                <small>
+                  Retained objects, coverage and source qualifications
+                </small>
+              </span>
+              <span className="diligence-disclosure-state">
+                <small>
+                  {mapEvidence.features
+                    ? `${mapEvidence.features.layers.length} layers`
+                    : 'View detail'}
+                </small>
+                <ChevronDown size={15} aria-hidden="true" />
+              </span>
+            </summary>
+            <div className="diligence-disclosure-body">
+              {mappedLayerEvidence(false)}
+            </div>
+          </details>
           <button className="evidence-summary-link" onClick={onEvidence}>
             <span>
-              <strong>Inspect detailed evidence and provenance</strong>
+              <strong>Open full evidence record</strong>
               <small>
-                Open every observation, gap, limitation and source reference
+                Every observation, gap, limitation and source reference
               </small>
             </span>
             <ArrowUpRight size={16} />
@@ -516,13 +557,13 @@ export default function ScreeningContextPanel({
             className="evidence-register-overview"
             aria-labelledby="evidence-register-overview-heading"
           >
-            <p className="context-kind">Evidence index</p>
+            <p className="context-kind">Evidence coverage</p>
             <h3 id="evidence-register-overview-heading">
               What this assessment contains
             </h3>
             <dl>
               <div>
-                <dt>Earth facts</dt>
+                <dt>Observations</dt>
                 <dd>{factCount}</dd>
               </div>
               <div>
@@ -605,13 +646,15 @@ export default function ScreeningContextPanel({
                     ) && (
                       <button
                         className="text-btn"
-                        onClick={() => mapEvidence.selectObject(
-                          fact.references.object_ids.find((id) =>
-                            mapEvidence.features?.features.some(
-                              (feature) => feature.id === id,
-                            ),
-                          )!,
-                        )}
+                        onClick={() =>
+                          mapEvidence.selectObject(
+                            fact.references.object_ids.find((id) =>
+                              mapEvidence.features?.features.some(
+                                (feature) => feature.id === id,
+                              ),
+                            )!,
+                          )
+                        }
                       >
                         <MapPin size={13} /> Show supporting mapped object
                       </button>
@@ -647,7 +690,7 @@ export default function ScreeningContextPanel({
               ))}
             </details>
           ))}
-          <details className="screening-section" open>
+          <details className="screening-section">
             <summary>Built-world map evidence</summary>
             {mappedLayerEvidence(true)}
           </details>

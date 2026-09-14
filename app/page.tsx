@@ -1435,17 +1435,6 @@ export default function Home() {
                     )}
                   </div>
                 )}
-                <div
-                  className="analysis-panel-heading"
-                  hidden={!!mapEvidence.selectedObjectId}
-                >
-                  <span>
-                    <strong>Site evidence and reasoning</strong>
-                    <small>
-                      Earth evidence · reasoning modules · team review
-                    </small>
-                  </span>
-                </div>
                 <Tabs
                   hidden={!!mapEvidence.selectedObjectId}
                   value={tab}
@@ -1457,7 +1446,7 @@ export default function Home() {
                     className="panel-tabs analysis-tabs"
                     aria-label="Site analysis sections"
                   >
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="overview">Brief</TabsTrigger>
                     <TabsTrigger value="evidence">Evidence</TabsTrigger>
                     <TabsTrigger value="models">Models</TabsTrigger>
                     <TabsTrigger value="history">History</TabsTrigger>
@@ -1499,14 +1488,14 @@ export default function Home() {
                           <span>
                             <FileText size={18} />
                             <span>
-                              <p className="eyebrow">TERRENE EARTH</p>
-                              <h2>Site brief</h2>
+                              <p className="eyebrow">SITE DILIGENCE</p>
+                              <h2>Analyst brief</h2>
                             </span>
                           </span>
                           <output>No saved assessment</output>
                         </div>
                         <section className="site-picture is-basic">
-                          <p className="context-kind">Site picture</p>
+                          <p className="context-kind">What we know</p>
                           <h3>{current.name}</h3>
                           <dl className="site-picture-basics">
                             <div>

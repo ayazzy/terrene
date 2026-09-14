@@ -2425,21 +2425,6 @@ pre,
 .site-workspace .investigation.panel-collapsed {
   grid-template-columns: 1fr;
 }
-.analysis-panel-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 16px;
-  background: var(--surface-raised);
-  border-bottom: 1px solid var(--border-subtle);
-  font-size: var(--font-size-base);
-}
-.analysis-panel-heading small {
-  display: block;
-  color: var(--text-secondary);
-  font-size: var(--font-size-xs);
-  margin-top: 3px;
-}
 .analysis-tabs {
   display: grid !important;
   grid-template-columns: repeat(3, 1fr);
@@ -3186,7 +3171,13 @@ summary {
 .screening-overview > .nature-muted { max-width: 62ch; line-height: 1.55; }
 .screening-overview .screening-actions { margin: var(--space-3) 0 2px; justify-content: flex-start; }
 .screening-overview .screening-actions button { min-height: 2rem; }
-.site-picture { margin: var(--space-5) 0 var(--space-1); padding-bottom: var(--space-4); border-bottom: 2px solid var(--border-strong); }
+.site-picture {
+  margin: var(--space-5) 0 var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-panel);
+  background: var(--surface-subtle);
+}
 .site-picture h3 { margin: var(--space-1) 0 var(--space-3); font-size: var(--font-size-xl); font-weight: 520; letter-spacing: -.015em; }
 .site-picture-facts,
 .site-picture-basics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 0; }
@@ -3234,10 +3225,71 @@ summary {
 .unknown-rows > button > span { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .unknown-rows strong { font-size: var(--font-size-sm); }
 .unknown-rows svg { flex: 0 0 auto; color: var(--action-primary); }
-.review-questions { padding: var(--space-4); border-left: 2px solid var(--border-strong); background: var(--surface-subtle); }
+.important-unknowns {
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--status-warning) 34%, var(--border-default));
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--status-warning-soft) 62%, transparent);
+}
+.important-unknowns .unknown-rows { border-top-color: color-mix(in srgb, var(--status-warning) 28%, var(--border-default)); }
+.review-questions {
+  padding: var(--space-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-panel);
+  background: var(--surface-subtle);
+}
 .review-questions .context-kind { display: flex; align-items: center; gap: 5px; }
 .review-questions ol { margin: 8px 0 0; padding-left: 20px; }
 .review-questions li { margin: 7px 0; padding-left: 4px; line-height: 1.5; }
+.diligence-disclosure {
+  margin-top: var(--space-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-panel);
+  background: var(--surface-subtle);
+  overflow: clip;
+}
+.diligence-disclosure > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 3.5rem;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  list-style: none;
+}
+.diligence-disclosure > summary::-webkit-details-marker { display: none; }
+.diligence-disclosure > summary > span { min-width: 0; }
+.diligence-disclosure > summary strong,
+.diligence-disclosure > summary small { display: block; }
+.diligence-disclosure > summary strong { font-size: var(--font-size-sm); }
+.diligence-disclosure > summary small {
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--font-size-micro);
+  font-weight: 400;
+}
+.diligence-disclosure-state {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+}
+.diligence-disclosure-state small { margin: 0; }
+.diligence-disclosure-state svg {
+  transition: transform var(--transition-fast);
+}
+.diligence-disclosure[open] .diligence-disclosure-state svg {
+  transform: rotate(180deg);
+}
+.diligence-disclosure-body {
+  padding: 0 var(--space-4) var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+.diligence-disclosure-body.brief-rows {
+  padding-bottom: 0;
+}
 .context-preparation-note { margin-top: var(--space-4); padding: var(--space-4); border-left: 2px solid var(--action-primary); background: var(--surface-subtle); }
 .context-preparation-note h3 { margin: 0 0 5px; }
 .context-preparation-note p { margin: 0 0 12px; color: var(--text-secondary); line-height: 1.5; }

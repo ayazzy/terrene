@@ -76,7 +76,7 @@ The 12 retained Oxford verification locations have inspectable physical and hydr
 
 ## Application/UI state
 
-The current home is a map-first portfolio view with a preserved list workflow. Its list is a Terrene site-intelligence ledger rather than a generic administration table: a compact portfolio command header, retained-site and evidence-layer signals, technical site identifiers, visual coverage tracks and clearly separated screening/team-review states support scanning and comparison without changing their semantics. The Site Analysis Workspace leads with a compact professional site brief: a deterministic presentation policy selects a high-level site picture, approximately six high-signal retained facts, consequential known gaps and existing human diligence questions without creating a score or unsupported narrative. Exact facts/gaps/provenance remain under Evidence, the unchanged wetland assessment is one module under Models, and immutable assessment selection remains under History. See [Site Analysis Workspace site brief](SITE-ANALYSIS-WORKSPACE-SITE-BRIEF.md).
+The current home is a map-first portfolio view with a preserved list workflow. Its list is a Terrene site-intelligence ledger rather than a generic administration table: a compact portfolio command header, retained-site and evidence-layer signals, technical site identifiers, visual coverage tracks and clearly separated screening/team-review states support scanning and comparison without changing their semantics. The Site Analysis Workspace leads with an analyst brief ordered around three diligence questions: what the retained evidence establishes, what remains unresolved and what should be verified next. A deterministic presentation policy selects three cross-domain headline facts without repeating them in the collapsed supporting-signal list; explicit gaps remain prominent, while mapped-infrastructure detail is disclosed on demand. The brief creates no score or unsupported narrative. Exact facts/gaps/provenance remain under Evidence, the unchanged wetland assessment is one module under Models, and immutable assessment selection remains under History. See [Site Analysis Workspace site brief](SITE-ANALYSIS-WORKSPACE-SITE-BRIEF.md).
 
 Site identity, boundary, area, assessment state/date, team review status and secondary actions share one compact band. Wetland export is contained within its Models module. Unprepared Screening Context and no-assessment states retain useful site/boundary context and one explicit action; ordinary reads still create no immutable records.
 
@@ -178,6 +178,8 @@ Shell navigation simplification verification: all **102 frontend tests**, TypeSc
 
 Typography, spacing and interaction-state foundation verification: all **105 frontend tests**, TypeScript, focused lint and focused formatting passed, and the production build completed with the existing large-chunk advisory. Live browser QA at 1102×941 covered the all-sites map, populated Oxford Site dossier, list ledger, Add Site editor, Project Intelligence and Data Sources. Increased text sizes did not introduce control overlap or horizontal overflow; the compact command bar remained one row, and the shared warning treatment remained readable on the dark surface. Backend/PostgreSQL suites were not rerun because evidence, persistence, API and reasoning contracts are unchanged.
 
+Analyst-brief progressive-disclosure verification: all **106 frontend tests**, TypeScript, focused lint and focused formatting passed, and the production build completed with the existing large-chunk advisory. Live Oxford browser QA at 1102×941 confirmed that Brief replaces the generic Overview label, the redundant dossier banner is removed, headline facts are not repeated, evidence gaps follow the current evidence picture, and supporting signals plus mapped infrastructure start collapsed with explicit counts and animated disclosure affordances. Exact evidence navigation, asset replacement, map visibility and historical URL state remain unchanged. Backend/PostgreSQL suites were not rerun because this pass changes frontend information hierarchy only.
+
 ## Known limitations
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
@@ -192,8 +194,8 @@ Typography, spacing and interaction-state foundation verification: all **105 fro
 
 ## Latest meaningful implementation
 
-The operating UI typography, spacing and interaction-state foundation was completed on 14 September 2026. Common text now resolves through one readable semantic scale, high-frequency analytical content uses the shared spacing rhythm, status colours clear dark-surface contrast and keyboard focus is consistent across controls, tabs and disclosures.
+The Site dossier analyst brief was reorganized on 14 September 2026. It now leads with a non-duplicated evidence picture, makes explicit gaps and analyst questions primary, and progressively discloses supporting signals and mapped-infrastructure detail while preserving the exact evidence record.
 
 ## Current recommended engineering question
 
-Can the Site dossier now be reorganized around analyst questions and progressive disclosure, reducing engineering-oriented labels and repeated metadata without weakening exact evidence access or immutable context?
+Can the Models tab become a compact model catalogue that asks the analyst to choose a model before showing detail, while preserving the existing wetland run and its immutable evidence semantics?

@@ -104,10 +104,10 @@ test('workspace hierarchy keeps Screening Context primary and team decisions sep
   const page = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
   const panel = readFileSync(new URL('../app/screening-context-panel.tsx', import.meta.url), 'utf8');
   const state = readFileSync(new URL('../app/site-workspace-state.ts', import.meta.url), 'utf8');
-  assert.match(page, /<TabsTrigger value="overview">Overview<\/TabsTrigger>[\s\S]*<TabsTrigger value="evidence">Evidence<\/TabsTrigger>[\s\S]*<TabsTrigger value="models">Models<\/TabsTrigger>[\s\S]*<TabsTrigger value="history">History<\/TabsTrigger>/);
+  assert.match(page, /<TabsTrigger value="overview">Brief<\/TabsTrigger>[\s\S]*<TabsTrigger value="evidence">Evidence<\/TabsTrigger>[\s\S]*<TabsTrigger value="models">Models<\/TabsTrigger>[\s\S]*<TabsTrigger value="history">History<\/TabsTrigger>/);
   assert.match(page, /key=\{assessment.id \+ ':overview'\}[\s\S]*mode="overview"/);
   assert.match(page, /TERRENE REASONING[\s\S]*Wetland assessment/);
-  assert.match(panel, /This context does not score the site or make a team decision/);
+  assert.match(panel, /This brief does not score the site or make a team decision/);
   assert.match(state, /requestGeneration\.current \+= 1;\s+abort\.abort\(\)/);
   assert.match(state, /assessmentVersion,\s+contextRetry,/);
   assert.match(panel, /state === 'unsupported'/);
