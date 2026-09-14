@@ -12,17 +12,25 @@ import {
   Search,
   X,
 } from 'lucide-react';
-import type { Geometry, Polygon, LineString, Position } from 'geojson';
+import type {
+  Feature,
+  FeatureCollection,
+  Geometry,
+  Polygon,
+  LineString,
+  Point,
+  Position,
+} from 'geojson';
 import type { OverlayFinding } from './site-evidence';
 import { layerGroup, layerColor } from './site-evidence';
 import {
-  builtWorldLayerIds,
+  infrastructureLayerIds,
   mapFeatureName,
   mapLayerLabel,
   mapLayerStatus,
-  type BuiltWorldLayerId,
-  type ScreeningMapFeatures,
-} from './screening-map-features';
+  type InfrastructureLayerId,
+  type InfrastructureMapScene,
+} from './infrastructure-map-scene';
 import {
   entityKey,
   infrastructureEntityLabel,
@@ -55,6 +63,60 @@ function geometryBounds(nextGeometry: Geometry) {
   return bounds;
 }
 
+const SOURCE_IDS = {
+  sites: 'terrene-sites',
+  projects: 'terrene-project-subjects',
+  environment: 'terrene-environment',
+  infrastructure: 'terrene-infrastructure',
+} as const;
+
+const NATIVE_LAYER_IDS = {
+  sitesFill: 'terrene-sites-fill',
+  sitesLine: 'terrene-sites-line',
+  projects: 'terrene-project-subjects-points',
+  environmentFill: 'terrene-environment-fill',
+  environmentLine: 'terrene-environment-line',
+  buildingFill: 'terrene-buildings-fill',
+  buildingExtrusion: 'terrene-buildings-extrusion',
+  buildingLine: 'terrene-buildings-line',
+  buildingFlatLine: 'terrene-buildings-flat-line',
+  functionalFill: 'terrene-functional-sites-fill',
+  functionalLine: 'terrene-functional-sites-line',
+  railwayTracks: 'terrene-railway-tracks-line',
+  railwayStations: 'terrene-railway-stations-point',
+} as const;
+
+const HIT_LAYER_IDS = [
+  NATIVE_LAYER_IDS.railwayStations,
+  NATIVE_LAYER_IDS.railwayTracks,
+  NATIVE_LAYER_IDS.buildingFlatLine,
+  NATIVE_LAYER_IDS.buildingLine,
+  NATIVE_LAYER_IDS.buildingExtrusion,
+  NATIVE_LAYER_IDS.buildingFill,
+  NATIVE_LAYER_IDS.functionalLine,
+  NATIVE_LAYER_IDS.functionalFill,
+  NATIVE_LAYER_IDS.environmentLine,
+  NATIVE_LAYER_IDS.environmentFill,
+  NATIVE_LAYER_IDS.projects,
+  NATIVE_LAYER_IDS.sitesLine,
+  NATIVE_LAYER_IDS.sitesFill,
+] as const;
+
+const emptyFeatureCollection: FeatureCollection = {
+  type: 'FeatureCollection',
+  features: [],
+};
+
+function setGeoJSONData(
+  currentMap: maplibregl.Map,
+  sourceId: string,
+  data: FeatureCollection,
+) {
+  const source = currentMap.getSource(sourceId);
+  if (source?.type === 'geojson')
+    void (source as maplibregl.GeoJSONSource).setData(data);
+}
+
 type Props = {
   geometry: Geometry | null;
   findings?: OverlayFinding[];
@@ -64,15 +126,15 @@ type Props = {
   boundaryLabel?: string;
   onInspect?: (finding: OverlayFinding) => void;
   onDraw?: (g: Polygon) => void;
-  screeningFeatures?: ScreeningMapFeatures | null;
-  screeningFeaturesState?:
+  mapScene?: InfrastructureMapScene | null;
+  mapSceneState?:
     | 'idle'
     | 'loading'
     | 'available'
     | 'failed'
     | 'unavailable'
     | 'unsupported';
-  screeningFeaturesError?: string;
+  mapSceneError?: string;
   selectedMapObject?: string | null;
   mapObjectFocusRequest?: number;
   onInspectMapObject?: (id: string) => void;
@@ -97,9 +159,9 @@ export default function SiteMap({
   focusRequest,
   boundaryLabel = 'Site boundary',
   onInspect,
-  screeningFeatures,
-  screeningFeaturesState = 'idle',
-  screeningFeaturesError = '',
+  mapScene,
+  mapSceneState = 'idle',
+  mapSceneError = '',
   selectedMapObject,
   mapObjectFocusRequest = 0,
   onInspectMapObject,
@@ -130,10 +192,10 @@ export default function SiteMap({
   const drawRef = useRef(draw);
   const geometryRef = useRef(geometry);
   const lastOverlayFocus = useRef('');
-  const overlay = useRef<SVGSVGElement>(null);
+  const selectedNativeFeatures = useRef<{ source: string; id: string }[]>([]);
   const inspectRef = useRef({ findings, onInspect });
   const builtWorldRef = useRef({
-    screeningFeatures,
+    mapScene,
     onInspectMapObject,
     selectedMapObject,
   });
@@ -143,11 +205,11 @@ export default function SiteMap({
   }, [findings, onInspect]);
   useEffect(() => {
     builtWorldRef.current = {
-      screeningFeatures,
+      mapScene,
       onInspectMapObject,
       selectedMapObject,
     };
-  }, [screeningFeatures, onInspectMapObject, selectedMapObject]);
+  }, [mapScene, onInspectMapObject, selectedMapObject]);
   useEffect(() => {
     entityRef.current = { entities, onSelectEntity };
   }, [entities, onSelectEntity]);
@@ -176,6 +238,21 @@ export default function SiteMap({
   const isVisible = (key: string) => !hiddenLayerSet.has(`environment:${key}`);
   const activeSelection =
     selected && isVisible(selected) ? selected : undefined;
+  const siteEntities = entities.filter((entity) => entity.kind === 'site');
+  const linkedProjects = entities.filter(
+    (entity) =>
+      entity.kind === 'project_subject' &&
+      entity.locationState === 'site_linked',
+  );
+  const unlocatedProjects = entities.filter(
+    (entity) =>
+      entity.kind === 'project_subject' &&
+      entity.locationState !== 'site_linked',
+  );
+  const chosenEntity = entities.find(
+    (entity) =>
+      entity.kind === selectedEntity?.kind && entity.id === selectedEntity.id,
+  );
   const repaint = () => setRevision((v) => v + 1);
   const fit = useCallback((nextGeometry: Geometry | null) => {
     const currentMap = map.current;
@@ -205,6 +282,19 @@ export default function SiteMap({
             tileSize: 256,
             attribution: '© OpenStreetMap contributors',
           },
+          [SOURCE_IDS.sites]: { type: 'geojson', data: emptyFeatureCollection },
+          [SOURCE_IDS.projects]: {
+            type: 'geojson',
+            data: emptyFeatureCollection,
+          },
+          [SOURCE_IDS.environment]: {
+            type: 'geojson',
+            data: emptyFeatureCollection,
+          },
+          [SOURCE_IDS.infrastructure]: {
+            type: 'geojson',
+            data: emptyFeatureCollection,
+          },
         },
         layers: [
           {
@@ -218,8 +308,213 @@ export default function SiteMap({
             source: 'base',
             paint: { 'raster-saturation': -0.7, 'raster-opacity': 0.8 },
           },
+          {
+            id: NATIVE_LAYER_IDS.sitesFill,
+            type: 'fill',
+            source: SOURCE_IDS.sites,
+            paint: {
+              'fill-color': '#a8c0ae',
+              'fill-opacity': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                0.2,
+                0.07,
+              ],
+            },
+          },
+          {
+            id: NATIVE_LAYER_IDS.sitesLine,
+            type: 'line',
+            source: SOURCE_IDS.sites,
+            paint: {
+              'line-color': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                '#b7d7c0',
+                '#8d9c92',
+              ],
+              'line-width': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                3,
+                1.5,
+              ],
+            },
+          },
+          {
+            id: NATIVE_LAYER_IDS.environmentFill,
+            type: 'fill',
+            source: SOURCE_IDS.environment,
+            paint: {
+              'fill-color': ['get', 'color'],
+              'fill-opacity': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                0.36,
+                0.2,
+              ],
+            },
+          },
+          {
+            id: NATIVE_LAYER_IDS.environmentLine,
+            type: 'line',
+            source: SOURCE_IDS.environment,
+            paint: {
+              'line-color': ['get', 'color'],
+              'line-width': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                3,
+                1.5,
+              ],
+            },
+          },
+          {
+            id: NATIVE_LAYER_IDS.functionalFill,
+            type: 'fill',
+            source: SOURCE_IDS.infrastructure,
+            filter: ['==', ['get', 'layer_id'], 'functional_sites'],
+            paint: {
+              'fill-color': '#65756b',
+              'fill-opacity': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                0.5,
+                0.3,
+              ],
+            },
+          },
+          {
+            id: NATIVE_LAYER_IDS.functionalLine,
+            type: 'line',
+            source: SOURCE_IDS.infrastructure,
+            filter: ['==', ['get', 'layer_id'], 'functional_sites'],
+            paint: {
+              'line-color': '#65756b',
+              'line-width': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                4,
+                1.75,
+              ],
+            },
+          },
+          {
+            id: NATIVE_LAYER_IDS.buildingFill,
+            type: 'fill',
+            source: SOURCE_IDS.infrastructure,
+            filter: ['==', ['get', 'layer_id'], 'buildings'],
+            paint: {
+              'fill-color': '#8a633e',
+              'fill-opacity': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                0.5,
+                0.24,
+              ],
+            },
+          },
+          {
+            id: NATIVE_LAYER_IDS.buildingExtrusion,
+            type: 'fill-extrusion',
+            source: SOURCE_IDS.infrastructure,
+            filter: [
+              'all',
+              ['==', ['get', 'layer_id'], 'buildings'],
+              ['==', ['get', 'height_backed'], true],
+            ],
+            paint: {
+              'fill-extrusion-color': '#8a633e',
+              'fill-extrusion-height': ['get', 'extrusion_height_m'],
+              'fill-extrusion-opacity': 0.72,
+            },
+          },
+          {
+            id: NATIVE_LAYER_IDS.buildingLine,
+            type: 'line',
+            source: SOURCE_IDS.infrastructure,
+            filter: ['==', ['get', 'layer_id'], 'buildings'],
+            paint: {
+              'line-color': '#8a633e',
+              'line-width': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                4,
+                1.75,
+              ],
+            },
+          },
+          {
+            id: NATIVE_LAYER_IDS.buildingFlatLine,
+            type: 'line',
+            source: SOURCE_IDS.infrastructure,
+            filter: [
+              'all',
+              ['==', ['get', 'layer_id'], 'buildings'],
+              ['==', ['get', 'height_backed'], false],
+            ],
+            paint: {
+              'line-color': '#d3a06d',
+              'line-width': 2,
+              'line-dasharray': [2, 1],
+            },
+          },
+          {
+            id: NATIVE_LAYER_IDS.railwayTracks,
+            type: 'line',
+            source: SOURCE_IDS.infrastructure,
+            filter: ['==', ['get', 'layer_id'], 'railway_tracks'],
+            paint: {
+              'line-color': '#7b4654',
+              'line-width': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                4,
+                2.5,
+              ],
+              'line-dasharray': [2, 1.2],
+            },
+          },
+          {
+            id: NATIVE_LAYER_IDS.railwayStations,
+            type: 'circle',
+            source: SOURCE_IDS.infrastructure,
+            filter: ['==', ['get', 'layer_id'], 'railway_stations'],
+            paint: {
+              'circle-color': '#304f47',
+              'circle-radius': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                7,
+                5,
+              ],
+              'circle-stroke-color': '#ffffff',
+              'circle-stroke-width': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                3,
+                2,
+              ],
+            },
+          },
+          {
+            id: NATIVE_LAYER_IDS.projects,
+            type: 'circle',
+            source: SOURCE_IDS.projects,
+            paint: {
+              'circle-color': '#c9a85a',
+              'circle-radius': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                7,
+                5,
+              ],
+              'circle-stroke-color': '#ffffff',
+              'circle-stroke-width': 2,
+            },
+          },
         ],
-      },
+      } satisfies maplibregl.StyleSpecification,
       center: [-1.29, 51.78],
       zoom: 10,
     });
@@ -249,28 +544,19 @@ export default function SiteMap({
       if (drawRef.current) {
         setPoints((vertices) => [...vertices, [e.lngLat.lng, e.lngLat.lat]]);
       } else {
-        // Hit-test the projected evidence on click without intercepting map drag/zoom.
-        const hit = [
-          ...(overlay.current?.querySelectorAll<SVGGeometryElement>(
-            '[data-map-object], [data-entity-kind], path[data-layer]:not([data-layer="site"])',
-          ) || []),
-        ]
-          .reverse()
-          .find(
-            (element) =>
-              element.isPointInFill(new DOMPoint(e.point.x, e.point.y)) ||
-              element.isPointInStroke(new DOMPoint(e.point.x, e.point.y)),
-          );
-        const objectId = hit?.dataset.mapObject;
+        const hit = m.queryRenderedFeatures(e.point, {
+          layers: [...HIT_LAYER_IDS],
+        })[0];
+        const objectId = hit?.properties?.object_id;
         if (objectId) builtWorldRef.current.onInspectMapObject?.(objectId);
-        else if (hit?.dataset.entityKind && hit.dataset.entityId)
+        else if (hit?.properties?.entity_kind && hit.properties.entity_id)
           entityRef.current.onSelectEntity?.({
-            kind: hit.dataset.entityKind as 'site' | 'project_subject',
-            id: hit.dataset.entityId,
+            kind: hit.properties.entity_kind as 'site' | 'project_subject',
+            id: hit.properties.entity_id,
           });
         else {
           const finding = inspectRef.current.findings.find(
-            (f) => f.key === hit?.dataset.layer,
+            (f) => f.key === hit?.properties?.environment_key,
           );
           if (finding) inspectRef.current.onInspect?.(finding);
         }
@@ -300,6 +586,125 @@ export default function SiteMap({
   useEffect(() => {
     geometryRef.current = geometry;
   }, [geometry]);
+  useEffect(() => {
+    const currentMap = map.current;
+    if (!ready || !currentMap?.isStyleLoaded()) return;
+    const siteFeatures: Feature[] = siteEntities.flatMap((entity) => {
+      const selectedSite =
+        selectedEntity?.kind === 'site' && selectedEntity.id === entity.id;
+      const displayGeometry = selectedSite && geometry ? geometry : entity.geometry;
+      if (!displayGeometry) return [];
+      return [{
+        type: 'Feature', id: `site:${entity.id}`, geometry: displayGeometry,
+        properties: {
+          entity_kind: 'site', entity_id: entity.id, name: entity.name,
+          boundary_version: entity.site.version,
+        },
+      }];
+    });
+    if (!siteFeatures.length && geometry) {
+      siteFeatures.push({
+        type: 'Feature', id: 'site:current-boundary', geometry,
+        properties: { entity_kind: null, entity_id: null },
+      });
+    }
+    const projectFeatures: Feature<Point>[] = linkedProjects.flatMap((entity) => {
+      const anchor = linkedSiteDisplayAnchor(entity.geometry);
+      if (!anchor) return [];
+      return [{
+        type: 'Feature', id: `project_subject:${entity.id}`,
+        geometry: { type: 'Point', coordinates: anchor },
+        properties: {
+          entity_kind: 'project_subject', entity_id: entity.id, name: entity.name,
+        },
+      }];
+    });
+    const environmentFeatures: Feature[] = findings.flatMap((finding) => {
+      if (
+        !finding.geometry || hiddenLayerSet.has(`environment:${finding.key}`)
+      ) return [];
+      return [{
+        type: 'Feature', id: `environment:${finding.key}`,
+        geometry: finding.geometry,
+        properties: {
+          environment_key: finding.key, name: finding.dataset,
+          color: layerColor(finding.key),
+        },
+      }];
+    });
+    const sceneFeatures: Feature[] = (mapScene?.features || []).flatMap((feature) => {
+      const layer = mapScene?.layers.find(
+        (item) => item.id === feature.properties.layer_id,
+      );
+      if (!layer || !['available', 'partial'].includes(layer.state)) return [];
+      const height = feature.properties.height;
+      const heightBacked =
+        height !== null &&
+        (height.state === 'available' || height.state === 'partial') &&
+        height.extrusion_height_m !== null;
+      return [{
+        type: 'Feature', id: feature.id, geometry: feature.geometry,
+        properties: {
+          object_id: feature.id,
+          layer_id: feature.properties.layer_id,
+          object_type: feature.properties.object_type,
+          name: mapFeatureName(feature),
+          classification: feature.properties.classification,
+          height_state: height?.state || null,
+          height_backed: heightBacked,
+          extrusion_height_m: heightBacked ? height.extrusion_height_m : 0,
+        },
+      }];
+    });
+    setGeoJSONData(currentMap, SOURCE_IDS.sites, {
+      type: 'FeatureCollection', features: siteFeatures,
+    });
+    setGeoJSONData(currentMap, SOURCE_IDS.projects, {
+      type: 'FeatureCollection', features: projectFeatures,
+    });
+    setGeoJSONData(currentMap, SOURCE_IDS.environment, {
+      type: 'FeatureCollection', features: environmentFeatures,
+    });
+    setGeoJSONData(currentMap, SOURCE_IDS.infrastructure, {
+      type: 'FeatureCollection', features: sceneFeatures,
+    });
+  }, [
+    ready, geometry, siteEntities, linkedProjects, selectedEntity,
+    findings, mapScene, hiddenLayerSet,
+  ]);
+  useEffect(() => {
+    const currentMap = map.current;
+    if (!ready || !currentMap?.isStyleLoaded()) return;
+    for (const feature of selectedNativeFeatures.current)
+      currentMap.removeFeatureState(feature, 'selected');
+    const next: { source: string; id: string }[] = [];
+    if (selectedMapObject)
+      next.push({ source: SOURCE_IDS.infrastructure, id: selectedMapObject });
+    if (activeSelection)
+      next.push({
+        source: SOURCE_IDS.environment,
+        id: `environment:${activeSelection}`,
+      });
+    if (selectedEntity?.kind === 'site')
+      next.push({ source: SOURCE_IDS.sites, id: `site:${selectedEntity.id}` });
+    if (selectedEntity?.kind === 'project_subject') {
+      next.push({
+        source: SOURCE_IDS.projects,
+        id: `project_subject:${selectedEntity.id}`,
+      });
+      if (chosenEntity?.kind === 'project_subject' && chosenEntity.subject.site_id)
+        next.push({
+          source: SOURCE_IDS.sites,
+          id: `site:${chosenEntity.subject.site_id}`,
+        });
+    }
+    for (const feature of next)
+      currentMap.setFeatureState(feature, { selected: true });
+    selectedNativeFeatures.current = next;
+  }, [
+    ready, selectedMapObject, activeSelection, selectedEntity, chosenEntity,
+    mapScene, findings, entities,
+  ]);
   const fitAllEntities = useCallback(() => {
     const m = map.current;
     const sites = entityRef.current.entities
@@ -350,21 +755,41 @@ export default function SiteMap({
   ]);
   useEffect(() => {
     if (!ready || !mapObjectFocusRequest) return;
-    const feature = builtWorldRef.current.screeningFeatures?.features.find(
+    const feature = builtWorldRef.current.mapScene?.features.find(
       (item) => item.id === builtWorldRef.current.selectedMapObject,
     );
     if (feature) fit(feature.geometry);
   }, [mapObjectFocusRequest, ready, projection, fit]);
   useEffect(() => {
-    if (ready && map.current?.isStyleLoaded())
-      map.current.setLayoutProperty(
-        'base',
-        'visibility',
-        hiddenLayerSet.has('basemap') ? 'none' : 'visible',
+    const currentMap = map.current;
+    if (!ready || !currentMap?.isStyleLoaded()) return;
+    const visibility = (layerId: string, hidden: boolean) =>
+      currentMap.setLayoutProperty(
+        layerId, 'visibility', hidden ? 'none' : 'visible',
       );
+    visibility('base', hiddenLayerSet.has('basemap'));
+    visibility(NATIVE_LAYER_IDS.sitesFill, hiddenLayerSet.has('site-boundary'));
+    visibility(NATIVE_LAYER_IDS.sitesLine, hiddenLayerSet.has('site-boundary'));
+    visibility(NATIVE_LAYER_IDS.projects, hiddenLayerSet.has('project-subjects'));
+    const semanticLayers: Record<InfrastructureLayerId, string[]> = {
+      buildings: [
+        NATIVE_LAYER_IDS.buildingFill,
+        NATIVE_LAYER_IDS.buildingExtrusion,
+        NATIVE_LAYER_IDS.buildingLine,
+        NATIVE_LAYER_IDS.buildingFlatLine,
+      ],
+      functional_sites: [
+        NATIVE_LAYER_IDS.functionalFill, NATIVE_LAYER_IDS.functionalLine,
+      ],
+      railway_tracks: [NATIVE_LAYER_IDS.railwayTracks],
+      railway_stations: [NATIVE_LAYER_IDS.railwayStations],
+    };
+    for (const [layerId, renderedLayers] of Object.entries(semanticLayers))
+      for (const renderedLayer of renderedLayers)
+        visibility(renderedLayer, hiddenLayerSet.has(`built:${layerId}`));
   }, [hiddenLayerSet, ready, projection]);
-  // Exact bounded server geometries rendered in screen coordinates from MapLibre's
-  // projection. SVG avoids blob-worker dependence and keeps overlays inspectable.
+  // The isolated boundary editor retains its temporary SVG drawing surface.
+  // The primary operating picture uses only native GeoJSON sources and layers.
   function path(g: Geometry | null): string {
     if (!g || !projection || !ready) return '';
     const ring = (coords: number[][], close = true) =>
@@ -387,94 +812,28 @@ export default function SiteMap({
   }
   const draft: LineString | null =
     points.length > 1 ? { type: 'LineString', coordinates: points } : null;
-  const builtFeatures = (screeningFeatures?.features || []).filter((feature) =>
-    screeningFeatures?.layers.some(
+  const builtFeatures = (mapScene?.features || []).filter((feature) =>
+    mapScene?.layers.some(
       (layer) =>
         layer.id === feature.properties.layer_id &&
         (layer.state === 'available' || layer.state === 'partial'),
     ),
   );
-  const builtLayerColor = (layer: BuiltWorldLayerId) =>
+  const builtLayerColor = (layer: InfrastructureLayerId) =>
     ({
       buildings: '#8a633e',
       functional_sites: '#65756b',
       railway_tracks: '#7b4654',
       railway_stations: '#304f47',
     })[layer];
-  const builtLayerVisible = (layer: BuiltWorldLayerId) =>
+  const builtLayerVisible = (layer: InfrastructureLayerId) =>
     !hiddenLayerSet.has(`built:${layer}`);
-  const siteEntities = entities.filter((entity) => entity.kind === 'site');
-  const linkedProjects = entities.filter(
-    (entity) =>
-      entity.kind === 'project_subject' &&
-      entity.locationState === 'site_linked',
-  );
-  const unlocatedProjects = entities.filter(
-    (entity) =>
-      entity.kind === 'project_subject' &&
-      entity.locationState !== 'site_linked',
-  );
   const rosterEntities = searchableInfrastructureEntities(
     entities,
     entityQuery,
     entities.length,
   );
   const shownRosterEntities = entityQuery.trim() ? rosterEntities : entities;
-  const chosenEntity = entities.find(
-    (entity) =>
-      entity.kind === selectedEntity?.kind && entity.id === selectedEntity.id,
-  );
-  function renderBuiltFeature(feature: (typeof builtFeatures)[number]) {
-    const layer = feature.properties.layer_id;
-    if (!builtLayerVisible(layer)) return null;
-    const isSelected = selectedMapObject === feature.id;
-    const geometry = feature.geometry;
-    if (geometry.type === 'Point' || geometry.type === 'MultiPoint') {
-      const positions =
-        geometry.type === 'Point'
-          ? [geometry.coordinates]
-          : geometry.coordinates;
-      return positions.map((position, index) => {
-        if (!projection) return null;
-        const point = projection.project(position as [number, number]);
-        return (
-          <circle
-            key={`${feature.id}:${index}`}
-            data-map-object={feature.id}
-            cx={point.x}
-            cy={point.y}
-            r={isSelected ? 7 : 5}
-            fill={builtLayerColor(layer)}
-            stroke="white"
-            strokeWidth={isSelected ? 3 : 2}
-          >
-            <title>
-              {mapFeatureName(feature)} · Terrene Earth mapped object
-            </title>
-          </circle>
-        );
-      });
-    }
-    return (
-      <path
-        key={feature.id}
-        data-map-object={feature.id}
-        data-map-layer={layer}
-        data-selected={isSelected}
-        d={path(geometry)}
-        fill={
-          geometry.type.includes('Polygon') ? builtLayerColor(layer) : 'none'
-        }
-        fillOpacity={isSelected ? 0.5 : 0.3}
-        stroke={builtLayerColor(layer)}
-        strokeWidth={isSelected ? 4 : layer === 'railway_tracks' ? 2.5 : 1.75}
-        strokeDasharray={layer === 'railway_tracks' ? '5 3' : undefined}
-        fillRule="evenodd"
-      >
-        <title>{mapFeatureName(feature)} · Terrene Earth mapped object</title>
-      </path>
-    );
-  }
   return (
     <div
       className={`map-wrap${entities.length || entityLoading || entityUnavailable ? ` ${infrastructureStyles.operatingMap}` : ''}`}
@@ -484,71 +843,13 @@ export default function SiteMap({
       aria-busy={!ready}
     >
       <div ref={el} className="map-canvas" />
-      <svg
-        ref={overlay}
-        className="geography-overlay"
-        aria-label="Site boundary and measured overlaps"
-        data-revision={revision}
-      >
-        {!hiddenLayerSet.has('site-boundary') &&
-          siteEntities.map((entity) => {
-            const selectedSite =
-              selectedEntity?.kind === 'site' &&
-              selectedEntity.id === entity.id;
-            const linkedSelection =
-              chosenEntity?.kind === 'project_subject' &&
-              chosenEntity.subject.site_id === entity.id;
-            const displayGeometry =
-              selectedSite && geometry ? geometry : entity.geometry;
-            if (!displayGeometry) return null;
-            return (
-              <path
-                key={`entity-site:${entity.id}`}
-                data-entity-kind="site"
-                data-entity-id={entity.id}
-                data-selected={selectedSite || linkedSelection}
-                d={path(displayGeometry)}
-                fill="#a8c0ae"
-                fillOpacity={selectedSite || linkedSelection ? 0.2 : 0.07}
-                stroke={selectedSite || linkedSelection ? '#b7d7c0' : '#8d9c92'}
-                strokeWidth={selectedSite || linkedSelection ? 3 : 1.5}
-                fillRule="evenodd"
-              >
-                <title>
-                  {entity.name} · saved Site boundary v{entity.site.version}
-                </title>
-              </path>
-            );
-          })}
-        {findings
-          .filter((f) => f.geometry && isVisible(f.key))
-          .map((f) => (
-            <path
-              key={f.key}
-              data-layer={f.key}
-              data-selected={activeSelection === f.key}
-              d={path(f.geometry)}
-              fill={layerColor(f.key)}
-              fillOpacity={
-                activeSelection
-                  ? activeSelection === f.key
-                    ? 0.36
-                    : 0.08
-                  : 0.2
-              }
-              stroke={layerColor(f.key)}
-              strokeWidth={activeSelection === f.key ? 3 : 1.5}
-              fillRule="evenodd"
-            >
-              <title>
-                {f.dataset} · {f.percent ?? 0}% overlap
-              </title>
-            </path>
-          ))}
-        {builtFeatures.map(renderBuiltFeature)}
-        {!siteEntities.length &&
-          geometry &&
-          !hiddenLayerSet.has('site-boundary') && (
+      {draw && (
+        <svg
+          className="geography-overlay"
+          aria-label="Boundary editor"
+          data-revision={revision}
+        >
+          {geometry && (
             <path
               data-layer="site"
               d={path(geometry)}
@@ -559,60 +860,31 @@ export default function SiteMap({
               fillRule="evenodd"
             />
           )}
-        {draft && (
-          <path
-            d={path(draft)}
-            fill="none"
-            stroke="#2549b4"
-            strokeWidth="3"
-            strokeDasharray="6 3"
-          />
-        )}
-        {draw &&
-          ready &&
-          points.map((p, i) => {
-            const q = projection!.project(p as [number, number]);
-            return (
-              <circle
-                key={i}
-                cx={q.x}
-                cy={q.y}
-                r="4"
-                fill="#2549b4"
-                stroke="white"
-                strokeWidth="2"
-              />
-            );
-          })}
-      </svg>
-      {!hiddenLayerSet.has('project-subjects') && projection && (
-        <div
-          className={infrastructureStyles.projectMarkers}
-          aria-label="Site-linked Project Subjects"
-        >
-          {linkedProjects.map((entity) => {
-            const anchor = linkedSiteDisplayAnchor(entity.geometry);
-            if (!anchor) return null;
-            const point = projection.project(anchor as [number, number]);
-            const isSelected =
-              selectedEntity?.kind === entity.kind &&
-              selectedEntity.id === entity.id;
-            return (
-              <button
-                key={entityKey(entity)}
-                className={infrastructureStyles.projectMarker}
-                data-selected={isSelected}
-                style={{ left: point.x, top: point.y }}
-                aria-label={`Open ${entity.name}`}
-                aria-pressed={isSelected}
-                onClick={() => onOpenEntity?.(entity)}
-              >
-                <span aria-hidden="true" />
-                <strong>{entity.name}</strong>
-              </button>
-            );
-          })}
-        </div>
+          {draft && (
+            <path
+              d={path(draft)}
+              fill="none"
+              stroke="#2549b4"
+              strokeWidth="3"
+              strokeDasharray="6 3"
+            />
+          )}
+          {ready &&
+            points.map((p, i) => {
+              const q = projection!.project(p as [number, number]);
+              return (
+                <circle
+                  key={i}
+                  cx={q.x}
+                  cy={q.y}
+                  r="4"
+                  fill="#2549b4"
+                  stroke="white"
+                  strokeWidth="2"
+                />
+              );
+            })}
+        </svg>
       )}
       {error && <div className="map-error">{error}</div>}
       <div className="map-toolbar">
@@ -646,7 +918,7 @@ export default function SiteMap({
                   !hiddenLayerSet.has('project-subjects'),
               ) +
               findings.filter((f) => f.geometry && isVisible(f.key)).length +
-              builtWorldLayerIds.filter((layer) =>
+              infrastructureLayerIds.filter((layer) =>
                 builtFeatures.some(
                   (feature) =>
                     feature.properties.layer_id === layer &&
@@ -791,29 +1063,29 @@ export default function SiteMap({
           </div>
           <div className="layer-group terrene-map-layers">
             <h3>Terrene Earth · built world</h3>
-            {screeningFeaturesState === 'loading' && (
+            {mapSceneState === 'loading' && (
               <p>Loading persisted mapped objects…</p>
             )}
-            {screeningFeaturesState === 'failed' && (
+            {mapSceneState === 'failed' && (
               <p role="alert">
                 Built-world layers could not be loaded. Missing map data is not
-                reported as zero. {screeningFeaturesError}
+                reported as zero. {mapSceneError}
               </p>
             )}
-            {screeningFeaturesState === 'unsupported' && (
+            {mapSceneState === 'unsupported' && (
               <p>
                 This historical evidence does not support persisted built-world
                 objects. Current objects are not substituted.
               </p>
             )}
-            {screeningFeaturesState === 'unavailable' && (
+            {mapSceneState === 'unavailable' && (
               <p>
                 No built-world map evidence is stored for this assessment.
                 Missing evidence is not reported as zero.
               </p>
             )}
-            {screeningFeatures
-              ? screeningFeatures.layers.map((layer) => {
+            {mapScene
+              ? mapScene.layers.map((layer) => {
                   const enabled =
                     layer.feature_count > 0 &&
                     (layer.state === 'available' || layer.state === 'partial');
@@ -847,21 +1119,29 @@ export default function SiteMap({
                           <small className={`layer-state state-${layer.state}`}>
                             {mapLayerStatus(layer)}
                           </small>
+                          {layer.id === 'buildings' && layer.feature_count > 0 && (
+                            <small className="layer-state">
+                              Solid · {layer.height_available_count} height-backed ·{' '}
+                              Dashed ·{' '}
+                              {layer.height_gap_count + layer.height_unsupported_count}{' '}
+                              flat
+                            </small>
+                          )}
                         </span>
                       </label>
                     </div>
                   );
                 })
               : !['loading', 'failed', 'unavailable', 'unsupported'].includes(
-                  screeningFeaturesState,
+                  mapSceneState,
                 ) && (
                   <p>
-                    {screeningFeaturesState === 'idle'
+                    {mapSceneState === 'idle'
                       ? 'Prepare or select a supported Screening Context run to inspect built-world layers.'
                       : 'Layer availability is unavailable.'}
                   </p>
                 )}
-            {screeningFeatures && (
+            {mapScene && (
               <p className="terrene-source-note">
                 Generalised source mapping—not surveyed, cadastral, legal or
                 engineering geometry.

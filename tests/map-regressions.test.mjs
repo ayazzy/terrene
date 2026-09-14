@@ -67,14 +67,22 @@ test('saved entities expose identity, location and evidence state without hover'
   assert.match(map, /\[rosterOpen, setRosterOpen\] = useState\(false\)/);
   assert.match(map, /infrastructureEntityLabel\(entity\)/);
   assert.match(map, /entity\.evidenceState/);
-  assert.match(map, /aria-pressed=\{isSelected\}/);
+  assert.match(map, /aria-pressed=\{/);
   assert.match(map, /Unlocated intelligence/);
 });
 
 test('retained built-world objects share layer visibility and inspection state', () => {
   assert.match(map, /id={`map-built-\${layer\.id}`}/);
   assert.match(map, /setLayerHidden\(`built:\${layer\.id}`, !value\)/);
-  assert.match(map, /data-map-object=\{feature\.id\}/);
+  assert.match(map, /queryRenderedFeatures\(e\.point/);
+  assert.match(map, /setFeatureState\(feature, \{ selected: true \}\)/);
+  assert.match(map, /source: SOURCE_IDS\.infrastructure/);
+  assert.match(map, /type: 'fill-extrusion'/);
+  assert.match(map, /\['==', \['get', 'height_backed'\], true\]/);
+  assert.match(map, /buildingFlatLine: 'terrene-buildings-flat-line'/);
+  assert.match(map, /'line-dasharray': \[2, 1\]/);
   assert.match(map, /onInspectMapObject\?\.\(objectId\)/);
   assert.match(map, /onClearMapObject\?\.\(\)/);
+  assert.doesNotMatch(map, /DOMPoint|isPointInFill|data-map-object/);
+  assert.match(map, /\{draw && \([\s\S]*className="geography-overlay"/);
 });

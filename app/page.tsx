@@ -734,11 +734,11 @@ export default function Home() {
                 showOnMap(finding.key);
                 setFinding(finding);
               }}
-              screeningFeatures={view === 'site' ? mapEvidence.features : null}
-              screeningFeaturesState={
-                view === 'site' ? mapEvidence.state : 'idle'
+              mapScene={view === 'site' ? mapEvidence.scene : null}
+              mapSceneState={
+                view === 'site' ? mapEvidence.sceneState : 'idle'
               }
-              screeningFeaturesError={view === 'site' ? mapEvidence.error : ''}
+              mapSceneError={view === 'site' ? mapEvidence.sceneError : ''}
               selectedMapObject={
                 view === 'site' ? mapEvidence.selectedObjectId : null
               }
@@ -1264,15 +1264,16 @@ export default function Home() {
                     </small>
                   </span>
                 </div>
-                {mapEvidence.selectedObject && mapEvidence.features && (
+                {mapEvidence.selectedObject && mapEvidence.scene && (
                   <MapFeatureInspector
                     feature={mapEvidence.selectedObject}
-                    layer={mapEvidence.features.layers.find(
+                    layer={mapEvidence.scene.layers.find(
                       (layer) =>
                         layer.id ===
                         mapEvidence.selectedObject?.properties.layer_id,
                     )}
-                    limitations={mapEvidence.features.limitations}
+                    sources={mapEvidence.scene.sources}
+                    limitations={mapEvidence.scene.limitations}
                     onLocate={() =>
                       mapEvidence.locateObject(mapEvidence.selectedObject!.id)
                     }

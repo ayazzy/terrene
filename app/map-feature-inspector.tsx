@@ -5,13 +5,15 @@ import {
   mapFeatureName,
   mapLayerLabel,
   mapRelationshipSummary,
-  type ScreeningMapFeature,
-  type ScreeningMapLayer,
-} from './screening-map-features';
+  type InfrastructureSceneFeature,
+  type InfrastructureSceneLayer,
+  type SceneSource,
+} from './infrastructure-map-scene';
 
 type Props = {
-  feature: ScreeningMapFeature;
-  layer?: ScreeningMapLayer;
+  feature: InfrastructureSceneFeature;
+  layer?: InfrastructureSceneLayer;
+  sources: SceneSource[];
   limitations: string[];
   onLocate: () => void;
   onClose: () => void;
@@ -20,6 +22,7 @@ type Props = {
 export default function MapFeatureInspector({
   feature,
   layer,
+  sources,
   limitations,
   onLocate,
   onClose,
@@ -29,6 +32,10 @@ export default function MapFeatureInspector({
     properties.classification ||
     properties.site_theme ||
     properties.object_type;
+  const objectSource = sources.find(
+    (source) => source.id === properties.object_source_id,
+  );
+  const height = properties.height;
   return (
     <section
       className="map-feature-inspector"
@@ -67,8 +74,9 @@ export default function MapFeatureInspector({
         <div>
           <strong>Source</strong>
           <p>
-            {properties.source.provider} · {properties.source.dataset} · release{' '}
-            {properties.source.release}
+            {objectSource
+              ? `${objectSource.provider} · ${objectSource.dataset} · release ${objectSource.release}`
+              : `Release ${properties.source_release}`}
           </p>
           <p className="map-source-qualification">
             Generalised source mapping for screening context—not surveyed,
@@ -76,6 +84,38 @@ export default function MapFeatureInspector({
           </p>
           {layer && <p className="nature-muted">{layer.qualification}</p>}
         </div>
+        {height && (
+          <div>
+            <strong>Building height evidence</strong>
+            {height.state === 'available' || height.state === 'partial' ? (
+              <>
+                <p>
+                  P90 {height.p90_height_m?.toLocaleString('en-GB', {
+                    maximumFractionDigits: 2,
+                  })}{' '}
+                  m · P50{' '}
+                  {height.p50_height_m?.toLocaleString('en-GB', {
+                    maximumFractionDigits: 2,
+                  })}{' '}
+                  m
+                </p>
+                <p className="nature-muted">
+                  {height.sample_count} retained cells ·{' '}
+                  {height.coverage_fraction === null
+                    ? 'coverage unavailable'
+                    : `${(height.coverage_fraction * 100).toLocaleString('en-GB', { maximumFractionDigits: 2 })}% valid coverage`}
+                </p>
+              </>
+            ) : (
+              <p>
+                {height.state === 'gap'
+                  ? `Unavailable · ${height.reason_code?.replaceAll('_', ' ') || 'evidence gap'}`
+                  : 'Unsupported by this historical snapshot'}
+              </p>
+            )}
+            <p className="map-source-qualification">{height.qualification}</p>
+          </div>
+        )}
       </div>
       <div className="map-feature-inspector-actions">
         <button onClick={onLocate}>
@@ -93,6 +133,12 @@ export default function MapFeatureInspector({
           <dd>{properties.geometry_fingerprint}</dd>
           <dt>Authoritative geometry</dt>
           <dd>{properties.authoritative_geometry_crs}</dd>
+          {height?.evidence_time && (
+            <>
+              <dt>Height evidence retrieved</dt>
+              <dd>{new Date(height.evidence_time).toLocaleString('en-GB')}</dd>
+            </>
+          )}
           {properties.relationships.map((relationship) => (
             <div key={relationship.id}>
               <dt>Relationship ID</dt>
@@ -105,8 +151,8 @@ export default function MapFeatureInspector({
           ))}
           {layer && (
             <>
-              <dt>Layer coverage basis</dt>
-              <dd>{layer.coverage_basis.join(' · ')}</dd>
+              <dt>Layer source references</dt>
+              <dd>{layer.source_reference_ids.join(' · ') || 'None retained'}</dd>
             </>
           )}
         </dl>

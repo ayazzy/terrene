@@ -18,6 +18,10 @@ import {
 } from './site-workspace-view-model';
 import type { OverlayFinding } from './site-evidence';
 import {
+  readInfrastructureMapScene,
+  type InfrastructureMapScene,
+} from './infrastructure-map-scene';
+import {
   readScreeningMapFeatures,
   type ScreeningMapFeatures,
 } from './screening-map-features';
@@ -85,6 +89,7 @@ export function useSiteWorkspaceState(
   const [contextExportUrl, setContextExportUrl] = useState('');
   const requestGeneration = useRef(0);
   const mapRequestGeneration = useRef(0);
+  const sceneRequestGeneration = useRef(0);
   const [mapFeatures, setMapFeatures] = useState<ScreeningMapFeatures | null>(
     null,
   );
@@ -93,6 +98,12 @@ export function useSiteWorkspaceState(
     'idle' | 'loading' | 'available' | 'failed'
   >('idle');
   const [mapFeaturesError, setMapFeaturesError] = useState('');
+  const [mapScene, setMapScene] = useState<InfrastructureMapScene | null>(null);
+  const [mapSceneAssessmentKey, setMapSceneAssessmentKey] = useState('');
+  const [mapSceneState, setMapSceneState] = useState<
+    'idle' | 'loading' | 'available' | 'failed'
+  >('idle');
+  const [mapSceneError, setMapSceneError] = useState('');
   const [selectedMapObjectId, setSelectedMapObjectId] = useState<string | null>(
     null,
   );
@@ -235,6 +246,35 @@ export function useSiteWorkspaceState(
     };
   }, [assessmentKey, contextAssessmentKey, contextRun]);
 
+  useEffect(() => {
+    if (contextAssessmentKey !== assessmentKey || !contextRun) return;
+    const abort = new AbortController();
+    const generation = ++sceneRequestGeneration.current;
+    void readInfrastructureMapScene(contextRun, abort.signal)
+      .then((next) => {
+        if (abort.signal.aborted || generation !== sceneRequestGeneration.current)
+          return;
+        setMapScene(next);
+        setMapSceneAssessmentKey(assessmentKey);
+        setMapSceneState('available');
+        setMapSceneError('');
+        setSelectedMapObjectId(null);
+      })
+      .catch((cause: Error) => {
+        if (abort.signal.aborted || generation !== sceneRequestGeneration.current)
+          return;
+        setMapScene(null);
+        setMapSceneAssessmentKey(assessmentKey);
+        setMapSceneState('failed');
+        setMapSceneError(cause.message);
+        setSelectedMapObjectId(null);
+      });
+    return () => {
+      sceneRequestGeneration.current += 1;
+      abort.abort();
+    };
+  }, [assessmentKey, contextAssessmentKey, contextRun]);
+
   function applyContextFailure(cause: unknown, operation: 'read' | 'prepare') {
     const status =
       cause instanceof ScreeningContextRequestError ? cause.status : undefined;
@@ -344,8 +384,17 @@ export function useSiteWorkspaceState(
       ? mapFeatures
       : null;
 
+  const scopedMapScene =
+    contextAssessmentKey === assessmentKey &&
+    contextState === 'available' &&
+    contextRun &&
+    mapSceneAssessmentKey === assessmentKey &&
+    mapScene?.snapshot.id === contextRun.evidence_snapshot_id
+      ? mapScene
+      : null;
+
   function selectMapObject(id: string) {
-    if (!scopedMapFeatures?.features.some((feature) => feature.id === id))
+    if (!scopedMapScene?.features.some((feature) => feature.id === id))
       return;
     setFinding(null);
     setMapFocus(null);
@@ -359,7 +408,7 @@ export function useSiteWorkspaceState(
   }
 
   const selectedMapObject =
-    scopedMapFeatures?.features.find(
+    scopedMapScene?.features.find(
       (feature) => feature.id === selectedMapObjectId,
     ) || null;
   const effectiveMapFeaturesState =
@@ -383,6 +432,26 @@ export function useSiteWorkspaceState(
                   : contextRun
                     ? ('loading' as const)
                     : ('idle' as const);
+  const effectiveMapSceneState =
+    contextAssessmentKey === assessmentKey && contextState === 'unsupported'
+      ? ('unsupported' as const)
+      : contextAssessmentKey === assessmentKey && contextState === 'absent'
+        ? ('unavailable' as const)
+        : contextAssessmentKey !== assessmentKey ||
+            contextState === 'checking' ||
+            contextState === 'preparing'
+          ? ('loading' as const)
+          : contextState === 'failed' || contextState === 'unauthorized'
+            ? ('failed' as const)
+            : scopedMapScene
+              ? ('available' as const)
+              : mapSceneAssessmentKey === assessmentKey &&
+                  contextRun &&
+                  mapSceneState === 'failed'
+                ? ('failed' as const)
+                : contextRun
+                  ? ('loading' as const)
+                  : ('idle' as const);
 
   return {
     assessment,
@@ -407,6 +476,9 @@ export function useSiteWorkspaceState(
       features: scopedMapFeatures,
       state: effectiveMapFeaturesState,
       error: mapFeaturesError,
+      scene: scopedMapScene,
+      sceneState: effectiveMapSceneState,
+      sceneError: mapSceneError,
       selectedObjectId: selectedMapObjectId,
       selectedObject: selectedMapObject,
       focusRequest: mapObjectFocusRequest,
