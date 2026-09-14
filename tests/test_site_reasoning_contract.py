@@ -8,6 +8,7 @@ from sqlalchemy import insert, select, update
 
 from backend import api, core
 from backend.earth import fingerprint
+from backend.screening_context_store import run_screening_from_snapshot
 from test_wetland_module_runs import (
     commit,
     module_database,
@@ -27,6 +28,10 @@ def client(module_database, monkeypatch):
 
 def catalogue_url(snapshot):
     return f'/api/sites/{snapshot.site_id}/reasoning-inputs'
+
+
+def run_catalogue_url(snapshot):
+    return f'/api/sites/{snapshot.site_id}/reasoning-runs'
 
 
 def test_catalogue_is_verified_read_only_and_publishes_exact_safe_envelope(
@@ -140,6 +145,69 @@ def test_exact_envelope_creates_one_idempotent_module_run_only(
     assert core.load_object(snapshot.manifest_key) == manifest_before
 
 
+def test_run_catalogue_is_read_only_safe_and_excludes_screening_context(
+    client, module_database,
+):
+    payload = saved()
+    snapshot = commit(module_database, payload)
+    screening = run_screening_from_snapshot(snapshot.id, org='org-a')
+    request = client.get(catalogue_url(snapshot)).json()['snapshots'][0]['run_request']
+    wetland = client.post(run_catalogue_url(snapshot), json=request).json()
+    counts_before = {
+        table.name: table_count(module_database, table)
+        for table in (core.module_runs, core.land_evidence_snapshots, core.assessments)
+    }
+
+    response = client.get(run_catalogue_url(snapshot))
+    assert response.status_code == 200, response.text
+    assert response.headers['cache-control'] == 'no-store'
+    result = response.json()
+    assert result['contract_version'] == 'site_reasoning_run_catalogue_v1'
+    assert result['site_id'] == snapshot.site_id
+    assert result['current_boundary_version'] == snapshot.boundary_version
+    assert len(result['runs']) == 1
+    item = result['runs'][0]
+    assert item['id'] == wetland['id']
+    assert item['id'] != screening.id
+    assert item['evidence_snapshot_id'] == snapshot.id
+    assert item['evidence_content_hash'] == snapshot.content_hash
+    assert item['current_boundary'] is True
+    assert item['module_id'] == 'wetland_restoration'
+    assert item['module_version'] == 'wetland_restoration_v0_1'
+    assert item['input_binding_version'] == 'wetland_input_binding_v1'
+    assert item['result_band'] == payload['wetland_model']['overall']['band']
+    assert item['result_score'] == payload['wetland_model']['overall']['score']
+    assert item['data_coverage_available'] == (
+        payload['wetland_model']['evidence_summary']['data_coverage']['available']
+    )
+    assert item['missing_input_count'] == len(payload['wetland_model']['missing_inputs'])
+    assert set(item) == {
+        'id', 'content_hash', 'site_id', 'boundary_version',
+        'evidence_snapshot_id', 'evidence_content_hash', 'evidence_as_of',
+        'current_boundary', 'module_id', 'module_version',
+        'input_binding_version', 'model_signature', 'result_band',
+        'result_score', 'data_coverage_available', 'data_coverage_required',
+        'missing_input_count', 'review_flag_count', 'synthetic', 'created',
+        'completed',
+    }
+    assert {
+        table.name: table_count(module_database, table)
+        for table in (core.module_runs, core.land_evidence_snapshots, core.assessments)
+    } == counts_before
+
+
+def test_empty_run_catalogue_is_valid_and_tenant_scoped(client, module_database):
+    snapshot = commit(module_database, saved())
+    response = client.get(run_catalogue_url(snapshot))
+    assert response.status_code == 200
+    assert response.json()['runs'] == []
+
+    api.app.dependency_overrides[api.organization] = lambda: 'org-b'
+    response = client.get(run_catalogue_url(snapshot))
+    assert response.status_code == 404
+    assert response.json()['detail'] == 'Record not found'
+
+
 @pytest.mark.parametrize('change', ['content_hash', 'boundary', 'model_spec'])
 def test_stale_or_contradictory_envelope_fails_closed(
     client, module_database, change,
@@ -222,6 +290,27 @@ def test_historical_boundary_is_explicit_and_remains_runnable(
     )
     assert response.status_code == 200, response.text
     assert response.json()['boundary_version'] == snapshot.boundary_version
+    runs = client.get(run_catalogue_url(snapshot)).json()['runs']
+    assert len(runs) == 1
+    assert runs[0]['current_boundary'] is False
+
+
+def test_corrupt_module_run_returns_sanitized_catalogue_failure(
+    client, module_database,
+):
+    snapshot = commit(module_database, saved())
+    request = client.get(catalogue_url(snapshot)).json()['snapshots'][0]['run_request']
+    run = client.post(run_catalogue_url(snapshot), json=request).json()
+    with module_database.begin() as connection:
+        connection.execute(update(core.module_runs).where(
+            core.module_runs.c.id == run['id'],
+        ).values(result={**run['result'], 'signature': 'corrupt'}))
+    response = client.get(run_catalogue_url(snapshot))
+    assert response.status_code == 500
+    assert response.json()['detail'].startswith(
+        'Site reasoning integrity check failed'
+    )
+    assert 'corrupt' not in response.text
 
 
 def test_corrupt_committed_snapshot_returns_sanitized_integrity_failure(

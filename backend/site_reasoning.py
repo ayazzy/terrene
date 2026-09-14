@@ -23,7 +23,9 @@ from backend.land_evidence_store import (
 )
 from backend.module_runs import (
     MODULE_ID,
+    ModuleRunConflict,
     ModuleRunRecord,
+    get_module_run,
     run_wetland_from_snapshot,
 )
 from backend.wetland import LIMITATIONS, MODEL_VERSION, model_spec
@@ -125,6 +127,46 @@ class SiteReasoningInputCatalogue(BaseModel):
     snapshots: list[SiteReasoningSnapshotInput]
 
 
+class SiteReasoningRunSummary(BaseModel):
+    """Client-safe, integrity-checked projection of one retained wetland run."""
+
+    model_config = ConfigDict(extra='forbid')
+
+    id: str
+    content_hash: str
+    site_id: str
+    boundary_version: int
+    evidence_snapshot_id: str
+    evidence_content_hash: str
+    evidence_as_of: datetime
+    current_boundary: bool
+    module_id: str
+    module_version: str
+    input_binding_version: str
+    model_signature: str
+    result_band: str
+    result_score: float | None
+    data_coverage_available: int | None
+    data_coverage_required: int | None
+    missing_input_count: int
+    review_flag_count: int
+    synthetic: bool
+    created: datetime
+    completed: datetime
+
+
+class SiteReasoningRunCatalogue(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+    contract_version: Literal['site_reasoning_run_catalogue_v1'] = (
+        'site_reasoning_run_catalogue_v1'
+    )
+    site_id: str
+    current_boundary_version: int
+    current_boundary_geometry_fingerprint: str
+    runs: list[SiteReasoningRunSummary]
+
+
 def _site(site_id: str, org: str) -> dict[str, Any]:
     with core.engine.connect() as connection:
         row = connection.execute(select(core.sites).where(
@@ -217,6 +259,112 @@ def list_site_reasoning_inputs(
             ),
         )],
         snapshots=snapshots,
+    )
+
+
+def list_site_reasoning_runs(
+    site_id: str, *, org: str,
+) -> SiteReasoningRunCatalogue:
+    """Return verified wetland ModuleRuns for one Site without creating state."""
+    site = _site(site_id, org)
+    current_fingerprint = fingerprint(site['geometry'])
+    with core.engine.connect() as connection:
+        run_ids = connection.execute(select(core.module_runs.c.id).where(
+            core.module_runs.c.org == org,
+            core.module_runs.c.site_id == site_id,
+            core.module_runs.c.module_id == MODULE_ID,
+        ).order_by(
+            core.module_runs.c.completed.desc(),
+            core.module_runs.c.id,
+        )).scalars().all()
+
+    summaries: list[SiteReasoningRunSummary] = []
+    for run_id in run_ids:
+        run = get_module_run(run_id, org=org)
+        snapshot = get_land_evidence_snapshot(run.evidence_snapshot_id, org=org)
+        projection = load_land_evidence_snapshot(snapshot.id, org=org)
+        if (
+            snapshot.site_id != site_id
+            or snapshot.content_hash != run.evidence_content_hash
+            or snapshot.boundary_version != run.boundary_version
+        ):
+            raise ModuleRunConflict(
+                'Stored ModuleRun and Evidence Snapshot identity mismatch'
+            )
+        overall = run.result.get('overall')
+        evidence_summary = run.result.get('evidence_summary')
+        coverage = (
+            evidence_summary.get('data_coverage')
+            if isinstance(evidence_summary, dict) else None
+        )
+        if not isinstance(overall, dict) or not isinstance(coverage, dict):
+            raise ModuleRunConflict('Stored wetland ModuleRun summary is invalid')
+        missing_inputs = run.result.get('missing_inputs')
+        review_flags = run.result.get('review_flags')
+        result_band = overall.get('band')
+        result_score = overall.get('score')
+        coverage_available = coverage.get('available')
+        coverage_required = coverage.get('required')
+        synthetic = run.result.get('synthetic')
+        if (
+            not isinstance(result_band, str)
+            or (
+                result_score is not None
+                and (
+                    isinstance(result_score, bool)
+                    or not isinstance(result_score, (int, float))
+                )
+            )
+            or (
+                coverage_available is not None
+                and (
+                    isinstance(coverage_available, bool)
+                    or not isinstance(coverage_available, int)
+                )
+            )
+            or (
+                coverage_required is not None
+                and (
+                    isinstance(coverage_required, bool)
+                    or not isinstance(coverage_required, int)
+                )
+            )
+            or not isinstance(missing_inputs, list)
+            or not isinstance(review_flags, list)
+            or not isinstance(synthetic, bool)
+        ):
+            raise ModuleRunConflict('Stored wetland ModuleRun summary is invalid')
+        summaries.append(SiteReasoningRunSummary(
+            id=run.id,
+            content_hash=run.content_hash,
+            site_id=run.site_id,
+            boundary_version=run.boundary_version,
+            evidence_snapshot_id=run.evidence_snapshot_id,
+            evidence_content_hash=run.evidence_content_hash,
+            evidence_as_of=projection.identity.evidence_as_of,
+            current_boundary=(
+                snapshot.boundary_version == site['version']
+                and snapshot.boundary_geometry_fingerprint == current_fingerprint
+            ),
+            module_id=run.module_id,
+            module_version=run.module_version,
+            input_binding_version=run.input_binding_version,
+            model_signature=run.model_signature,
+            result_band=result_band,
+            result_score=result_score,
+            data_coverage_available=coverage_available,
+            data_coverage_required=coverage_required,
+            missing_input_count=len(missing_inputs),
+            review_flag_count=len(review_flags),
+            synthetic=synthetic,
+            created=run.created,
+            completed=run.completed,
+        ))
+    return SiteReasoningRunCatalogue(
+        site_id=site_id,
+        current_boundary_version=site['version'],
+        current_boundary_geometry_fingerprint=current_fingerprint,
+        runs=summaries,
     )
 
 

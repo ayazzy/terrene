@@ -29,6 +29,26 @@ rewrite or reinterpret legacy assessments.
 The GET creates no snapshot, assessment or ModuleRun. An empty snapshot list is
 a valid catalogue state.
 
+## Run catalogue
+
+`GET /api/sites/{site_id}/reasoning-runs` returns
+`site_reasoning_run_catalogue_v1`. This organization-scoped, no-store GET
+selects only retained `wetland_restoration` ModuleRuns for the requested Site,
+excluding Screening Context runs that share the underlying persistence table.
+Every returned row is integrity-checked against its exact ModuleRun content and
+Evidence Snapshot before the API publishes a narrow client-safe summary:
+
+- immutable run/content, snapshot/content and boundary identities;
+- module, binding, model-signature and evidence-time identity;
+- current-versus-historical boundary state;
+- result band/score, evidence-coverage counts, missing/review counts and
+  synthetic status; and
+- creation and completion times.
+
+The response omits the full model payload, model specification and private
+storage details. A missing Site is non-disclosing, an empty run list is valid,
+and the GET creates no state.
+
 ## Write contract
 
 `POST /api/sites/{site_id}/reasoning-runs` accepts only a complete
@@ -79,8 +99,15 @@ snapshot, content, boundary, module, binding and model identities.
 The retained-snapshot path and legacy acquisition path are separate choices.
 Unavailable catalogues and failed runs remain visible in the modal and do not
 fall through to acquisition. On narrow screens the action is available through
-the Site actions menu. A completed run is confirmed immediately; durable
-ModuleRun discovery in the Models view remains a separate follow-up contract.
+the Site actions menu. A completed run is confirmed immediately and refreshes
+the Models run catalogue.
+
+Models keeps the selected legacy assessment result and the Site's
+snapshot-bound run history in separate sections. Retained runs expose their
+current/historical boundary state, coverage and exact snapshot/model/binding
+identity on explicit selection. The UI labels these as model interpretations,
+not Terrene Earth facts or team decisions. Catalogue failures remain visible
+and retryable without discarding the legacy assessment view.
 
 ## Error and compatibility behavior
 
@@ -96,10 +123,12 @@ ModuleRun discovery in the Models view remains a separate follow-up contract.
 
 ## Verification scope
 
-Focused tests cover read-only catalogue behavior, exact and safe response
-identity, strict request validation, stale-envelope rejection, Site and
-organization isolation, deterministic retry reuse, historical-boundary
-execution and sanitized corrupt-snapshot failure. The established wetland
-ModuleRun, Screening Context and infrastructure map-scene regressions remain the
-compatibility boundary. The complete backend suite passed 197 tests with 63
-retained-data skips on both SQLite and disposable PostgreSQL/PostGIS.
+Focused tests cover both read-only catalogues, exact and safe response identity,
+strict request validation, stale-envelope rejection, Site and organization
+isolation, deterministic retry reuse, historical-boundary execution, Screening
+Context exclusion and sanitized corrupt-storage failures. The established
+wetland ModuleRun, Screening Context and infrastructure map-scene regressions
+remain the compatibility boundary. The complete local backend suite passed 200
+tests with 63 retained-data skips. The preceding input/run contract baseline
+also passed on disposable PostgreSQL/PostGIS; the additive run-catalogue change
+was verified locally against SQLite.

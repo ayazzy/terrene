@@ -92,6 +92,12 @@ snapshot execution primitive. Snapshot-bound wetland execution explicitly pins
 no environmental acquisition and reuses the deterministic immutable ModuleRun
 on an identical retry. Stale or contradictory envelopes fail closed.
 
+`GET /api/sites/{site_id}/reasoning-runs` is the matching read-only Site
+history projection. It returns only integrity-checked wetland ModuleRun
+summaries, excludes Screening Context runs from the shared table, marks exact
+current-versus-historical boundary state and omits full results, specifications
+and storage details. Reads create no persistence.
+
 This is additive to the legacy Site assessment POST, which still snapshots the
 latest registered dataset versions and runs its existing worker pipeline. No
 legacy assessment is converted or retargeted. The current public reasoning

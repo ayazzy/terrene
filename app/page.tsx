@@ -17,6 +17,7 @@ import ScreeningContextPanel from './screening-context-panel';
 import MapFeatureInspector from './map-feature-inspector';
 import SiteEditorPanel from './site-editor-panel';
 import SiteModelCatalogue from './site-model-catalogue';
+import { useSiteReasoningRuns } from './use-site-reasoning-runs';
 import SiteAssessmentTimeline from './site-assessment-timeline';
 import AssessmentPreflight, {
   type ReasoningReadState,
@@ -315,6 +316,10 @@ export default function Home() {
     showOnMap,
     mapEvidence,
   } = workspace;
+  const siteReasoningRuns = useSiteReasoningRuns(
+    view === 'site' && tab === 'models',
+    active,
+  );
   const result = assessment?.result,
     viewingHistorical =
       !!assessment && assessment.id !== current?.assessment?.id,
@@ -791,6 +796,7 @@ export default function Home() {
           'The returned ModuleRun does not match the selected immutable input.',
         );
       setCompletedReasoningRun(run);
+      siteReasoningRuns.refresh();
     });
   }
   const filtered = sites.filter(
@@ -1711,6 +1717,10 @@ export default function Home() {
                       key={(assessment?.id || current.id) + ':models'}
                       model={result?.wetland_model}
                       assessmentState={assessment?.state}
+                      reasoningRuns={siteReasoningRuns.runs}
+                      reasoningRunsState={siteReasoningRuns.state}
+                      reasoningRunsError={siteReasoningRuns.error}
+                      onRetryReasoningRuns={siteReasoningRuns.refresh}
                     >
                       <div className="model-module-heading">
                         <span>

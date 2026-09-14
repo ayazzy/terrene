@@ -199,8 +199,8 @@ from backend.project_intelligence_store import (
 )
 from backend.site_reasoning import (
     SiteReasoningConflict, SiteReasoningInputCatalogue,
-    SiteReasoningNotFound, SiteReasoningRunRequest,
-    list_site_reasoning_inputs, run_site_reasoning,
+    SiteReasoningNotFound, SiteReasoningRunCatalogue, SiteReasoningRunRequest,
+    list_site_reasoning_inputs, list_site_reasoning_runs, run_site_reasoning,
 )
 
 
@@ -270,6 +270,19 @@ def create_site_reasoning_run(
     response.headers['Cache-Control'] = 'no-store'
     return site_reasoning_operation(
         lambda: run_site_reasoning(id, data, org=org)
+    )
+
+
+@app.get(
+    '/api/sites/{id}/reasoning-runs',
+    response_model=SiteReasoningRunCatalogue,
+)
+def read_site_reasoning_runs(
+    id: str, response: Response, org=Depends(organization),
+):
+    response.headers['Cache-Control'] = 'no-store'
+    return site_reasoning_operation(
+        lambda: list_site_reasoning_runs(id, org=org)
     )
 
 
