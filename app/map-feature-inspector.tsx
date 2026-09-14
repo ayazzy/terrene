@@ -93,6 +93,11 @@ export default function MapFeatureInspector({
             <strong>Building height evidence</strong>
             {height.state === 'available' || height.state === 'partial' ? (
               <>
+                <p className={`height-state state-${height.state}`}>
+                  {height.state === 'partial'
+                    ? 'Partial coverage · valid retained estimate'
+                    : 'Available · valid retained estimate'}
+                </p>
                 <p>
                   P90{' '}
                   {height.p90_height_m?.toLocaleString('en-GB', {

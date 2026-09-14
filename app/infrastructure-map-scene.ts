@@ -137,6 +137,51 @@ export type InfrastructureMapScene = {
   limitations: string[];
 };
 
+export type BuildingHeightStateCounts = {
+  available: number;
+  partial: number;
+  gap: number;
+  unsupported: number;
+  unrecorded: number;
+};
+
+export function buildingHeightStateCounts(
+  scene: InfrastructureMapScene | null | undefined,
+): BuildingHeightStateCounts {
+  const counts: BuildingHeightStateCounts = {
+    available: 0,
+    partial: 0,
+    gap: 0,
+    unsupported: 0,
+    unrecorded: 0,
+  };
+  for (const feature of scene?.features || []) {
+    if (feature.properties.layer_id !== 'buildings') continue;
+    const state = feature.properties.height?.state;
+    if (state) counts[state] += 1;
+    else counts.unrecorded += 1;
+  }
+  return counts;
+}
+
+export function buildingHeightStatus(
+  counts: BuildingHeightStateCounts,
+): string | null {
+  const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  if (!total) return null;
+  const extruded = counts.available + counts.partial;
+  const flat = counts.gap + counts.unsupported + counts.unrecorded;
+  if (counts.unsupported === total)
+    return `Historical snapshot · ${total} ${total === 1 ? 'building remains' : 'buildings remain'} flat because height evidence is unsupported`;
+  if (!extruded)
+    return `Height unavailable · ${flat} ${flat === 1 ? 'building remains' : 'buildings remain'} flat; missing evidence is not zero`;
+  if (counts.partial && !flat)
+    return `Partial evidence · ${counts.partial} of ${extruded} building ${extruded === 1 ? 'estimate' : 'estimates'} ${counts.partial === 1 ? 'has' : 'have'} a partial state`;
+  if (counts.partial || flat)
+    return `Partial height coverage · ${extruded} evidence-backed · ${flat} flat`;
+  return null;
+}
+
 export const infrastructureLayerIds: InfrastructureLayerId[] = [
   'buildings',
   'functional_sites',
@@ -221,8 +266,7 @@ export function mapFeatureName(feature: InfrastructureSceneFeature) {
   if (properties.name) return properties.name;
   if (properties.classification)
     return properties.classification.replaceAll('_', ' ');
-  if (properties.site_theme)
-    return properties.site_theme.replaceAll('_', ' ');
+  if (properties.site_theme) return properties.site_theme.replaceAll('_', ' ');
   return mapLayerLabel(properties.layer_id).replace(/s$/, '');
 }
 

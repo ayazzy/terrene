@@ -26,6 +26,8 @@ import type {
 import type { OverlayFinding } from './site-evidence';
 import { layerGroup, layerColor } from './site-evidence';
 import {
+  buildingHeightStateCounts,
+  buildingHeightStatus,
   infrastructureLayerIds,
   mapFeatureName,
   mapLayerLabel,
@@ -124,6 +126,20 @@ const MAP_PALETTE = {
 } as const;
 
 const OPENFREEMAP_DARK_STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
+
+const EVIDENCE_ONLY_DARK_STYLE: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {},
+  layers: [
+    {
+      id: 'evidence-only-background',
+      type: 'background',
+      paint: { 'background-color': '#0a0f11' },
+    },
+  ],
+};
+
+type BasemapState = 'loading' | 'available' | 'degraded' | 'unavailable';
 
 type BasemapConfiguration = {
   style: maplibregl.StyleSpecification | string;
@@ -594,6 +610,7 @@ export default function SiteMap({
     [entityQuery, setEntityQuery] = useState(''),
     [coordinates, setCoordinates] = useState(''),
     [error, setError] = useState('');
+  const [basemapState, setBasemapState] = useState<BasemapState>('loading');
   const drawRef = useRef(draw);
   const geometryRef = useRef(geometry);
   const lastOverlayFocus = useRef('');
@@ -661,9 +678,12 @@ export default function SiteMap({
     (entity) =>
       entity.kind === selectedEntity?.kind && entity.id === selectedEntity.id,
   );
-  const heightAvailableCount =
-    mapScene?.layers.find((layer) => layer.id === 'buildings')
-      ?.height_available_count || 0;
+  const heightCounts = useMemo(
+    () => buildingHeightStateCounts(mapScene),
+    [mapScene],
+  );
+  const heightAvailableCount = heightCounts.available + heightCounts.partial;
+  const heightStatus = buildingHeightStatus(heightCounts);
   const canPerspective = heightAvailableCount > 0;
   const perspectiveActive =
     canPerspective && perspectiveSceneId === mapScene?.snapshot.id;
@@ -696,6 +716,18 @@ export default function SiteMap({
       zoom: 10,
     });
     map.current = m;
+    let evidenceOnlyFallback = BASEMAP.productionConfigurationMissing;
+    m.setMissingStyleImageResolver((imageId) => {
+      if (m.hasImage(imageId)) return;
+      // Optional third-party basemap patterns are context, not Terrene
+      // evidence. A transparent pixel prevents a missing decorative sprite
+      // from polluting the evidence failure channel.
+      m.addImage(imageId, {
+        width: 1,
+        height: 1,
+        data: new Uint8Array([0, 0, 0, 0]),
+      });
+    });
     m.addControl(new maplibregl.NavigationControl(), 'top-right');
     m.addControl(
       new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }),
@@ -729,25 +761,58 @@ export default function SiteMap({
       hoverPopup.setLngLat(e.lngLat).setDOMContent(content).addTo(m);
     });
     m.on('mouseout', () => hoverPopup.remove());
-    m.on('load', () => {
+    const handleStyleLoad = () => {
       basemapLayerIds.current = (m.getStyle().layers || []).map(
         (layer) => layer.id,
       );
       installTerreneLayers(m);
-      if (BASEMAP.productionConfigurationMissing)
+      if (evidenceOnlyFallback) {
+        setBasemapState('unavailable');
         setError(
-          'Basemap is not configured for production. Evidence geometry remains available.',
+          BASEMAP.productionConfigurationMissing
+            ? 'Basemap is not configured for production. Evidence geometry remains available.'
+            : 'Basemap could not load. Terrene boundary and evidence geometry remain available on an evidence-only background.',
         );
+      } else {
+        setBasemapState('available');
+      }
       setReadyMs(Math.round(performance.now() - startedAt));
       setProjection(m);
-    });
+    };
+    m.on('style.load', handleStyleLoad);
     m.on('move', repaint);
     m.on('resize', repaint);
-    m.on('error', () =>
+    m.on('error', (event) => {
+      const sourceId = (event as { sourceId?: string }).sourceId;
+      if (
+        sourceId &&
+        Object.values(SOURCE_IDS).includes(
+          sourceId as (typeof SOURCE_IDS)[keyof typeof SOURCE_IDS],
+        )
+      ) {
+        setError(
+          'A retained evidence layer could not render. The layer is unavailable rather than empty.',
+        );
+        return;
+      }
+      if (
+        !m.isStyleLoaded() &&
+        typeof BASEMAP.style === 'string' &&
+        !evidenceOnlyFallback
+      ) {
+        evidenceOnlyFallback = true;
+        setBasemapState('unavailable');
+        setError(
+          'Basemap could not load. Terrene boundary and evidence geometry remain available on an evidence-only background.',
+        );
+        m.setStyle(EVIDENCE_ONLY_DARK_STYLE, { diff: false });
+        return;
+      }
+      setBasemapState('degraded');
       setError(
         'Some basemap tiles could not load. Boundary and evidence remain available.',
-      ),
-    );
+      );
+    });
     m.on('click', (e) => {
       if (drawRef.current) {
         setPoints((vertices) => [...vertices, [e.lngLat.lng, e.lngLat.lat]]);
@@ -783,6 +848,7 @@ export default function SiteMap({
       observer.disconnect();
       cancelAnimationFrame(resizeFrame);
       hoverPopup.remove();
+      m.setMissingStyleImageResolver(null);
       m.remove();
       map.current = null;
     };
@@ -1180,9 +1246,15 @@ export default function SiteMap({
       data-primary-map="infrastructure-operating-picture"
       data-map-ready={ready}
       data-map-ready-ms={readyMs ?? undefined}
+      data-basemap-state={basemapState}
       aria-busy={!ready}
     >
       <div ref={el} className="map-canvas" />
+      {!ready && (
+        <output className={infrastructureStyles.sceneStatus}>
+          Initialising spatial evidence…
+        </output>
+      )}
       {draw && (
         <svg
           className="geography-overlay"
@@ -1227,6 +1299,36 @@ export default function SiteMap({
         </svg>
       )}
       {error && <div className="map-error">{error}</div>}
+      {ready &&
+        (mapSceneState === 'loading' ||
+          mapSceneState === 'failed' ||
+          mapSceneState === 'unsupported' ||
+          mapSceneState === 'unavailable' ||
+          heightStatus) && (
+          <output
+            className={infrastructureStyles.sceneStatus}
+            data-state={
+              mapSceneState === 'failed'
+                ? 'failed'
+                : mapSceneState === 'loading'
+                  ? 'loading'
+                  : heightStatus?.startsWith('Partial')
+                    ? 'partial'
+                    : 'unavailable'
+            }
+            role={mapSceneState === 'failed' ? 'alert' : undefined}
+          >
+            {mapSceneState === 'loading'
+              ? 'Loading saved infrastructure evidence…'
+              : mapSceneState === 'failed'
+                ? `Infrastructure evidence unavailable. Missing data is not zero.${mapSceneError ? ` ${mapSceneError}` : ''}`
+                : mapSceneState === 'unsupported'
+                  ? 'This historical assessment predates persisted infrastructure evidence. Current objects were not substituted.'
+                  : mapSceneState === 'unavailable'
+                    ? 'No persisted infrastructure evidence is stored for this assessment. Missing data is not zero.'
+                    : heightStatus}
+          </output>
+        )}
       <div className="map-toolbar">
         {!!entities.length && (
           <button
@@ -1367,7 +1469,9 @@ export default function SiteMap({
               checked={!hiddenLayerSet.has('basemap')}
               onCheckedChange={(value) => setLayerHidden('basemap', !value)}
             />{' '}
-            {BASEMAP.label}
+            {basemapState === 'unavailable'
+              ? 'Evidence-only background · basemap unavailable'
+              : `${BASEMAP.label}${basemapState === 'degraded' ? ' · degraded' : ''}`}
           </label>
           <div className="layer-group">
             <h3>Infrastructure entities</h3>
@@ -1528,11 +1632,8 @@ export default function SiteMap({
                           {layer.id === 'buildings' &&
                             layer.feature_count > 0 && (
                               <small className="layer-state">
-                                Solid · {layer.height_available_count}{' '}
-                                height-backed · Dashed ·{' '}
-                                {layer.height_gap_count +
-                                  layer.height_unsupported_count}{' '}
-                                flat
+                                {buildingHeightStatus(heightCounts) ||
+                                  `${heightAvailableCount} evidence-backed`}
                               </small>
                             )}
                         </span>
@@ -1623,10 +1724,8 @@ export default function SiteMap({
                     <small>{mapLayerStatus(layer)}</small>
                     {layer.id === 'buildings' && layer.feature_count > 0 && (
                       <small>
-                        {layer.height_available_count} height-backed ·{' '}
-                        {layer.height_gap_count +
-                          layer.height_unsupported_count}{' '}
-                        flat
+                        {buildingHeightStatus(heightCounts) ||
+                          `${heightAvailableCount} evidence-backed`}
                       </small>
                     )}
                   </div>

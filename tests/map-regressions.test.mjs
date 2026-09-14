@@ -66,6 +66,31 @@ test('the primary map prefers a dark vector style with a legacy raster fallback'
   assert.doesNotMatch(mapCss, /portfolio-canvas|portfolio-map/);
 });
 
+test('a failed remote basemap falls back without suppressing Terrene evidence', () => {
+  assert.match(map, /EVIDENCE_ONLY_DARK_STYLE/);
+  assert.match(map, /m\.on\('style\.load', handleStyleLoad\)/);
+  assert.match(
+    map,
+    /m\.setStyle\(EVIDENCE_ONLY_DARK_STYLE, \{ diff: false \}\)/,
+  );
+  assert.match(map, /setMissingStyleImageResolver/);
+  assert.match(map, /data-basemap-state=\{basemapState\}/);
+  assert.match(map, /Terrene boundary and evidence geometry remain available/);
+  assert.match(map, /Initialising spatial evidence/);
+});
+
+test('scene status keeps missing, partial, and historical evidence explicit', () => {
+  assert.match(map, /buildingHeightStateCounts\(mapScene\)/);
+  assert.match(map, /buildingHeightStatus\(heightCounts\)/);
+  assert.match(
+    map,
+    /Infrastructure evidence unavailable\. Missing data is not zero/,
+  );
+  assert.match(map, /Current objects were not substituted/);
+  assert.match(map, /No persisted infrastructure evidence is stored/);
+  assert.match(mapCss, /\.sceneStatus\[data-state='partial'\]/);
+});
+
 test('operator controls preserve 2D truth and mutually exclusive left surfaces', () => {
   assert.match(
     map,

@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
+  buildingHeightStateCounts,
+  buildingHeightStatus,
   infrastructureMapScenePath,
   mapLayerStatus,
   mapRelationshipSummary,
@@ -74,12 +76,17 @@ test('native scene is read by immutable snapshot identity and fails closed', asy
   );
   assert.equal(calls[0].options.headers.Authorization, 'Bearer scene-token');
   assert.equal(calls[0].options.cache, 'no-store');
-  assert.equal(infrastructureMapScenePath(run.evidence_snapshot_id), calls[0].path);
+  assert.equal(
+    infrastructureMapScenePath(run.evidence_snapshot_id),
+    calls[0].path,
+  );
 
   t.mock.method(globalThis, 'fetch', async () =>
-    Response.json(scene({
-      snapshot: { ...scene().snapshot, content_hash: 'changed' },
-    })),
+    Response.json(
+      scene({
+        snapshot: { ...scene().snapshot, content_hash: 'changed' },
+      }),
+    ),
   );
   await assert.rejects(
     readInfrastructureMapScene(run),
@@ -89,7 +96,10 @@ test('native scene is read by immutable snapshot identity and fails closed', asy
 
 test('native scene helpers preserve layer and relationship semantics', () => {
   const layer = { feature_count: 2 };
-  assert.equal(mapLayerStatus({ ...layer, state: 'available' }), '2 mapped objects');
+  assert.equal(
+    mapLayerStatus({ ...layer, state: 'available' }),
+    '2 mapped objects',
+  );
   assert.match(
     mapLayerStatus({ ...layer, feature_count: 0, state: 'mapped_zero' }),
     /Mapped zero · source-bounded/,
@@ -109,6 +119,73 @@ test('native scene helpers preserve layer and relationship semantics', () => {
   );
 });
 
+test('height presentation distinguishes partial, missing, and historical evidence', () => {
+  const heightScene = scene({
+    features: [
+      { properties: { layer_id: 'buildings', height: { state: 'available' } } },
+      { properties: { layer_id: 'buildings', height: { state: 'partial' } } },
+      { properties: { layer_id: 'buildings', height: { state: 'gap' } } },
+      {
+        properties: { layer_id: 'buildings', height: { state: 'unsupported' } },
+      },
+      { properties: { layer_id: 'buildings', height: null } },
+      { properties: { layer_id: 'railway_tracks', height: null } },
+    ],
+  });
+  const counts = buildingHeightStateCounts(heightScene);
+  assert.deepEqual(counts, {
+    available: 1,
+    partial: 1,
+    gap: 1,
+    unsupported: 1,
+    unrecorded: 1,
+  });
+  assert.equal(
+    buildingHeightStatus(counts),
+    'Partial height coverage · 2 evidence-backed · 3 flat',
+  );
+  assert.equal(
+    buildingHeightStatus({
+      available: 4,
+      partial: 1,
+      gap: 0,
+      unsupported: 0,
+      unrecorded: 0,
+    }),
+    'Partial evidence · 1 of 5 building estimates has a partial state',
+  );
+  assert.match(
+    buildingHeightStatus({
+      available: 0,
+      partial: 0,
+      gap: 0,
+      unsupported: 3,
+      unrecorded: 0,
+    }),
+    /Historical snapshot · 3 buildings remain flat.*unsupported/,
+  );
+  assert.match(
+    buildingHeightStatus({
+      available: 0,
+      partial: 0,
+      gap: 2,
+      unsupported: 0,
+      unrecorded: 0,
+    }),
+    /Height unavailable.*missing evidence is not zero/,
+  );
+  assert.equal(
+    buildingHeightStatus({
+      available: 2,
+      partial: 0,
+      gap: 0,
+      unsupported: 0,
+      unrecorded: 0,
+    }),
+    null,
+  );
+});
+
 test('primary map consumes the scene while screening keeps its legacy read contract', () => {
   const state = readFileSync(
     new URL('../app/site-workspace-state.ts', import.meta.url),
@@ -118,7 +195,10 @@ test('primary map consumes the scene while screening keeps its legacy read contr
     new URL('../app/page.tsx', import.meta.url),
     'utf8',
   );
-  assert.match(state, /readInfrastructureMapScene\(contextRun, abort\.signal\)/);
+  assert.match(
+    state,
+    /readInfrastructureMapScene\(contextRun, abort\.signal\)/,
+  );
   assert.match(state, /readScreeningMapFeatures\(contextRun, abort\.signal\)/);
   assert.match(
     state,
@@ -127,7 +207,14 @@ test('primary map consumes the scene while screening keeps its legacy read contr
   assert.match(state, /sceneRequestGeneration\.current/);
   assert.match(
     state,
+    /sceneRequestGeneration\.current \+= 1;\s+abort\.abort\(\)/,
+  );
+  assert.match(
+    state,
     /mapSceneAssessmentKey === assessmentKey &&[\s\S]*?mapSceneState === 'failed'/,
   );
-  assert.match(page, /mapScene=\{view === 'site' \? mapEvidence\.scene : null\}/);
+  assert.match(
+    page,
+    /mapScene=\{view === 'site' \? mapEvidence\.scene : null\}/,
+  );
 });

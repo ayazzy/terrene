@@ -3706,6 +3706,16 @@ summary {
 .map-feature-inspector-body p {
   margin: 4px 0;
 }
+.map-feature-inspector-body .height-state {
+  color: var(--status-success);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.map-feature-inspector-body .height-state.state-partial {
+  color: var(--status-warning);
+}
 .map-feature-inspector-actions {
   margin-top: 10px;
 }
