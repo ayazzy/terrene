@@ -9,7 +9,9 @@ from pydantic import Field, model_validator
 
 from backend.earth import fingerprint
 from backend.land_evidence import (
-    BuiltWorldMeasurement, BuiltWorldObject, CapabilityDisposition, DimensionValue, EvidenceGap, LandEvidenceProjection,
+    BUILDING_HEIGHT_REGISTRY_VERSION, BuildingHeightEvidenceGap,
+    BuildingHeightObservation, BuiltWorldMeasurement, BuiltWorldObject,
+    CapabilityDisposition, DimensionValue, EvidenceGap, LandEvidenceProjection,
     NumericValue, ObservationDefinition, ParcelObjectRelationship, Record,
     PriorityHabitatMeasurement, SourceFeatureReference, SpatialSupport, TemporalReference, TypedValue,
     validate_land_evidence,
@@ -229,6 +231,10 @@ def build_screening_context(projection: LandEvidenceProjection, *, snapshot_id: 
     groups = {key: ReviewGroup(id=key, label=label, facts=[], gaps=[]) for key, label in GROUPS}
     zeroes, questions, contexts = [], [], []
     for observation in sorted(projection.observations, key=lambda o: (o.definition_id, o.id)):
+        # The v1 screening workflow remains unchanged. Object-level height is
+        # exposed by the later map-scene contract, not reinterpreted here.
+        if isinstance(observation, BuildingHeightObservation):
+            continue
         object_ids = sorted(getattr(observation, 'supporting_object_ids', []))
         relationships = [r for r in projection.relationships if r.object_id in object_ids]
         refs = EvidenceRefs(
@@ -265,6 +271,8 @@ def build_screening_context(projection: LandEvidenceProjection, *, snapshot_id: 
                 text='Is this partial or historically unrecorded spatial support adequate for the current review, or is further evidence material?',
             ))
     for gap in sorted(projection.gaps, key=lambda g: (g.definition_id or g.legacy_variable or '', g.id)):
+        if isinstance(gap, BuildingHeightEvidenceGap):
+            continue
         label = gap.definition_id or gap.legacy_variable or gap.reason_code
         groups[_group(label)].gaps.append(gap)
         questions.append(ContextItem(
@@ -294,7 +302,9 @@ def build_screening_context(projection: LandEvidenceProjection, *, snapshot_id: 
             questions.append(ContextItem(id='question:' + rule_id, label=label, text=question, references=refs))
     identity = projection.identity
     limitations = list(LIMITATIONS)
-    if not projection.objects and identity.registry_version != 'land_evidence_registry_v3':
+    if not projection.objects and identity.registry_version not in (
+        'land_evidence_registry_v3', BUILDING_HEIGHT_REGISTRY_VERSION,
+    ):
         limitations.append('This historical evidence registry predates built-world representation. Missing objects here do not mean mapped zero; prepare a new assessment to acquire newer evidence.')
     return ScreeningResult(
         signature=screening_spec(config)['signature'], site_id=identity.legacy_location_id,

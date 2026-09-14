@@ -18,6 +18,9 @@ from sqlalchemy.exc import IntegrityError
 from backend import core
 from backend.earth import fingerprint
 from backend.land_evidence import (
+    BUILDING_HEIGHT_REGISTRY_VERSION,
+    BuildingHeightEvidenceGap,
+    BuildingHeightObservation,
     BUILT_WORLD_REGISTRY_VERSION,
     BuiltWorldObservation,
     LandEvidenceProjection,
@@ -94,11 +97,16 @@ def snapshot_content_document(
         'capabilities': [item.model_dump(mode='json') for item in projection.capabilities],
         'diagnostics': [item.model_dump(mode='json') for item in projection.diagnostics],
     }
-    if identity.registry_version in (PHI_REGISTRY_VERSION, BUILT_WORLD_REGISTRY_VERSION):
+    if identity.registry_version in (
+        PHI_REGISTRY_VERSION, BUILT_WORLD_REGISTRY_VERSION,
+        BUILDING_HEIGHT_REGISTRY_VERSION,
+    ):
         document['source_feature_references'] = [
             item.model_dump(mode='json') for item in projection.source_feature_references
         ]
-    if identity.registry_version == BUILT_WORLD_REGISTRY_VERSION:
+    if identity.registry_version in (
+        BUILT_WORLD_REGISTRY_VERSION, BUILDING_HEIGHT_REGISTRY_VERSION,
+    ):
         document['objects'] = [item.model_dump(mode='json') for item in projection.objects]
         document['relationships'] = [
             item.model_dump(mode='json') for item in projection.relationships
@@ -210,7 +218,8 @@ def _member_rows(snapshot_id: str, projection: LandEvidenceProjection) -> list[d
     for position, item in enumerate(projection.observations):
         add('observation', item.id, position, definition_id=item.definition_id,
             legacy_variable=(None if isinstance(item, (PriorityHabitatObservation,
-                                                        BuiltWorldObservation))
+                                                        BuiltWorldObservation,
+                                                        BuildingHeightObservation))
                              else item.provenance.legacy_variable))
     for position, item in enumerate(projection.selections):
         add('selection', item.semantic_key, position)
@@ -259,9 +268,13 @@ def _link_rows(snapshot_id: str, projection: LandEvidenceProjection) -> list[dic
                 item.source_feature_reference_ids)
         if isinstance(item, BuiltWorldObservation):
             add('observation', item.id, 'object', item.supporting_object_ids)
+        if isinstance(item, BuildingHeightObservation):
+            add('observation', item.id, 'object', [item.object_id])
     for item in projection.gaps:
         add('gap', item.id, 'source_reference', item.source_reference_ids)
         add('gap', item.id, 'raw_reference', item.raw_reference_ids)
+        if isinstance(item, BuildingHeightEvidenceGap):
+            add('gap', item.id, 'object', [item.object_id])
     for item in projection.selections:
         add('selection', item.semantic_key, 'selected_observation', [item.observation_id])
     return rows

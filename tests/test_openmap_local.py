@@ -11,14 +11,24 @@ from shapely.ops import transform
 from sqlalchemy import create_engine, delete, insert
 
 from backend import core
+from backend import building_heights
 from backend import land_evidence_store as store
 from backend.earth import fingerprint
 from backend.land_evidence import (
+    BUILDING_HEIGHT_REGISTRY_VERSION,
+    BuildingHeightEvidenceGap,
+    BuildingHeightObservation,
     BUILT_WORLD_REGISTRY_VERSION,
     BuiltWorldObservation,
     FunctionalSiteObject,
     RailwayTrackObject,
     project_land_evidence,
+)
+from backend.building_heights import (
+    DTM_CATALOG as HEIGHT_DTM_CATALOG,
+    DSM_CATALOG as HEIGHT_DSM_CATALOG,
+    PROCESSING_VERSION as HEIGHT_PROCESSING_VERSION,
+    SURVEY_METADATA as HEIGHT_SURVEY_METADATA,
 )
 from backend.openmap_local import (
     ATTRIBUTION,
@@ -40,6 +50,17 @@ from synthetic_assessment import synthetic_assessment
 
 REAL_ROOT = Path(__file__).parents[1] / 'data' / 'verification' / 'england-real-phi-v1'
 PORT_MEADOW = REAL_ROOT / 'port-meadow-after.json'
+OXFORD_STATION = (
+    Path(__file__).parents[1] / 'data' / 'verification' /
+    'england-real-openmap-local-2026-04' / 'oxford-station-after.json'
+)
+OXFORD_STATION_V3_CONTENT_HASH = (
+    '507d8ef7b2688ccb911aeeb483c94a1d15924a4b3a7bf6a1cf83e614ae2a6ab8'
+)
+OXFORD_HEIGHTS = (
+    Path(__file__).parents[1] / 'docs' / 'sprints' /
+    '005-oxford-station-building-heights.json'
+)
 FORWARD = Transformer.from_crs(4326, 27700, always_xy=True).transform
 BACKWARD = Transformer.from_crs(27700, 4326, always_xy=True).transform
 
@@ -133,6 +154,68 @@ def built_observations(projection):
             if isinstance(item, BuiltWorldObservation)]
 
 
+def with_building_heights(payload):
+    result = deepcopy(payload)
+    finding = next(item for item in result['findings'] if item['key'] == 'built_world')
+    buildings = [item for item in finding['built_world']['objects']
+                 if item['object_type'] == 'building']
+    roles = (
+        ('dtm_describe_coverage', 'a', HEIGHT_DTM_CATALOG, 'application/xml', 'metadata', None),
+        ('dtm_raster', 'b', HEIGHT_DTM_CATALOG, 'image/tiff', 'terrain', 1),
+        ('dsm_describe_coverage', 'c', HEIGHT_DSM_CATALOG, 'application/xml', 'metadata', None),
+        ('dsm_raster', 'd', HEIGHT_DSM_CATALOG, 'image/tiff', 'surface', 1),
+    )
+    artifacts = []
+    for role, character, source_url, media_type, asset_role, resolution in roles:
+        checksum = character * 64
+        artifacts.append({
+            'role': role, 'sha256': checksum,
+            'storage_reference': f'environmental/raw/{checksum}/{checksum}.{media_type.split("/")[-1]}',
+            'provider': 'Environment Agency',
+            'dataset': ('LIDAR Composite Digital Surface Model (DSM) - 1m'
+                        if role.startswith('dsm') else
+                        'LIDAR Composite Digital Terrain Model (DTM) - 1m'),
+            'source_url': source_url, 'media_type': media_type,
+            'asset_role': asset_role, 'crs': 'EPSG:27700' if resolution else None,
+            'spatial_resolution_m': resolution,
+            'raw_semantics': 'Exact retained fixture WCS response.',
+            'request': {
+                'url': f'https://environment.data.gov.uk/wcs?role={role}',
+                'retrieved_at': '2026-09-14T10:00:00Z',
+                'etag': None, 'last_modified': None,
+            },
+        })
+    outcomes = []
+    for index, item in enumerate(buildings):
+        if index == len(buildings) - 1:
+            outcomes.append({
+                'source_object_key': item['source_object_key'], 'state': 'gap',
+                'reason_code': 'footprint_too_small',
+                'reason': 'Fixture footprint is too small after buffering.',
+                'candidate_cell_count': 2,
+            })
+        else:
+            outcomes.append({
+                'source_object_key': item['source_object_key'], 'state': 'available',
+                'p50_height_m': 8.25 + index, 'p90_height_m': 11.75 + index,
+                'extrusion_height_m': 11.75 + index,
+                'candidate_cell_count': 100, 'valid_cell_count': 90,
+                'sample_count': 88, 'coverage_fraction': .9,
+                'median_absolute_deviation_m': .5,
+            })
+    finding['building_heights'] = {
+        'processing_version': HEIGHT_PROCESSING_VERSION, 'status': 'available',
+        'retrieved_at': '2026-09-14T10:00:00Z',
+        'building_source_fingerprint': 'fixture',
+        'assessment_input_fingerprint': 'fixture',
+        'requested_bounds_27700': [449998, 209998, 450112, 210102],
+        'survey_metadata': deepcopy(HEIGHT_SURVEY_METADATA),
+        'artifacts': artifacts, 'results': outcomes,
+        'limitations': 'Historical fixture evidence.',
+    }
+    return result
+
+
 def test_pinned_release_metadata_and_source_attributes_are_strict():
     product = {'id': 'OpenMapLocal', 'version': SOURCE_RELEASE}
     downloads = [{
@@ -211,6 +294,91 @@ def test_projection_retains_typed_objects_relationships_and_derived_measurements
     assert SCHEMA_VERSION == building.provenance.source_schema_version
     assert not any(item.definition_id == 'built.infrastructure.complete_footprint_fraction'
                    for item in projection.observations)
+
+
+def test_v4_height_observations_link_existing_buildings_and_never_fill_gaps():
+    _, summary = synthetic_summary()
+    v3_payload = with_built_world(synthetic_assessment(), summary)
+    v3_projection = project_land_evidence(v3_payload)
+    projection = project_land_evidence(with_building_heights(v3_payload))
+    assert projection.identity.registry_version == BUILDING_HEIGHT_REGISTRY_VERSION
+    assert projection.identity.projection_id == v3_projection.identity.projection_id
+    assert [item.model_dump(mode='json') for item in projection.objects] == [
+        item.model_dump(mode='json') for item in v3_projection.objects
+    ]
+    building_ids = {item.id for item in projection.objects
+                    if item.object_type == 'building'}
+    observations = [item for item in projection.observations
+                    if isinstance(item, BuildingHeightObservation)]
+    gaps = [item for item in projection.gaps
+            if isinstance(item, BuildingHeightEvidenceGap)]
+    assert len(observations) == 2 and len(gaps) == 1
+    assert {item.object_id for item in observations} | {item.object_id for item in gaps} == building_ids
+    assert all(item.value.value == item.measurement.p90_height_m ==
+               item.measurement.extrusion_height_m for item in observations)
+    assert all(item.availability == 'partial' and item.measurement.coverage_fraction == .9
+               for item in observations)
+    assert gaps[0].reason_code == 'footprint_too_small'
+    assert not any(item.object_id == gaps[0].object_id for item in observations)
+    assert bind_wetland_input(projection, v3_payload['geometry']).model_dump(mode='json') == (
+        bind_wetland_input(v3_projection, v3_payload['geometry']).model_dump(mode='json')
+    )
+
+
+def test_retained_oxford_v3_content_identity_is_byte_stable():
+    projection = project_land_evidence(json.loads(OXFORD_STATION.read_text()))
+    assert projection.identity.registry_version == BUILT_WORLD_REGISTRY_VERSION
+    assert store.snapshot_content_hash(projection) == OXFORD_STATION_V3_CONTENT_HASH
+
+
+def test_retained_oxford_height_results_link_all_five_real_buildings():
+    payload = json.loads(OXFORD_STATION.read_text())
+    verified = json.loads(OXFORD_HEIGHTS.read_text())
+    finding = next(item for item in payload['findings'] if item['key'] == 'built_world')
+    artifacts = []
+    for item in verified['artifacts']:
+        is_dsm = item['role'].startswith('dsm')
+        is_raster = item['role'].endswith('raster')
+        artifacts.append({
+            'role': item['role'], 'sha256': item['sha256'],
+            'request': {
+                'url': item['request_url'],
+                'retrieved_at': '2026-09-14T09:42:51.647962+00:00',
+                'etag': None, 'last_modified': None,
+            },
+            'storage_reference': 'verification-only/' + item['sha256'],
+            'provider': 'Environment Agency',
+            'dataset': ('LIDAR Composite Digital Surface Model (DSM) - 1m'
+                        if is_dsm else
+                        'LIDAR Composite Digital Terrain Model (DTM) - 1m'),
+            'source_url': HEIGHT_DSM_CATALOG if is_dsm else HEIGHT_DTM_CATALOG,
+            'media_type': 'image/tiff' if is_raster else 'application/xml',
+            'asset_role': ('surface' if is_dsm else 'terrain') if is_raster else 'metadata',
+            'crs': 'EPSG:27700' if is_raster else None,
+            'spatial_resolution_m': 1 if is_raster else None,
+            'raw_semantics': 'Verification identity only; production retains the exact private bytes.',
+        })
+    finding['building_heights'] = {
+        'processing_version': verified['processing_version'],
+        'status': verified['status'],
+        'retrieved_at': '2026-09-14T09:42:51.647962+00:00',
+        'building_source_fingerprint': 'retained-verification',
+        'assessment_input_fingerprint': 'retained-verification',
+        'requested_bounds_27700': verified['requested_bounds_27700'],
+        'survey_metadata': verified['survey_metadata'],
+        'artifacts': artifacts, 'results': verified['results'],
+        'limitations': verified['qualification'],
+    }
+    projection = project_land_evidence(payload)
+    observations = [item for item in projection.observations
+                    if isinstance(item, BuildingHeightObservation)]
+    building_ids = {item.id for item in projection.objects if item.object_type == 'building'}
+    assert projection.identity.registry_version == BUILDING_HEIGHT_REGISTRY_VERSION
+    assert len(observations) == 5
+    assert {item.object_id for item in observations} == building_ids
+    assert sorted(item.value.value for item in observations) == sorted(
+        item['p90_height_m'] for item in verified['results']
+    )
 
 
 def test_known_mapped_zero_is_not_unknown_or_real_world_absence():
@@ -354,7 +522,54 @@ def test_snapshot_history_org_isolation_phi_worldcover_and_wetland_parity(snapsh
     assert enriched_state.get('human.infrastructure_fraction').value is None
 
 
-def test_database_analysis_path_resolves_multiple_geometry_types(snapshot_database):
+def test_v4_snapshot_persists_object_links_and_round_trips(snapshot_database):
+    _, summary = synthetic_summary()
+    payload = with_building_heights(with_built_world(synthetic_assessment(), summary))
+    projection = project_land_evidence(payload)
+    record = store.persist_land_evidence_snapshot(
+        projection, org='org-a', site_id=projection.identity.legacy_location_id,
+    )
+    assert record.registry_version == BUILDING_HEIGHT_REGISTRY_VERSION
+    assert store.load_land_evidence_snapshot(record.id, org='org-a') == projection
+    height_members = [item for item in projection.observations
+                      if isinstance(item, BuildingHeightObservation)]
+    height_gaps = [item for item in projection.gaps
+                   if isinstance(item, BuildingHeightEvidenceGap)]
+    with snapshot_database.connect() as connection:
+        links = [dict(row) for row in connection.execute(
+            core.land_evidence_snapshot_links.select().where(
+                core.land_evidence_snapshot_links.c.snapshot_id == record.id,
+                core.land_evidence_snapshot_links.c.relationship == 'object',
+            )
+        ).mappings()]
+    linked = {(item['owner_kind'], item['owner_id'], item['reference_id']) for item in links}
+    assert all(('observation', item.id, item.object_id) in linked for item in height_members)
+    assert all(('gap', item.id, item.object_id) in linked for item in height_gaps)
+
+
+def test_database_analysis_path_resolves_multiple_geometry_types(snapshot_database, monkeypatch):
+    def unavailable_height_fixture(job, finding):
+        buildings = [item for item in finding['built_world']['objects']
+                     if item['object_type'] == 'building']
+        return {
+            'processing_version': HEIGHT_PROCESSING_VERSION,
+            'status': 'unavailable', 'retrieved_at': '2026-09-14T10:00:00Z',
+            'building_source_fingerprint': 'fixture',
+            'assessment_input_fingerprint': 'fixture',
+            'requested_bounds_27700': None,
+            'survey_metadata': deepcopy(HEIGHT_SURVEY_METADATA),
+            'artifacts': [], 'limitations': 'Fixture source unavailable.',
+            'missing_reason': 'Fixture source unavailable.',
+            'results': [{
+                'source_object_key': item['source_object_key'], 'state': 'gap',
+                'reason_code': 'acquisition_failed',
+                'reason': 'Fixture source unavailable.',
+            } for item in buildings],
+        }
+
+    monkeypatch.setattr(
+        building_heights, 'acquire_for_assessment', unavailable_height_fixture,
+    )
     parcel, summary = synthetic_summary()
     dataset_id = 'openmap-local-database-test'
     with snapshot_database.begin() as connection:
@@ -404,6 +619,11 @@ def test_database_analysis_path_resolves_multiple_geometry_types(snapshot_databa
     assert finding['built_world']['source_release'] == SOURCE_RELEASE
     assert len([item for item in finding['built_world']['objects']
                 if item['object_type'] == 'building']) == 3
+    assert finding['building_heights']['status'] == 'unavailable'
+    projection = project_land_evidence(result)
+    assert projection.identity.registry_version == BUILDING_HEIGHT_REGISTRY_VERSION
+    assert len([item for item in projection.gaps
+                if isinstance(item, BuildingHeightEvidenceGap)]) == 3
     building = next(item for item in finding['built_world']['observations']
                     if item['definition_id'] == 'built.building.mapped_overlap_fraction')
     assert building['value'] == pytest.approx(1, abs=2e-4)

@@ -34,12 +34,23 @@ from backend.openmap_local import (
     SOURCE_CRS as OML_SOURCE_CRS,
     validate_properties as validate_oml_properties,
 )
+from backend.building_heights import (
+    DTM_CATALOG as HEIGHT_DTM_CATALOG,
+    DSM_CATALOG as HEIGHT_DSM_CATALOG,
+    INWARD_BUFFER_M as HEIGHT_INWARD_BUFFER_M,
+    LIMITATIONS as HEIGHT_LIMITATIONS,
+    MIN_VALID_CELLS as HEIGHT_MIN_VALID_CELLS,
+    MIN_VALID_COVERAGE as HEIGHT_MIN_VALID_COVERAGE,
+    PROCESSING_VERSION as HEIGHT_PROCESSING_VERSION,
+    SURVEY_METADATA as HEIGHT_SURVEY_METADATA,
+)
 
 
 SCHEMA_VERSION = 'land_evidence_v1'
 REGISTRY_VERSION = 'land_evidence_registry_v1'
 PHI_REGISTRY_VERSION = 'land_evidence_registry_v2'
 BUILT_WORLD_REGISTRY_VERSION = 'land_evidence_registry_v3'
+BUILDING_HEIGHT_REGISTRY_VERSION = 'land_evidence_registry_v4'
 
 WORLD_COVER_CLASSES = {
     10: 'woodland', 20: 'shrubland', 30: 'grassland', 40: 'arable',
@@ -396,6 +407,43 @@ class BuiltWorldProvenance(Record):
     derivation_method: Literal['crc_openmap_local_spatial_v1'] = OML_PROCESSING_VERSION
 
 
+class BuildingHeightMeasurement(Record):
+    p50_height_m: float = Field(ge=0)
+    p90_height_m: float = Field(ge=0)
+    extrusion_height_m: float = Field(ge=0)
+    candidate_cell_count: int = Field(ge=HEIGHT_MIN_VALID_CELLS)
+    valid_cell_count: int = Field(ge=HEIGHT_MIN_VALID_CELLS)
+    sample_count: int = Field(ge=HEIGHT_MIN_VALID_CELLS)
+    coverage_fraction: float = Field(ge=HEIGHT_MIN_VALID_COVERAGE, le=1)
+    inward_buffer_m: Literal[1.0] = HEIGHT_INWARD_BUFFER_M
+    median_absolute_deviation_m: float = Field(ge=0)
+    outlier_filter: Literal[
+        'median_mad_robust_z_3_5_with_0_0001m_precision_floor'
+    ] = 'median_mad_robust_z_3_5_with_0_0001m_precision_floor'
+
+
+class BuildingHeightProvenance(Record):
+    kind: Literal['native_ea_lidar_building_height_v1'] = 'native_ea_lidar_building_height_v1'
+    provider: Literal['Environment Agency'] = 'Environment Agency'
+    dtm_source_dataset: Literal[
+        'LIDAR Composite Digital Terrain Model (DTM) - 1m'
+    ] = 'LIDAR Composite Digital Terrain Model (DTM) - 1m'
+    dsm_source_dataset: Literal[
+        'LIDAR Composite Digital Surface Model (DSM) - 1m'
+    ] = 'LIDAR Composite Digital Surface Model (DSM) - 1m'
+    dtm_raster_sha256: str
+    dsm_raster_sha256: str
+    dtm_describe_coverage_sha256: str
+    dsm_describe_coverage_sha256: str
+    constituent_survey_period_start: Literal[2000] = 2000
+    constituent_survey_period_end: Literal[2022] = 2022
+    local_survey_date: None = None
+    retrieved_at: datetime
+    derivation_method: Literal[
+        'crc_ea_lidar_building_height_v1'
+    ] = HEIGHT_PROCESSING_VERSION
+
+
 class LandObservation(Record):
     id: str
     definition_id: str
@@ -449,7 +497,30 @@ class BuiltWorldObservation(Record):
     limitations: str
 
 
-LandObservationRecord = LandObservation | PriorityHabitatObservation | BuiltWorldObservation
+class BuildingHeightObservation(Record):
+    id: str
+    definition_id: Literal[
+        'built.building.height_estimate'
+    ] = 'built.building.height_estimate'
+    dimensions: dict[str, DimensionValue] = Field(default_factory=dict)
+    object_id: str
+    value: NumericValue
+    unit: Literal['m'] = 'm'
+    availability: Literal['available', 'partial']
+    known_zero: bool
+    support: SpatialSupport
+    measurement: BuildingHeightMeasurement
+    source_reference_ids: list[str]
+    raw_reference_ids: list[str]
+    parent_observation_ids: list[str] = Field(default_factory=list)
+    provenance: BuildingHeightProvenance
+    limitations: str
+
+
+LandObservationRecord = (
+    LandObservation | PriorityHabitatObservation | BuiltWorldObservation |
+    BuildingHeightObservation
+)
 
 
 class EvidenceGap(Record):
@@ -465,6 +536,13 @@ class EvidenceGap(Record):
     reason: str
     source_reference_ids: list[str] = Field(default_factory=list)
     raw_reference_ids: list[str] = Field(default_factory=list)
+
+
+class BuildingHeightEvidenceGap(EvidenceGap):
+    object_id: str
+
+
+EvidenceGapRecord = EvidenceGap | BuildingHeightEvidenceGap
 
 
 class Diagnostic(Record):
@@ -514,7 +592,7 @@ class EvidenceSnapshotIdentity(Record):
     projection_id: str
     registry_version: Literal[
         'land_evidence_registry_v1', 'land_evidence_registry_v2',
-        'land_evidence_registry_v3'
+        'land_evidence_registry_v3', 'land_evidence_registry_v4'
     ] = REGISTRY_VERSION
     legacy_assessment_fingerprint: str
     legacy_state_fingerprint: str
@@ -537,7 +615,7 @@ class LandEvidenceProjection(Record):
     relationships: list[ParcelObjectRelationship] = Field(default_factory=list)
     observations: list[LandObservationRecord]
     selections: list[EvidenceSelection]
-    gaps: list[EvidenceGap]
+    gaps: list[EvidenceGapRecord]
     capabilities: list[CapabilityDisposition]
     diagnostics: list[Diagnostic]
     legacy_module_outputs: list[LegacyModuleOutputReference]
@@ -702,14 +780,26 @@ BUILT_WORLD_DEFINITIONS = [
     ),
 ]
 
+BUILDING_HEIGHT_DEFINITIONS = [
+    _definition(
+        'built.building.height_estimate',
+        'Historical surface-height estimate for one mapped building object. The value is the full-precision P90 of valid 1 m DSM minus DTM samples after a 1 m inward footprint buffer and deterministic median/MAD filtering.',
+        'number', 'm', 'linear_percentile_90_after_median_mad_filter',
+        'one_metre_cell_centres_within_one_metre_inward_building_footprint',
+        minimum=0,
+    ),
+]
+
 LAND_EVIDENCE_V2_DEFINITIONS = LAND_EVIDENCE_V1_DEFINITIONS + PRIORITY_HABITAT_DEFINITIONS
 LAND_EVIDENCE_V3_DEFINITIONS = LAND_EVIDENCE_V2_DEFINITIONS + BUILT_WORLD_DEFINITIONS
+LAND_EVIDENCE_V4_DEFINITIONS = LAND_EVIDENCE_V3_DEFINITIONS + BUILDING_HEIGHT_DEFINITIONS
 DEFINITIONS_BY_REGISTRY = {
     REGISTRY_VERSION: LAND_EVIDENCE_V1_DEFINITIONS,
     PHI_REGISTRY_VERSION: LAND_EVIDENCE_V2_DEFINITIONS,
     BUILT_WORLD_REGISTRY_VERSION: LAND_EVIDENCE_V3_DEFINITIONS,
+    BUILDING_HEIGHT_REGISTRY_VERSION: LAND_EVIDENCE_V4_DEFINITIONS,
 }
-DEFINITIONS_BY_ID = {definition.id: definition for definition in LAND_EVIDENCE_V3_DEFINITIONS}
+DEFINITIONS_BY_ID = {definition.id: definition for definition in LAND_EVIDENCE_V4_DEFINITIONS}
 
 
 LEGACY_CORE_MAPPINGS: dict[str, tuple[str, dict[str, DimensionValue]]] = {
@@ -833,7 +923,10 @@ def _projection_identity_seed(
         'selected': selected,
         'inventory_findings': inventory_findings,
     }
-    if registry_version in (PHI_REGISTRY_VERSION, BUILT_WORLD_REGISTRY_VERSION):
+    if registry_version in (
+        PHI_REGISTRY_VERSION, BUILT_WORLD_REGISTRY_VERSION,
+        BUILDING_HEIGHT_REGISTRY_VERSION,
+    ):
         result['priority_habitat_findings'] = [
             {
                 key: finding.get(key) for key in (
@@ -848,7 +941,7 @@ def _projection_identity_seed(
             for finding in findings
             if isinstance(finding, dict) and finding.get('key') == 'priority_habitats'
         ]
-    if registry_version == BUILT_WORLD_REGISTRY_VERSION:
+    if registry_version in (BUILT_WORLD_REGISTRY_VERSION, BUILDING_HEIGHT_REGISTRY_VERSION):
         result['built_world_findings'] = [
             {
                 key: finding.get(key) for key in (
@@ -861,6 +954,13 @@ def _projection_identity_seed(
             for finding in findings
             if isinstance(finding, dict) and finding.get('key') == 'built_world'
         ]
+        if registry_version == BUILDING_HEIGHT_REGISTRY_VERSION:
+            for projected_finding, finding in zip(
+                result['built_world_findings'],
+                [item for item in findings
+                 if isinstance(item, dict) and item.get('key') == 'built_world'],
+            ):
+                projected_finding['building_heights'] = finding.get('building_heights')
     return result
 
 
@@ -1577,6 +1677,194 @@ def _project_built_world(
     )
 
 
+def _building_height_references(
+    evidence: dict[str, Any],
+) -> tuple[list[RawArtifactReference], list[SourceReference]]:
+    raw_references: list[RawArtifactReference] = []
+    source_references: list[SourceReference] = []
+    for item in evidence.get('artifacts', []):
+        try:
+            expected_keys = {
+                'sha256', 'role', 'request', 'storage_reference', 'provider',
+                'dataset', 'source_url', 'media_type', 'asset_role', 'crs',
+                'spatial_resolution_m', 'raw_semantics',
+            }
+            if set(item) != expected_keys or item.get('provider') != 'Environment Agency':
+                raise ValueError('unexpected retained artifact schema')
+            checksum = item['sha256']
+            request = item['request']
+            if (
+                not isinstance(checksum, str) or len(checksum) != 64
+                or any(character not in '0123456789abcdef' for character in checksum)
+                or not isinstance(request.get('url'), str)
+                or not request.get('retrieved_at')
+            ):
+                raise ValueError('invalid retained artifact identity')
+            role = item['role']
+            raw_id = f'raw:building-height:{role}:{checksum}'
+            source_id = f'source:building-height:{role}:{checksum}'
+            raw_references.append(RawArtifactReference(
+                id=raw_id, legacy_raw_id=checksum,
+                retention_status='retained_artifact',
+                storage_reference=item['storage_reference'], checksum=checksum,
+                assets=[ArtifactAssetReference(
+                    href=request['url'], media_type=item['media_type'],
+                    roles=[item['asset_role']], crs='EPSG:27700',
+                    spatial_resolution_m=item.get('spatial_resolution_m'),
+                )],
+                original_semantics=item['raw_semantics'],
+            ))
+            source_references.append(SourceReference(
+                id=source_id, provider='Environment Agency', dataset=item['dataset'],
+                source_version=checksum, source_url=item['source_url'],
+                reference_period=TemporalReference(
+                    status='not_recorded_legacy',
+                    qualification='Composite constituents span 2000–2022; local survey date is not recorded.',
+                ),
+                retrieved_at=request['retrieved_at'], raw_reference_ids=[raw_id],
+                licence_or_attribution='Environment Agency data licensed under the Open Government Licence v3.0.',
+                licence_metadata_status='recorded_legacy',
+            ))
+        except (KeyError, TypeError, ValueError) as error:
+            raise LandEvidenceValidationError(
+                'Building-height evidence contains malformed retained source provenance'
+            ) from error
+    return raw_references, source_references
+
+
+def _project_building_heights(
+    evidence: dict[str, Any], height_scope_id: str, boundary_reference: str,
+    objects: list[BuiltWorldObject], gaps: list[EvidenceGapRecord],
+) -> list[BuildingHeightObservation]:
+    if evidence.get('processing_version') != HEIGHT_PROCESSING_VERSION:
+        raise LandEvidenceValidationError('Unsupported building-height processing version')
+    survey = evidence.get('survey_metadata')
+    if survey != HEIGHT_SURVEY_METADATA:
+        raise LandEvidenceValidationError('Building-height survey metadata is missing or changed')
+    object_by_key = {
+        'building:' + item.source_feature_id.upper(): item
+        for item in objects if isinstance(item, MappedBuildingObject)
+    }
+    outcomes = evidence.get('results')
+    if not isinstance(outcomes, list):
+        raise LandEvidenceValidationError('Building-height evidence has no per-object outcomes')
+    outcome_by_key: dict[str, dict[str, Any]] = {}
+    for outcome in outcomes:
+        key = outcome.get('source_object_key') if isinstance(outcome, dict) else None
+        if key not in object_by_key or key in outcome_by_key:
+            raise LandEvidenceValidationError(
+                'Building-height evidence has duplicate or dangling object linkage'
+            )
+        outcome_by_key[key] = outcome
+
+    artifacts = evidence.get('artifacts', [])
+    raw_ids = [
+        f'raw:building-height:{item["role"]}:{item["sha256"]}'
+        for item in artifacts
+    ]
+    source_ids = [
+        f'source:building-height:{item["role"]}:{item["sha256"]}'
+        for item in artifacts
+    ]
+    roles = {item.get('role'): item for item in artifacts}
+    if len(roles) != len(artifacts):
+        raise LandEvidenceValidationError('Building-height evidence contains duplicate source roles')
+    observations: list[BuildingHeightObservation] = []
+
+    for source_key, obj in sorted(object_by_key.items()):
+        outcome = outcome_by_key.get(source_key)
+        if outcome is None:
+            outcome = {
+                'state': 'gap', 'reason_code': 'missing_object_outcome',
+                'reason': 'No retained DSM/DTM processing outcome exists for this mapped building.',
+            }
+        if outcome.get('state') != 'available':
+            reason_code = str(outcome.get('reason_code') or 'processing_unavailable')
+            state: Literal[
+                'source_not_connected', 'unavailable', 'absent_observation',
+                'incomplete_inventory', 'unsupported_processing_case', 'partial_coverage',
+            ] = (
+                'partial_coverage' if reason_code in {
+                    'insufficient_valid_coverage', 'insufficient_raster_extent',
+                } else
+                'unsupported_processing_case' if reason_code in {
+                    'grid_misaligned', 'footprint_too_small',
+                    'invalid_building_footprint', 'insufficient_filtered_samples',
+                    'invalid_surface_values',
+                } else 'unavailable'
+            )
+            gaps.append(BuildingHeightEvidenceGap(
+                id='gap:' + fingerprint([
+                    height_scope_id, obj.id, 'built.building.height_estimate',
+                    reason_code, outcome,
+                ]),
+                definition_id='built.building.height_estimate', object_id=obj.id,
+                state=state, reason_code=reason_code,
+                reason=str(outcome.get('reason') or 'Building-height evidence is unavailable.')
+                       + ' ' + HEIGHT_LIMITATIONS,
+                source_reference_ids=source_ids, raw_reference_ids=raw_ids,
+            ))
+            continue
+
+        required_roles = {
+            'dtm_describe_coverage', 'dtm_raster',
+            'dsm_describe_coverage', 'dsm_raster',
+        }
+        if evidence.get('status') != 'available' or set(roles) != required_roles:
+            raise LandEvidenceValidationError(
+                'Available building-height evidence lacks the exact DSM/DTM source set'
+            )
+        try:
+            measurement = BuildingHeightMeasurement(
+                p50_height_m=outcome['p50_height_m'],
+                p90_height_m=outcome['p90_height_m'],
+                extrusion_height_m=outcome['extrusion_height_m'],
+                candidate_cell_count=outcome['candidate_cell_count'],
+                valid_cell_count=outcome['valid_cell_count'],
+                sample_count=outcome['sample_count'],
+                coverage_fraction=outcome['coverage_fraction'],
+                median_absolute_deviation_m=outcome['median_absolute_deviation_m'],
+            )
+            value = NumericValue(value=measurement.p90_height_m)
+            coverage = measurement.coverage_fraction
+            support = SpatialSupport(
+                boundary_reference=boundary_reference, crs='EPSG:27700',
+                spatial_resolution_m=1, support_type='feature',
+                aggregation='DSM minus DTM; median/MAD filtered P50 and P90',
+                coverage_status='full' if coverage == 1 else 'partial',
+                coverage_fraction=coverage,
+                coverage_basis=(
+                    'one_metre_cell_centres_within_one_metre_inward_building_footprint'
+                ),
+                denominator_metadata_status='recorded',
+                thematic_completeness='complete_for_declared_product',
+            )
+            provenance = BuildingHeightProvenance(
+                dtm_raster_sha256=roles['dtm_raster']['sha256'],
+                dsm_raster_sha256=roles['dsm_raster']['sha256'],
+                dtm_describe_coverage_sha256=roles['dtm_describe_coverage']['sha256'],
+                dsm_describe_coverage_sha256=roles['dsm_describe_coverage']['sha256'],
+                retrieved_at=evidence['retrieved_at'],
+            )
+        except (KeyError, TypeError, ValueError) as error:
+            raise LandEvidenceValidationError(
+                'Available building-height outcome is malformed'
+            ) from error
+        observations.append(BuildingHeightObservation(
+            id='observation:' + fingerprint([
+                height_scope_id, obj.id, 'built.building.height_estimate',
+                measurement.model_dump(mode='json'), raw_ids,
+            ]),
+            object_id=obj.id, value=value,
+            availability='available' if coverage == 1 else 'partial',
+            known_zero=value.value == 0, support=support,
+            measurement=measurement, source_reference_ids=source_ids,
+            raw_reference_ids=raw_ids, provenance=provenance,
+            limitations=HEIGHT_LIMITATIONS,
+        ))
+    return sorted(observations, key=lambda item: item.id)
+
+
 def project_land_evidence(saved_assessment: dict[str, Any] | EarthState) -> LandEvidenceProjection:
     """Purely project a saved assessment or EarthState into ``land_evidence_v1``.
 
@@ -1618,7 +1906,10 @@ def project_land_evidence(saved_assessment: dict[str, Any] | EarthState) -> Land
                       if isinstance(finding, dict) and finding.get('key') == 'built_world']
     if len(built_findings) > 1:
         raise LandEvidenceValidationError('Saved assessment contains multiple OpenMap Local findings')
+    height_findings = [finding for finding in built_findings
+                       if isinstance(finding.get('building_heights'), dict)]
     registry_version = (
+        BUILDING_HEIGHT_REGISTRY_VERSION if height_findings else
         BUILT_WORLD_REGISTRY_VERSION if built_findings else
         PHI_REGISTRY_VERSION if phi_findings else REGISTRY_VERSION
     )
@@ -1648,6 +1939,12 @@ def project_land_evidence(saved_assessment: dict[str, Any] | EarthState) -> Land
         [finding for finding in findings
          if not (isinstance(finding, dict) and finding.get('key') == 'priority_habitats')],
         BUILT_WORLD_REGISTRY_VERSION,
+    ))
+    height_scope_id = fingerprint(_projection_identity_seed(
+        state,
+        [finding for finding in findings
+         if not (isinstance(finding, dict) and finding.get('key') == 'priority_habitats')],
+        BUILDING_HEIGHT_REGISTRY_VERSION,
     ))
     boundary_reference = f'{state.location_id}/boundary/{state.boundary_version}'
     identity = EvidenceSnapshotIdentity(
@@ -1694,13 +1991,14 @@ def project_land_evidence(saved_assessment: dict[str, Any] | EarthState) -> Land
         ))
 
     diagnostics: list[Diagnostic] = []
-    gaps: list[EvidenceGap] = []
+    gaps: list[EvidenceGapRecord] = []
     projected: list[LandObservation] = []
     source_feature_references: list[SourceFeatureReference] = []
     native_projected: list[PriorityHabitatObservation] = []
     built_objects: list[BuiltWorldObject] = []
     built_relationships: list[ParcelObjectRelationship] = []
     built_projected: list[BuiltWorldObservation] = []
+    height_projected: list[BuildingHeightObservation] = []
     legacy_to_projected: dict[str, list[str]] = defaultdict(list)
     distribution_by_source: dict[tuple[str, tuple[str, ...]], str] = {}
 
@@ -1813,6 +2111,31 @@ def project_land_evidence(saved_assessment: dict[str, Any] | EarthState) -> Land
         built_objects, built_relationships, built_projected = _project_built_world(
             finding, built_scope_id, boundary_reference, gaps,
         )
+        if height_findings:
+            height_evidence = finding['building_heights']
+            height_raw, height_sources = _building_height_references(height_evidence)
+            existing_raw = {item.id: item for item in raw_references}
+            for item in height_raw:
+                if item.id in existing_raw and existing_raw[item.id] != item:
+                    raise LandEvidenceValidationError(
+                        'Building-height raw evidence conflicts with an existing raw reference'
+                    )
+                if item.id not in existing_raw:
+                    raw_references.append(item)
+                    existing_raw[item.id] = item
+            existing_sources = {item.id: item for item in source_references}
+            for item in height_sources:
+                if item.id in existing_sources and existing_sources[item.id] != item:
+                    raise LandEvidenceValidationError(
+                        'Building-height source evidence conflicts with an existing source reference'
+                    )
+                if item.id not in existing_sources:
+                    source_references.append(item)
+                    existing_sources[item.id] = item
+            height_projected = _project_building_heights(
+                height_evidence, height_scope_id, boundary_reference,
+                built_objects, gaps,
+            )
 
     for variable, (definition_id, dimensions) in LEGACY_CORE_MAPPINGS.items():
         domain, name = variable.split('.', 1)
@@ -2020,9 +2343,12 @@ def project_land_evidence(saved_assessment: dict[str, Any] | EarthState) -> Land
     projected = updated
     projected.extend(native_projected)  # type: ignore[arg-type]
     projected.extend(built_projected)  # type: ignore[arg-type]
+    projected.extend(height_projected)  # type: ignore[arg-type]
 
     groups: dict[str, list[LandObservation]] = defaultdict(list)
     for observation in projected:
+        if isinstance(observation, BuildingHeightObservation):
+            continue
         groups[_semantic_key(observation.definition_id, observation.dimensions)].append(observation)
     selections: list[EvidenceSelection] = []
     for semantic_key, candidates in sorted(groups.items()):
@@ -2307,17 +2633,18 @@ def validate_land_evidence(
             if source and not set(source.raw_reference_ids) <= set(observation.raw_reference_ids):
                 errors.append(f'Observation {observation.id} omits raw reference resolved by {source_id}')
         resolved_sources = [source_by_id[source_id] for source_id in observation.source_reference_ids if source_id in source_by_id]
-        provenance_version = (
-            observation.provenance.source_release
-            if isinstance(observation, (PriorityHabitatObservation, BuiltWorldObservation))
-            else observation.provenance.source_version
-        )
-        if resolved_sources and not any(
-            source.provider == observation.provenance.provider
-            and source.source_version == provenance_version
-            for source in resolved_sources
-        ):
-            errors.append(f'Observation source/provider version does not resolve for {observation.id}')
+        if not isinstance(observation, BuildingHeightObservation):
+            provenance_version = (
+                observation.provenance.source_release
+                if isinstance(observation, (PriorityHabitatObservation, BuiltWorldObservation))
+                else observation.provenance.source_version
+            )
+            if resolved_sources and not any(
+                source.provider == observation.provenance.provider
+                and source.source_version == provenance_version
+                for source in resolved_sources
+            ):
+                errors.append(f'Observation source/provider version does not resolve for {observation.id}')
         if isinstance(observation, LandObservation) and observation.provenance.legacy_variable in LEGACY_MODULE_OUTPUTS:
             errors.append(f'Wetland/module interpretation leaked into core: {observation.id}')
         if isinstance(observation, PriorityHabitatObservation):
@@ -2381,6 +2708,53 @@ def validate_land_evidence(
                 errors.append(f'Built-world overlap measurement units are invalid: {observation.id}')
             if not observation.supporting_object_ids and not observation.known_zero:
                 errors.append(f'Positive built-world observation lacks object support: {observation.id}')
+        if isinstance(observation, BuildingHeightObservation):
+            obj = object_by_id.get(observation.object_id)
+            if not isinstance(obj, MappedBuildingObject):
+                errors.append(f'Building-height observation has dangling or non-building object: {observation.id}')
+            measurement = observation.measurement
+            if (
+                observation.value.value != measurement.p90_height_m
+                or measurement.extrusion_height_m != measurement.p90_height_m
+            ):
+                errors.append(f'Building-height value or extrusion estimate disagrees with P90: {observation.id}')
+            if measurement.valid_cell_count > measurement.candidate_cell_count:
+                errors.append(f'Building-height valid cells exceed candidates: {observation.id}')
+            if measurement.sample_count > measurement.valid_cell_count:
+                errors.append(f'Building-height filtered samples exceed valid cells: {observation.id}')
+            calculated_coverage = measurement.valid_cell_count / measurement.candidate_cell_count
+            if not math.isclose(
+                calculated_coverage, measurement.coverage_fraction,
+                rel_tol=0, abs_tol=1e-15,
+            ):
+                errors.append(f'Building-height coverage fraction is inconsistent: {observation.id}')
+            if observation.support.spatial_resolution_m != 1:
+                errors.append(f'Building-height support is not the native 1 m grid: {observation.id}')
+            provenance = observation.provenance
+            expected_raw = {
+                'raw:building-height:dtm_raster:' + provenance.dtm_raster_sha256,
+                'raw:building-height:dsm_raster:' + provenance.dsm_raster_sha256,
+                'raw:building-height:dtm_describe_coverage:'
+                + provenance.dtm_describe_coverage_sha256,
+                'raw:building-height:dsm_describe_coverage:'
+                + provenance.dsm_describe_coverage_sha256,
+            }
+            if set(observation.raw_reference_ids) != expected_raw:
+                errors.append(f'Building-height raw lineage is incomplete: {observation.id}')
+            if set(observation.source_reference_ids) != {
+                value.replace('raw:building-height:', 'source:building-height:', 1)
+                for value in expected_raw
+            }:
+                errors.append(f'Building-height source lineage is incomplete: {observation.id}')
+            for source in resolved_sources:
+                if (
+                    source.provider != 'Environment Agency'
+                    or source.reference_period.status != 'not_recorded_legacy'
+                    or source.source_url not in (HEIGHT_DTM_CATALOG, HEIGHT_DSM_CATALOG)
+                ):
+                    errors.append(f'Building-height source semantics are invalid: {observation.id}')
+            if observation.parent_observation_ids:
+                errors.append(f'Building-height observation cannot have semantic parents: {observation.id}')
 
     visiting: set[str] = set()
     visited: set[str] = set()
@@ -2424,27 +2798,60 @@ def validate_land_evidence(
             errors.append(f'Gap has unresolved source references: {gap.id}')
         if set(gap.raw_reference_ids) - raw_ids:
             errors.append(f'Gap has unresolved raw references: {gap.id}')
+        if isinstance(gap, BuildingHeightEvidenceGap):
+            if not isinstance(object_by_id.get(gap.object_id), MappedBuildingObject):
+                errors.append(f'Building-height gap has dangling or non-building object: {gap.id}')
+            if gap.definition_id != 'built.building.height_estimate':
+                errors.append(f'Building-height gap has the wrong definition: {gap.id}')
 
     native_observations = [observation for observation in projection.observations
                            if isinstance(observation, PriorityHabitatObservation)]
     built_observations = [observation for observation in projection.observations
                           if isinstance(observation, BuiltWorldObservation)]
+    height_observations = [observation for observation in projection.observations
+                           if isinstance(observation, BuildingHeightObservation)]
     if projection.identity.registry_version == REGISTRY_VERSION:
         if (projection.source_feature_references or native_observations
-                or projection.objects or projection.relationships or built_observations):
-            errors.append('Registry v1 snapshot contains native v2/v3 members')
+                or projection.objects or projection.relationships or built_observations
+                or height_observations):
+            errors.append('Registry v1 snapshot contains native v2/v3/v4 members')
     elif projection.identity.registry_version == PHI_REGISTRY_VERSION:
-        if projection.objects or projection.relationships or built_observations:
-            errors.append('Registry v2 snapshot contains built-world v3 members')
+        if projection.objects or projection.relationships or built_observations or height_observations:
+            errors.append('Registry v2 snapshot contains built-world v3/v4 members')
         phi_gaps = [gap for gap in projection.gaps
                     if gap.definition_id == 'ecology.priority_habitat.any_mapped_overlap_fraction']
         if not native_observations and not phi_gaps:
             errors.append('Registry v2 snapshot has neither PHI observations nor a PHI availability gap')
     elif projection.identity.registry_version == BUILT_WORLD_REGISTRY_VERSION:
+        if height_observations or any(
+            isinstance(gap, BuildingHeightEvidenceGap) for gap in projection.gaps
+        ):
+            errors.append('Registry v3 snapshot contains building-height v4 members')
         built_gaps = [gap for gap in projection.gaps
                       if gap.definition_id == 'built.building.mapped_overlap_fraction']
         if not built_observations and not built_gaps:
             errors.append('Registry v3 snapshot has neither built-world observations nor a source gap')
+    elif projection.identity.registry_version == BUILDING_HEIGHT_REGISTRY_VERSION:
+        built_gaps = [gap for gap in projection.gaps
+                      if gap.definition_id == 'built.building.mapped_overlap_fraction']
+        if not built_observations and not built_gaps:
+            errors.append('Registry v4 snapshot has neither built-world observations nor a source gap')
+        building_ids = {
+            item.id for item in projection.objects if isinstance(item, MappedBuildingObject)
+        }
+        height_object_ids = {item.object_id for item in height_observations} | {
+            gap.object_id for gap in projection.gaps
+            if isinstance(gap, BuildingHeightEvidenceGap)
+        }
+        height_outcome_sequence = [item.object_id for item in height_observations] + [
+            gap.object_id for gap in projection.gaps
+            if isinstance(gap, BuildingHeightEvidenceGap)
+        ]
+        if (
+            building_ids != height_object_ids
+            or len(height_outcome_sequence) != len(building_ids)
+        ):
+            errors.append('Registry v4 snapshot does not have exactly one height outcome per building')
 
     capability_variables = [capability.legacy_variable for capability in projection.capabilities]
     if len(capability_variables) != len(set(capability_variables)):

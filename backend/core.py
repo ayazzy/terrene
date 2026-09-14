@@ -551,4 +551,14 @@ def analyze(job):
         next_steps.append('Ask a flood-risk specialist whether the mapped flood-zone overlap warrants site-specific hydrological investigation.')
     from backend.nature import assess_nature
     nature=assess_nature(job,findings)
+    # Object-level LIDAR evidence is acquired only after the legacy wetland run.
+    # It therefore cannot alter EarthState, legacy selections or ModuleRun output.
+    built_finding=next((f for f in findings if f.get('key')=='built_world'),None)
+    if (built_finding and built_finding.get('coverage')=='covered'
+            and (built_finding.get('built_world') or {}).get('objects')):
+        buildings=[item for item in built_finding['built_world']['objects']
+                   if item.get('object_type')=='building']
+        if buildings:
+            from backend.building_heights import acquire_for_assessment
+            built_finding['building_heights']=acquire_for_assessment(job,built_finding)
     return {'area_ha':round(area,4),'area_method':'EPSG:27700 planar area / v1','findings':findings,'limitations':LIMIT,'completed':now(),'boundary_version':job['version'],'site_name':job['site_name'],'geometry':job['geometry'],'next_steps':next_steps,'completeness':sum(f['coverage']=='covered' for f in findings),'dataset_count':len(findings),**nature}

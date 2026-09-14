@@ -10,7 +10,8 @@ from shapely.geometry import mapping, shape
 from shapely.ops import transform
 
 from backend.land_evidence import (
-    BUILT_WORLD_REGISTRY_VERSION, BuiltWorldMeasurement, NumericValue,
+    BUILDING_HEIGHT_REGISTRY_VERSION, BUILT_WORLD_REGISTRY_VERSION,
+    BuiltWorldMeasurement, NumericValue,
 )
 from backend.module_runs import ModuleRunRecord
 from backend.openmap_local import LIMITATIONS as OPENMAP_LOCAL_LIMITATIONS
@@ -189,7 +190,9 @@ def _measurement(fact: Fact) -> LayerMeasurement:
 
 
 def _state(registry_version: str, object_count: int, facts: list[Fact], gaps: list) -> LayerState:
-    if registry_version != BUILT_WORLD_REGISTRY_VERSION:
+    if registry_version not in (
+        BUILT_WORLD_REGISTRY_VERSION, BUILDING_HEIGHT_REGISTRY_VERSION,
+    ):
         return 'unsupported'
     gap_states = {gap.state for gap in gaps}
     if 'partial_coverage' in gap_states or any(
