@@ -16,6 +16,7 @@ import OverlayFindings from './overlay-findings';
 import ScreeningContextPanel from './screening-context-panel';
 import MapFeatureInspector from './map-feature-inspector';
 import SiteEditorPanel from './site-editor-panel';
+import SiteModelCatalogue from './site-model-catalogue';
 import {
   useSiteWorkspaceState,
   type WorkspaceTab,
@@ -1587,96 +1588,102 @@ export default function Home() {
                     </details>
                   </TabsContent>
                   <TabsContent value="models">
-                    <div className="model-module-heading">
-                      <span>
-                        <p className="eyebrow">TERRENE REASONING · MODULE</p>
-                        <h2>Wetland assessment</h2>
-                        <p>
-                          Versioned reasoning over the selected assessment’s
-                          retained evidence. Model interpretations are not Earth
-                          facts or team decisions.
-                        </p>
-                      </span>
-                      <button disabled={!result || busy} onClick={report}>
-                        <Download size={15} /> Export report
-                      </button>
-                    </div>
-                    <Tabs
-                      className="model-module"
-                      value={wetlandSection}
-                      onValueChange={(value) =>
-                        setWetlandSection(value as typeof wetlandSection)
-                      }
+                    <SiteModelCatalogue
+                      key={(assessment?.id || current.id) + ':models'}
+                      model={result?.wetland_model}
+                      assessmentState={assessment?.state}
                     >
-                      <TabsList
-                        className="model-tabs"
-                        variant="line"
-                        aria-label="Wetland assessment sections"
+                      <div className="model-module-heading">
+                        <span>
+                          <p className="eyebrow">TERRENE REASONING · MODULE</p>
+                          <h2>Wetland assessment</h2>
+                          <p>
+                            Versioned reasoning over the selected assessment’s
+                            retained evidence. Model interpretations are not
+                            Earth facts or team decisions.
+                          </p>
+                        </span>
+                        <button disabled={!result || busy} onClick={report}>
+                          <Download size={15} /> Export report
+                        </button>
+                      </div>
+                      <Tabs
+                        className="model-module"
+                        value={wetlandSection}
+                        onValueChange={(value) =>
+                          setWetlandSection(value as typeof wetlandSection)
+                        }
                       >
-                        <TabsTrigger value="overview">Summary</TabsTrigger>
-                        <TabsTrigger value="physical">Physical</TabsTrigger>
-                        <TabsTrigger value="ecology">Ecology</TabsTrigger>
-                        <TabsTrigger value="constraints">
-                          Constraints
-                        </TabsTrigger>
-                      </TabsList>
-                      {['overview', 'physical', 'ecology', 'constraints'].map(
-                        (section) => (
-                          <TabsContent value={section} key={section}>
-                            <NaturePanel
-                              key={(assessment?.id || current.id) + section}
-                              section={section}
-                              onSection={(next) => {
-                                if (next === 'evidence')
-                                  changeSiteSection('evidence');
-                                else
-                                  setWetlandSection(
-                                    next as typeof wetlandSection,
-                                  );
-                              }}
-                              model={result?.wetland_model}
-                              earth={result?.environmental_state}
-                              assessmentState={assessment?.state}
-                              hasResult={!!result}
-                              error={assessment?.error}
-                              findings={result?.findings}
-                              onMapEvidence={showOnMap}
-                              onInspect={() =>
-                                analysisPanel.current?.scrollTo({ top: 0 })
-                              }
-                            />
-                            {section !== 'overview' && (
-                              <details className="model-reference-layers">
-                                <summary>
-                                  Mapped reference layers ·{' '}
-                                  {
-                                    (result?.findings || []).filter(
+                        <TabsList
+                          className="model-tabs"
+                          variant="line"
+                          aria-label="Wetland assessment sections"
+                        >
+                          <TabsTrigger value="overview">Summary</TabsTrigger>
+                          <TabsTrigger value="physical">Physical</TabsTrigger>
+                          <TabsTrigger value="ecology">Ecology</TabsTrigger>
+                          <TabsTrigger value="constraints">
+                            Constraints
+                          </TabsTrigger>
+                        </TabsList>
+                        {['overview', 'physical', 'ecology', 'constraints'].map(
+                          (section) => (
+                            <TabsContent value={section} key={section}>
+                              <NaturePanel
+                                key={(assessment?.id || current.id) + section}
+                                section={section}
+                                onSection={(next) => {
+                                  if (next === 'evidence')
+                                    changeSiteSection('evidence');
+                                  else
+                                    setWetlandSection(
+                                      next as typeof wetlandSection,
+                                    );
+                                }}
+                                model={result?.wetland_model}
+                                earth={result?.environmental_state}
+                                assessmentState={assessment?.state}
+                                hasResult={!!result}
+                                error={assessment?.error}
+                                findings={result?.findings}
+                                onMapEvidence={showOnMap}
+                                onInspect={() =>
+                                  analysisPanel.current?.scrollTo({ top: 0 })
+                                }
+                              />
+                              {section !== 'overview' && (
+                                <details className="model-reference-layers">
+                                  <summary>
+                                    Mapped reference layers ·{' '}
+                                    {
+                                      (result?.findings || []).filter(
+                                        (f: OverlayFinding) =>
+                                          section === 'physical'
+                                            ? f.key === 'flood'
+                                            : f.key !== 'flood',
+                                      ).length
+                                    }
+                                  </summary>
+                                  <OverlayFindings
+                                    findings={(result?.findings || []).filter(
                                       (f: OverlayFinding) =>
                                         section === 'physical'
                                           ? f.key === 'flood'
                                           : f.key !== 'flood',
-                                    ).length
-                                  }
-                                </summary>
-                                <OverlayFindings
-                                  findings={(result?.findings || []).filter(
-                                    (f: OverlayFinding) =>
-                                      section === 'physical'
-                                        ? f.key === 'flood'
-                                        : f.key !== 'flood',
-                                  )}
-                                  onInspect={(f) => {
-                                    if (f.geometry) showOnMap(f.key);
-                                    setFinding(f);
-                                  }}
-                                  onMap={showOnMap}
-                                />
-                              </details>
-                            )}
-                          </TabsContent>
-                        ),
-                      )}
-                    </Tabs>
+                                    )}
+                                    onInspect={(f) => {
+                                      if (f.geometry) showOnMap(f.key);
+                                      setFinding(f);
+                                    }}
+                                    onMap={showOnMap}
+                                  />
+                                </details>
+                              )}
+                            </TabsContent>
+                          ),
+                        )}
+                      </Tabs>
+                    </SiteModelCatalogue>
                   </TabsContent>
                   <TabsContent value="history">
                     <div className="panel-heading">
