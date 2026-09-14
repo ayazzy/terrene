@@ -103,7 +103,7 @@
   flex: 0 0 2rem;
   padding: 0;
   border-color: transparent;
-  border-radius: 2px;
+  border-radius: var(--radius-control);
   background: transparent;
   color: #98a49d;
 }
@@ -144,7 +144,7 @@
   padding: 0.5rem 0.625rem;
   overflow: visible;
   border: 1px solid transparent;
-  border-radius: 2px;
+  border-radius: var(--radius-control);
   background: transparent;
   color: #9ca7a1;
   white-space: nowrap;
@@ -279,7 +279,7 @@
   pointer-events: none;
   color: #eef3ef;
   border: 1px solid #4a554f;
-  border-radius: 2px;
+  border-radius: var(--radius-small);
   background: #171c1a;
   box-shadow: 0 8px 24px rgb(0 0 0 / 30%);
   font-size: 0.6875rem;
@@ -356,7 +356,7 @@
   gap: 0.5rem;
   padding: 0 0.625rem;
   border: 1px solid #414a45;
-  border-radius: 2px;
+  border-radius: var(--radius-control);
   background: #202624;
   color: #78857d;
 }
@@ -404,7 +404,7 @@
   left: 0;
   padding: 0.3rem;
   border: 1px solid #4a554f;
-  border-radius: 2px;
+  border-radius: var(--radius-panel);
   background: #1c211f;
   box-shadow: 0 18px 38px rgb(0 0 0 / 34%);
 }
@@ -416,7 +416,7 @@
   gap: 0.625rem;
   padding: 0.5rem 0.625rem;
   border: 0;
-  border-radius: 1px;
+  border-radius: var(--radius-control);
   background: transparent;
   color: #dbe2dd;
   text-align: left;
@@ -473,7 +473,7 @@
   align-items: stretch;
   height: 2.25rem;
   border: 1px solid #3a433e;
-  border-radius: 2px;
+  border-radius: var(--radius-control);
   background: #1c211f;
 }
 
@@ -560,14 +560,16 @@
 .shell :global(.spatial-main > .entity-dossier) {
   position: absolute;
   z-index: 18;
-  top: var(--topbar-height);
-  right: 0;
-  bottom: 0;
+  top: calc(var(--topbar-height) + 0.75rem);
+  right: 0.75rem;
+  bottom: 0.75rem;
   width: min(48rem, 48%);
   min-height: 0;
   overflow: hidden;
-  border-left: 1px solid #4a554f;
-  box-shadow: -16px 0 32px rgb(0 0 0 / 24%);
+  border: 1px solid #4a554f;
+  border-radius: var(--radius-panel);
+  background: #1b201e;
+  box-shadow: var(--shadow-overlay);
 }
 
 @media (min-width: 80rem) {
@@ -726,7 +728,7 @@
   grid-template-columns: repeat(3, minmax(7rem, 0.55fr)) minmax(15rem, 1.4fr);
   margin: 0 0 0.75rem;
   border-color: #414a45;
-  border-radius: 2px;
+  border-radius: var(--radius-panel);
   background: #222825;
   box-shadow: none;
 }
@@ -783,7 +785,7 @@
 .shell :global(.workspace-loading),
 .shell :global(.workspace-state) {
   border-color: #414a45;
-  border-radius: 2px;
+  border-radius: var(--radius-panel);
   background: #222825;
 }
 
@@ -850,7 +852,7 @@
 .shell :global(.question-card),
 .shell :global(.quiet-card),
 .shell :global(.run-history button) {
-  border-radius: 2px;
+  border-radius: var(--radius-panel);
 }
 
 .shell :global(.findings-panel) {
@@ -867,7 +869,7 @@
 .shell :global(.map-boundary-label),
 .shell :global(.map-selection),
 .shell :global(.layer-control) {
-  border-radius: 2px;
+  border-radius: var(--radius-panel);
 }
 
 .shell :global(.workspace-state) {
@@ -928,6 +930,8 @@
 
   .shell :global(.spatial-main > .entity-dossier) {
     top: 42%;
+    right: 0;
+    bottom: 0;
     width: 100%;
     border-top: 1px solid #4a554f;
     border-left: 0;
