@@ -156,7 +156,13 @@ def download_boundary(id:str,version:int,org=Depends(organization)):
 
 # Explicit, additive review-context action. Ordinary reads never publish evidence.
 from backend.land_evidence import LandEvidenceValidationError
-from backend.land_evidence_store import LandEvidenceSnapshotError, LandEvidenceSnapshotNotFound
+from backend.land_evidence_store import (
+    LandEvidenceSnapshotError, LandEvidenceSnapshotNotFound,
+    get_land_evidence_snapshot, load_land_evidence_snapshot,
+)
+from backend.infrastructure_map_scene import (
+    InfrastructureMapScene, build_infrastructure_map_scene,
+)
 from backend.module_runs import ModuleRunError, ModuleRunNotFound, ModuleRunRecord
 from backend.screening_context_store import (
     ScreeningUnavailable, get_screening_run, prepare_screening_context,
@@ -207,6 +213,18 @@ def screening_operation(operation):
         raise HTTPException(500, 'Screening context integrity check failed. Stored evidence or run content is missing or contradictory; history has not been overwritten.')
 
 
+def map_scene_operation(operation):
+    try:
+        return operation()
+    except LandEvidenceSnapshotNotFound:
+        raise HTTPException(404, 'Record not found')
+    except (LandEvidenceValidationError, ValueError):
+        raise HTTPException(409, 'Saved evidence is unsupported or invalid for the infrastructure map scene. Historical records have been preserved.')
+    except (LandEvidenceSnapshotError, ImmutableObjectConflict):
+        # Never send an internal object key, storage error or credential to clients.
+        raise HTTPException(500, 'Infrastructure map scene integrity check failed. Stored evidence is missing or contradictory; history has not been overwritten.')
+
+
 @app.post('/api/assessments/{id}/screening-context', response_model=ModuleRunRecord)
 def prepare_context(id: str, org=Depends(organization)):
     return screening_operation(lambda: prepare_screening_context(id, org=org))
@@ -231,6 +249,23 @@ def read_context_map_features(id: str, response: Response, org=Depends(organizat
     return screening_operation(lambda: build_screening_map_features(
         get_screening_run(id, org=org)
     ))
+
+
+@app.get(
+    '/api/land-evidence-snapshots/{id}/map-scene',
+    response_model=InfrastructureMapScene,
+)
+def read_infrastructure_map_scene(
+    id: str, response: Response, org=Depends(organization),
+):
+    response.headers['Cache-Control'] = 'no-store'
+
+    def operation():
+        snapshot = get_land_evidence_snapshot(id, org=org)
+        projection = load_land_evidence_snapshot(id, org=org)
+        return build_infrastructure_map_scene(snapshot, projection)
+
+    return map_scene_operation(operation)
 
 
 @app.get('/api/assessments/{id}/screening-context/report', response_class=HTMLResponse)
