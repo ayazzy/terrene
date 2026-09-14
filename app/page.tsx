@@ -17,6 +17,7 @@ import ScreeningContextPanel from './screening-context-panel';
 import MapFeatureInspector from './map-feature-inspector';
 import SiteEditorPanel from './site-editor-panel';
 import SiteModelCatalogue from './site-model-catalogue';
+import SiteAssessmentTimeline from './site-assessment-timeline';
 import {
   useSiteWorkspaceState,
   type WorkspaceTab,
@@ -1686,40 +1687,20 @@ export default function Home() {
                     </SiteModelCatalogue>
                   </TabsContent>
                   <TabsContent value="history">
-                    <div className="panel-heading">
-                      <h2>Assessment history</h2>
-                      <p>
-                        Each run retains its exact boundary, observations and
-                        source versions. Selecting a run updates both map and
-                        analysis.
-                      </p>
-                    </div>
-                    {history.length ? (
-                      history.map((a) => (
-                        <button
-                          className={`history-row${a.id === assessment?.id ? ' is-selected' : ''}`}
-                          aria-pressed={a.id === assessment?.id}
-                          key={a.id}
-                          onClick={() => selectSiteAssessment(a.id)}
-                        >
-                          <b>
-                            Boundary v{a.version} · {a.state}
-                          </b>
-                          <small>
-                            {new Date(a.created).toLocaleString('en-GB')}
-                            {a.id === assessment?.id ? ' · Viewing' : ''}
-                          </small>
-                        </button>
-                      ))
-                    ) : (
-                      <p className="pad">
-                        {historyFailure
+                    <SiteAssessmentTimeline
+                      assessments={history}
+                      selectedAssessmentId={assessment?.id}
+                      latestAssessmentId={current.assessment?.id}
+                      currentBoundaryVersion={current.version}
+                      emptyMessage={
+                        historyFailure
                           ? 'Assessment history could not be loaded. Retry live refresh above.'
                           : historyRead.siteId !== active || !historyRead.loaded
                             ? 'Loading assessment history…'
-                            : 'No assessments yet.'}
-                      </p>
-                    )}
+                            : 'No assessments have been created for this Site.'
+                      }
+                      onSelect={selectSiteAssessment}
+                    />
                   </TabsContent>
                 </Tabs>
               </div>
