@@ -8,6 +8,14 @@ Early-stage site screening and diligence for land-intensive development, potenti
 
 This is a working go-to-market hypothesis, not a commitment to make renewables Terrene's permanent identity.
 
+On 14 September 2026 the founder approved developing shared intelligence-platform
+capabilities while leaving the initial commercial market open. Climate assessment,
+infrastructure intelligence, monitoring and analyst workflows are additional
+candidate directions. The earlier screening hypothesis remains unvalidated; it
+does not select the next architectural investment. This is an internal product
+direction, not an interview result, paid pilot or evidence of demand. See the
+[architecture](ARCHITECTURE.md) and [decision record](DECISIONS.md).
+
 ## Closed technical experiment — no customer validation
 
 Sprint 003 used Beacon Fen Energy Park (Planning Inspectorate reference EN010151) as a real-project case study. The experiment was intended to ask whether a development, investment or diligence practitioner benefits from a source-separated account of what is officially established about consent, what a promoter reports about construction and operation timing, and what remains unresolved about grid delivery.

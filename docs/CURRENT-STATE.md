@@ -229,4 +229,12 @@ Models now durably discovers the Site's verified snapshot-bound wetland runs thr
 
 ## Current recommended engineering question
 
-What is the smallest immutable full-result read contract and URL state needed to make one snapshot-bound wetland ModuleRun directly reviewable and shareable without duplicating or reinterpreting its retained result?
+How can one existing vector source be acquired for an explicit supported area,
+independently of assessments, without changing the legacy Oxford dataset selection?
+
+The approved direction is an extensible intelligence platform with an undecided
+initial market. The next proposed implementation is the bounded
+[geographic acquisition iteration](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md), followed
+by separate imagery and historical-weather iterations. These are planned
+capabilities; the implemented state above is unchanged. Full wetland ModuleRun
+result sharing remains an unresolved capability, outside this next iteration.

@@ -234,3 +234,37 @@ without rewriting assessment history or allowing newer registry families to
 silently alter `wetland_restoration_v0_1`.
 
 **References:** [Snapshot-bound Site reasoning](SITE-REASONING-INPUT-CONTRACT.md), [Architecture](ARCHITECTURE.md), [wetland binding and ModuleRuns](WETLAND-SNAPSHOT-MODULE-RUN.md).
+
+## 2026-09-14 — Develop reusable intelligence capabilities while the market remains open
+
+**Status:** Founder-approved direction; acquisition implementation is planned.
+
+**Decision:** Develop Terrene toward an extensible intelligence platform around
+geography, time, evidence, entities and analytical models. Preserve the existing
+Earth/Reasoning/Scenario/Application separation. Support future climate,
+infrastructure, monitoring and analyst workflows through shared capabilities;
+no initial buyer or vertical is selected by this decision. Earlier renewable
+screening hypotheses and technical experiments remain historical records, not
+customer validation or binding architectural requirements.
+
+Begin with geographic evidence acquisition independent of assessments, using
+explicit source capabilities and one existing source in two bounded areas.
+Prove this contract before introducing dated Sentinel-2 imagery and then
+historical weather in separate iterations. Keep native evidence with common
+discovery/provenance metadata rather than flatten every data family into one
+measurement schema. Expand types and workflows only as concrete work needs them.
+
+**Rationale:** Architectural work should reduce the cost of supporting a new
+customer geography, source, model or workflow. The Oxford prototype and wetland
+module should not dictate the eventual product. Public, commercial and customer
+data need compatible discovery and lineage, with truthful differences in access,
+coverage, time and resolution. Product references such as Gotham and Stellaria
+inform ambition without establishing demand, data access or equivalent capability.
+
+**Compatibility:** Retain historical CRC identities and all existing assessments,
+snapshots, runs, imports and map contracts. New regional acquisitions must not
+enter the legacy source-only `latest()` selection and replace Oxford inputs.
+Future time requests must fail explicitly when the selected source cannot serve
+them. Source collection must not silently execute a model or fabricate a Site.
+
+**References:** [Architecture](ARCHITECTURE.md), [first acquisition iteration](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md), [Customer Discovery](CUSTOMER-DISCOVERY.md).

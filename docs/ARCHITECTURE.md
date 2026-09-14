@@ -160,6 +160,73 @@ or ModuleRuns.
 
 ## Intended, not completed
 
+### Agreed intelligence-platform direction — 14 September 2026
+
+Terrene will develop shared capabilities for understanding places, assets and
+changes over time while its initial commercial market remains undecided. Climate
+assessment, infrastructure intelligence, monitoring and analyst investigations
+are candidate applications. Palantir Gotham and Stellaria are product references,
+not evidence of Terrene's readiness, access to their data feeds or a decision to
+serve a particular government, defence or commercial market.
+
+The architectural objective is to reduce the work required to add a supported
+geography, source, analytical question or customer workflow. Preserve the existing
+separation of objects, relationships, observations, interpretations and decisions;
+extend it through concrete implementations rather than introduce an exhaustive
+ontology, generic workflow engine or new database technology in advance.
+
+The intended acquisition and analysis flow is:
+
+```text
+Explicit area + source selection + supported temporal request
+  → source-capability validation and bounded acquisition
+  → retained source artifacts and immutable acquisition records
+  → explicit evidence assembly / observations
+  → versioned analytical binding and model execution
+  → reviewable results and application-specific workflows
+```
+
+Acquisition must be usable without running a reasoning model. Acquiring provider
+features does not itself create a parcel observation, Land Evidence Snapshot,
+ModuleRun or operational decision. Those require their own explicit contracts.
+The existing reference import CLI is already independent of assessments; the
+assessment-coupled environmental enrichment and legacy source-selection paths
+remain compatibility implementations while an additive path is established.
+
+The intended shared capabilities are:
+
+- **Geographic acquisition:** request data for an explicit area within each
+  adapter's supported geography, with source-specific coverage, resolution,
+  freshness, access terms and bounded resource use.
+- **Native evidence and time:** retain vector features, raster imagery,
+  measurements, documents and event records in suitable native forms with shared
+  provenance and discovery metadata. Distinguish observation/event, publication
+  and retrieval times, and keep future scenario periods separate. A source that
+  only serves its current publication must reject unsupported historical queries.
+- **Extensible entities and relationships:** introduce types as an application
+  requires them; keep source assertions, inferred matches and verified identities
+  distinguishable, including the evidence for a relationship.
+- **Modular analysis:** bind exact evidence and explicit assumptions into
+  versioned modules. New evidence families never silently broaden old models.
+  Model validation and uncertainty remain specific to the analytical question.
+- **Linked analytical views:** evolve maps, timelines, tables, graphs and dossiers
+  into views over the same authorized evidence and results. Layers should carry
+  their own source/time/availability metadata; display resolution must not imply
+  measurement resolution. Preserve existing snapshot-bound map semantics until
+  an additive multi-source scene contract is implemented.
+- **Customer data and operational work:** progressively support private sources,
+  human review, decisions and assignments, with permissions carried through to
+  derived results. Public provider data does not make customer areas or queries
+  public. Purchased data must retain usage terms and acquisition-cost context.
+
+First establish [independent geographic acquisition](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md)
+using one existing vector source in Oxford and a second bounded area. Subsequent
+iterations should test dated Sentinel-2 imagery, then historical weather data,
+with their appropriate processing and presentation. Radar, climate projections,
+commercial feeds and richer workflows remain later candidates. This sequence
+approves architectural direction, not a claim that those integrations exist or
+authorization to purchase data or implement all applications at once.
+
 ### Terrene Scenario
 
 Scenario will compute consequences or alternative/future state from a pinned Design Revision and Evidence Snapshot. The versioned proposal input now exists, but no scenario binding, evidence-intersection calculation, alternative comparison or impact interpretation is implemented. Drawing either a Site boundary or a proposed footprint is not itself a calculation.
