@@ -79,6 +79,8 @@ type Props = {
   onClearMapObject?: () => void;
   hiddenLayerIds?: string[];
   onHiddenLayerIdsChange?: (ids: string[]) => void;
+  layersOpen?: boolean;
+  onLayersOpenChange?: (open: boolean) => void;
   entities?: InfrastructureEntity[];
   selectedEntity?: EntitySelection;
   onSelectEntity?: (selection: EntitySelection) => void;
@@ -104,6 +106,8 @@ export default function SiteMap({
   onClearMapObject,
   hiddenLayerIds,
   onHiddenLayerIdsChange,
+  layersOpen,
+  onLayersOpenChange,
   entities = [],
   selectedEntity = null,
   onSelectEntity,
@@ -117,7 +121,7 @@ export default function SiteMap({
     [points, setPoints] = useState<number[][]>([]),
     [revision, setRevision] = useState(0),
     [localHiddenLayerIds, setLocalHiddenLayerIds] = useState<string[]>([]),
-    [layersOpen, setLayersOpen] = useState(false),
+    [localLayersOpen, setLocalLayersOpen] = useState(false),
     [rosterOpen, setRosterOpen] = useState(true),
     [entityQuery, setEntityQuery] = useState(''),
     [coordinates, setCoordinates] = useState(''),
@@ -147,6 +151,12 @@ export default function SiteMap({
     entityRef.current = { entities, onSelectEntity };
   }, [entities, onSelectEntity]);
   const ready = !!projection;
+  const layerPanelOpen = layersOpen ?? localLayersOpen;
+  const setLayerPanelOpen = (open: boolean) => {
+    if (open) setRosterOpen(false);
+    if (layersOpen === undefined) setLocalLayersOpen(open);
+    onLayersOpenChange?.(open);
+  };
   const effectiveHiddenLayerIds = hiddenLayerIds ?? localHiddenLayerIds;
   const hiddenLayerSet = useMemo(
     () => new Set(effectiveHiddenLayerIds),
@@ -602,16 +612,20 @@ export default function SiteMap({
           <button
             aria-expanded={rosterOpen}
             aria-controls="infrastructure-entity-roster"
-            onClick={() => setRosterOpen((value) => !value)}
+            onClick={() => {
+              const open = !rosterOpen;
+              setRosterOpen(open);
+              if (open) setLayerPanelOpen(false);
+            }}
           >
             <Search size={16} /> Entities{' '}
             <span className="layer-count">{entities.length}</span>
           </button>
         )}
         <button
-          aria-expanded={layersOpen}
+          aria-expanded={layerPanelOpen}
           aria-controls="map-layers"
-          onClick={() => setLayersOpen((value) => !value)}
+          onClick={() => setLayerPanelOpen(!layerPanelOpen)}
         >
           <Layers size={16} /> Layers{' '}
           <span className="layer-count">
@@ -642,7 +656,7 @@ export default function SiteMap({
           <LocateFixed size={17} />
         </button>
       </div>
-      {layersOpen && (
+      {layerPanelOpen && (
         <section
           id="map-layers"
           className="layer-control"
@@ -650,7 +664,10 @@ export default function SiteMap({
         >
           <div className="layer-control-title">
             <strong>Map layers</strong>
-            <button className="text-btn" onClick={() => setLayersOpen(false)}>
+            <button
+              className="text-btn"
+              onClick={() => setLayerPanelOpen(false)}
+            >
               Close
             </button>
           </div>

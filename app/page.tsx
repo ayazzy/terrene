@@ -20,6 +20,7 @@ import {
   type WorkspaceTab,
 } from './site-workspace-state';
 import ProjectIntelligenceWorkspace from './project-intelligence-workspace';
+import EntityDossier from './entity-dossier';
 import {
   OperatingCommandBar,
   OperatingRail,
@@ -60,7 +61,6 @@ import {
   Check,
   Info,
   RefreshCw,
-  PanelLeftClose,
   PanelLeftOpen,
   FileText,
   Map as MapIcon,
@@ -188,7 +188,8 @@ export default function Home() {
     [password, setPassword] = useState(''),
     [rawGeometry, setRawGeometry] = useState<any>(null),
     [navigationCompact, setNavigationCompact] = useState(true),
-    [mobileNavigation, setMobileNavigation] = useState(false);
+    [mobileNavigation, setMobileNavigation] = useState(false),
+    [mapLayersOpen, setMapLayersOpen] = useState(false);
   const operatingProjection = projectOperatingPictureState(operatingState);
   const { view, sitesView, activeSiteId: active } = operatingProjection;
   function setView(next: string) {
@@ -751,6 +752,8 @@ export default function Home() {
               onClearMapObject={mapEvidence.clearSelection}
               hiddenLayerIds={operatingState.hiddenLayers}
               onHiddenLayerIdsChange={operatingPicture.setHiddenLayers}
+              layersOpen={mapLayersOpen}
+              onLayersOpenChange={setMapLayersOpen}
               entities={infrastructureEntities}
               selectedEntity={operatingState.selection}
               onSelectEntity={(selection) => {
@@ -775,15 +778,16 @@ export default function Home() {
                   !projectEntityIndex.subjects.length)
               }
             />
-            {view === 'site' && !panelOpen && (
-              <button
-                ref={reopenAnalysisButton}
-                className="reopen-analysis operating-map-reopen"
-                onClick={reopenSitePanel}
-              >
-                <PanelLeftOpen size={16} /> Open analysis
-              </button>
-            )}
+            {(view === 'site' || view === 'project-intelligence') &&
+              !panelOpen && (
+                <button
+                  ref={reopenAnalysisButton}
+                  className="reopen-analysis operating-map-reopen"
+                  onClick={reopenSitePanel}
+                >
+                  <PanelLeftOpen size={16} /> Open entity dossier
+                </button>
+              )}
           </div>
         )}
         <ProjectIntelligenceWorkspace
@@ -791,6 +795,15 @@ export default function Home() {
           selectedSubjectId={requestedProjectSubjectId}
           selectedRunId={requestedProjectRunId}
           section={operatingState.section}
+          dossierOpen={operatingState.dossierOpen}
+          locationLabel={
+            selectedInfrastructureEntity
+              ? infrastructureEntityLabel(selectedInfrastructureEntity)
+              : 'Project Subject · geography not established'
+          }
+          closeButtonRef={analysisCloseButton}
+          onCollapse={collapseSitePanel}
+          onOpenLayers={() => setMapLayersOpen(true)}
           onSubjectChange={(id, method) =>
             operatingPicture.transition(
               (currentState) => ({
@@ -1117,49 +1130,43 @@ export default function Home() {
           </Tabs>
         )}
         {view === 'site' && current && (
-          <section
-            className={`site-workspace${panelOpen ? '' : ' dossier-collapsed'}`}
-            aria-label="Site analysis workspace"
-          >
-            <div className="heading site-heading">
-              <div className="site-context">
+          <EntityDossier
+            className="site-workspace"
+            open={panelOpen}
+            ariaLabel="Site intelligence dossier"
+            entityKind="SITE"
+            title={current.name}
+            location={`England · Saved boundary v${stale ? assessment.version : current.version}${result ? ` · ${fmt(result.area_ha)} ha` : ''}`}
+            artifact={
+              assessment
+                ? `Assessment ${assessment.state}`
+                : 'No saved assessment'
+            }
+            evidenceAsOf={
+              assessment
+                ? `Evidence retained ${new Date(assessment.created).toLocaleDateString('en-GB')}`
+                : undefined
+            }
+            status={
+              <EvidenceBadge
+                state={
+                  assessment?.state === 'completed'
+                    ? 'available'
+                    : assessment?.state === 'failed'
+                      ? 'warning'
+                      : assessment
+                        ? 'partial'
+                        : 'missing'
+                }
+              >
+                {assessment ? assessment.state : 'Not assessed'}
+              </EvidenceBadge>
+            }
+            actions={
+              <>
                 <button className="back" onClick={() => setView('workspace')}>
                   <ArrowLeft size={14} /> All sites
                 </button>
-                <h1>{current.name}</h1>
-                <div className="site-meta-line">
-                  <span>
-                    <MapPin size={13} /> England
-                  </span>
-                  <span>
-                    Boundary v{stale ? assessment.version : current.version}
-                  </span>
-                  {result && <span>{fmt(result.area_ha)} ha</span>}
-                  <EvidenceBadge
-                    state={
-                      assessment?.state === 'completed'
-                        ? 'available'
-                        : assessment?.state === 'failed'
-                          ? 'warning'
-                          : assessment
-                            ? 'partial'
-                            : 'missing'
-                    }
-                  >
-                    {assessment
-                      ? `Assessment ${assessment.state}`
-                      : 'Not assessed'}
-                  </EvidenceBadge>
-                  {assessment && (
-                    <span className="context-date">
-                      {new Date(assessment.created).toLocaleString('en-GB', {
-                        dateStyle: 'medium',
-                      })}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="site-heading-controls">
                 <span className="compact-team-review">
                   <small>Team review</small>
                   <Status
@@ -1208,8 +1215,22 @@ export default function Home() {
                     </button>
                   </div>
                 </details>
-              </div>
-            </div>
+              </>
+            }
+            historyState={
+              assessment &&
+              selectedAssessment &&
+              selectedAssessment !== current.assessment?.id
+                ? {
+                    label: `Boundary v${assessment.version} · ${new Date(assessment.created).toLocaleString('en-GB')}`,
+                    onReturnLatest: () => selectSiteAssessment(null),
+                  }
+                : undefined
+            }
+            closeButtonRef={analysisCloseButton}
+            onCollapse={collapseSitePanel}
+            onOpenLayers={() => setMapLayersOpen(true)}
+          >
             {stale && (
               <div className="alert">
                 Viewing saved boundary v{assessment.version}; current site is v
@@ -1217,20 +1238,6 @@ export default function Home() {
                 current boundary.
               </div>
             )}
-            {assessment &&
-              selectedAssessment &&
-              selectedAssessment !== current.assessment?.id && (
-                <div className="assessment-snapshot">
-                  Historical assessment ·{' '}
-                  {new Date(assessment.created).toLocaleString('en-GB')}
-                  <button
-                    className="text-btn"
-                    onClick={() => selectSiteAssessment(null)}
-                  >
-                    Return to latest
-                  </button>
-                </div>
-              )}
             {newerData && (
               <details className="data-update-note">
                 <summary>Newer reference data available</summary>
@@ -1250,19 +1257,11 @@ export default function Home() {
               >
                 <div className="analysis-panel-heading">
                   <span>
-                    <strong>Site Analysis Workspace</strong>
+                    <strong>Site evidence and reasoning</strong>
                     <small>
                       Earth evidence · reasoning modules · team review
                     </small>
                   </span>
-                  <button
-                    ref={analysisCloseButton}
-                    className="icon-btn"
-                    aria-label="Collapse analysis panel"
-                    onClick={collapseSitePanel}
-                  >
-                    <PanelLeftClose size={17} />
-                  </button>
                 </div>
                 {mapEvidence.selectedObject && mapEvidence.features && (
                   <MapFeatureInspector
@@ -1561,7 +1560,7 @@ export default function Home() {
                 </Tabs>
               </div>
             </div>
-          </section>
+          </EntityDossier>
         )}
         {view === 'data' && (
           <>

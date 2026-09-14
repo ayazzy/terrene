@@ -3590,7 +3590,7 @@ summary {
     border-left: 0;
   }
 }
-/* Project Intelligence is an isolated, read-only evidence investigation surface. */
+/* Project Intelligence uses the shared, read-only entity dossier surface. */
 .project-intelligence-workspace {
   min-height: calc(100vh - var(--topbar-height));
 }
@@ -3681,6 +3681,7 @@ summary {
   border-radius: 0 !important;
 }
 .intelligence-tabs button { height: 42px; min-height: 42px; white-space: nowrap; }
+.project-intelligence-workspace .intelligence-tabs button { font-size: 12px; }
 .intelligence-tab-body { padding: 24px 26px 34px; }
 .intelligence-distinction {
   padding: 12px 14px;
@@ -3734,6 +3735,18 @@ summary {
   font-family: var(--font-mono);
   font-size: 10px;
 }
+.intelligence-references button {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.intelligence-references button + button::before { content: ' · '; text-decoration: none; }
 .intelligence-timing { margin: 8px 0 0; color: var(--status-warning); font-size: 12px; }
 .intelligence-limitations { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--border-default); }
 .intelligence-limitations h3 { font-size: 15px; }
@@ -3749,6 +3762,12 @@ summary {
 }
 .claim-list > article { padding: 20px 0; border-bottom: 1px solid var(--border-default); }
 .claim-list > article.is-superseded { opacity: 0.7; }
+.claim-list > article[data-focused='true'] {
+  margin-inline: -12px;
+  padding-inline: 12px;
+  background: var(--surface-selected);
+  outline: 1px solid var(--action-primary);
+}
 .claim-heading { display: flex; justify-content: space-between; gap: 12px; }
 .claim-heading code { color: var(--text-tertiary); font-size: 11px; }
 .claim-list h3 { margin: 7px 0 10px; font-size: 16px; }

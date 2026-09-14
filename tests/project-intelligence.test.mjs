@@ -71,7 +71,7 @@ test('run detail rejects a contradictory immutable envelope', async (t) => {
   );
 });
 
-test('workspace remains isolated, read-only, and makes evidence states first-class', () => {
+test('workspace remains read-only and makes evidence states first-class in the shared dossier', () => {
   assert.match(page, /view === 'project-intelligence'/);
   assert.match(page, /useOperatingPictureState\(\)/);
   assert.match(page, /<ProjectIntelligenceWorkspace\s+enabled=/);
@@ -82,6 +82,8 @@ test('workspace remains isolated, read-only, and makes evidence states first-cla
   assert.match(workspace, /TERRENE CONCLUSION/);
   assert.match(workspace, /Conflicts &amp; unknowns/);
   assert.match(workspace, /IMMUTABLE RUN HISTORY/);
+  assert.match(workspace, /<EntityDossier/);
+  assert.doesNotMatch(workspace, /className="subject-list"/);
   assert.doesNotMatch(workspace, /POST|PATCH|DELETE|pursue|dismiss|confidence/i);
   assert.match(state, /createLatestRequestFence\(\)/);
   assert.match(state, /subjectRequest\.current\.isCurrent\(request\)/);

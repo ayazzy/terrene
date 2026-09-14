@@ -162,3 +162,21 @@ spatial evidence. A shared map improves investigation continuity only if it does
 not turn missing geography into an approximate or fabricated location.
 
 **References:** [Sprint 004](SPRINT-004-INFRASTRUCTURE-OPERATING-PICTURE.md), [Sprint 004 Task 3](SPRINT-004-TASK-3-ENTITY-MAP.md), [Architecture](ARCHITECTURE.md).
+
+## 2026-09-14 — Sites and Project Subjects share one dossier shell
+
+**Decision:** Present Site and Project Subject investigation through one docked
+entity-dossier shell beside the persistent infrastructure map. The shell owns
+entity identity, defensible location state, exact assessment/run envelope,
+evidence time, historical state, map-layer access and collapse behavior. Keep
+the existing Site and Project evidence/reasoning components inside it rather
+than normalizing their distinct domain contracts.
+
+**Rationale:** A common investigation grammar reduces context switching and
+keeps the map operational, while shared presentation must not imply that Site
+observations and attributed project assertions are the same evidence type.
+Collapse is presentation state; historical artifact, section and entity
+selection remain canonical and restorable. Source assertions and Terrene
+conclusions remain visibly and navigably separate.
+
+**References:** [Sprint 004](SPRINT-004-INFRASTRUCTURE-OPERATING-PICTURE.md), [Sprint 004 Task 4](SPRINT-004-TASK-4-ENTITY-DOSSIERS.md), [Architecture](ARCHITECTURE.md).

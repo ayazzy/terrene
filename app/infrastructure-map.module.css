@@ -74,6 +74,10 @@
   backdrop-filter: blur(8px);
 }
 
+.operatingMap:has(:global(.layer-control)) .roster {
+  display: none;
+}
+
 .roster > header {
   min-height: 3rem;
   display: flex;

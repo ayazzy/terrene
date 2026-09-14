@@ -1,6 +1,8 @@
 'use client';
-import { AlertTriangle, ArrowRight, Clock3, FileText, RefreshCw } from 'lucide-react';
+import { useState, type Ref } from 'react';
+import { AlertTriangle, ArrowRight, RefreshCw } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import EntityDossier from './entity-dossier';
 import { WorkspaceLoading, WorkspaceState } from './status-primitives';
 import {
   claimValue,
@@ -18,17 +20,17 @@ function StatePill({ state }: { state: EvidenceState }) {
   return <span className={'intelligence-state state-' + state}>{evidenceStateLabel(state)}</span>;
 }
 
-function References({ references }: { references: Array<{ claim_id: string }> }) {
+function References({ references, onOpen }: { references: Array<{ claim_id: string }>; onOpen: (claimId: string) => void }) {
   return references.length ? (
     <span className="intelligence-references">
-      {references.map((reference) => reference.claim_id).join(' · ')}
+      {references.map((reference) => <button key={reference.claim_id} onClick={() => onOpen(reference.claim_id)}>{reference.claim_id}</button>)}
     </span>
   ) : (
     <span className="intelligence-references">No supporting claim</span>
   );
 }
 
-function Overview({ run }: { run: ProjectIntelligenceRun }) {
+function Overview({ run, onOpenClaim }: { run: ProjectIntelligenceRun; onOpenClaim: (claimId: string) => void }) {
   const result = run.result;
   const timing = result.grid_connection_target;
   return (
@@ -42,19 +44,19 @@ function Overview({ run }: { run: ProjectIntelligenceRun }) {
           <small>Reported stage</small>
           <h2>{humanize(result.reported_stage.value)}</h2>
           <StatePill state={result.reported_stage.evidence_state} />
-          <References references={result.reported_stage.references} />
+          <References references={result.reported_stage.references} onOpen={onOpenClaim} />
         </article>
         <article>
           <small>Planning status</small>
           <h3>{result.planning_status.values.map(humanize).join(' · ') || 'Not established'}</h3>
           <StatePill state={result.planning_status.evidence_state} />
-          <References references={result.planning_status.references} />
+          <References references={result.planning_status.references} onOpen={onOpenClaim} />
         </article>
         <article>
           <small>Construction status</small>
           <h3>{result.construction_status.values.map(humanize).join(' · ') || 'Not established'}</h3>
           <StatePill state={result.construction_status.evidence_state} />
-          <References references={result.construction_status.references} />
+          <References references={result.construction_status.references} onOpen={onOpenClaim} />
         </article>
         <article>
           <small>Reported grid target</small>
@@ -65,7 +67,7 @@ function Overview({ run }: { run: ProjectIntelligenceRun }) {
               {humanize(target.temporal_state)}
             </p>
           ))}
-          <References references={timing.references} />
+          <References references={timing.references} onOpen={onOpenClaim} />
         </article>
       </div>
       <section className="intelligence-limitations">
@@ -76,7 +78,7 @@ function Overview({ run }: { run: ProjectIntelligenceRun }) {
   );
 }
 
-function Evidence({ run }: { run: ProjectIntelligenceRun }) {
+function Evidence({ run, focusedClaimId }: { run: ProjectIntelligenceRun; focusedClaimId: string | null }) {
   const binding = run.evidence_binding;
   const sources = new Map(binding.sources.map((item) => [
     projectEvidenceSourceKey(item.source.id, item.source.source_version),
@@ -100,7 +102,7 @@ function Evidence({ run }: { run: ProjectIntelligenceRun }) {
             item.source_version,
           ));
           return (
-            <article key={item.claim.id} className={active.has(item.claim.id) ? '' : 'is-superseded'}>
+            <article key={item.claim.id} className={active.has(item.claim.id) ? '' : 'is-superseded'} data-focused={item.claim.id === focusedClaimId} data-project-claim={item.claim.id} tabIndex={-1}>
               <div className="claim-heading">
                 <span>{active.has(item.claim.id) ? 'Active assertion' : 'Superseded assertion'}</span>
                 <code>{item.claim.id}</code>
@@ -123,7 +125,7 @@ function Evidence({ run }: { run: ProjectIntelligenceRun }) {
   );
 }
 
-function Conflicts({ run }: { run: ProjectIntelligenceRun }) {
+function Conflicts({ run, onOpenClaim }: { run: ProjectIntelligenceRun; onOpenClaim: (claimId: string) => void }) {
   const { conflicts, unresolved_questions: questions } = run.result;
   return (
     <div className="intelligence-tab-body intelligence-issues">
@@ -136,7 +138,7 @@ function Conflicts({ run }: { run: ProjectIntelligenceRun }) {
             <div>
               <h3>{humanize(conflict.predicate)}</h3>
               {conflict.values.map((value) => (
-                <p key={value.value}><strong>{humanize(value.value)}</strong><span>{value.claim_ids.join(' · ')}</span></p>
+                <p key={value.value}><strong>{humanize(value.value)}</strong><span className="intelligence-references">{value.claim_ids.map((claimId) => <button key={claimId} onClick={() => onOpenClaim(claimId)}>{claimId}</button>)}</span></p>
               ))}
             </div>
           </article>
@@ -147,7 +149,7 @@ function Conflicts({ run }: { run: ProjectIntelligenceRun }) {
         {questions.length ? questions.map((question) => (
           <article className="question-card" key={question.id}>
             <ArrowRight size={17} />
-            <div><h3>{question.text}</h3><References references={question.references} /></div>
+            <div><h3>{question.text}</h3><References references={question.references} onOpen={onOpenClaim} /></div>
           </article>
         )) : <p className="quiet-card">No unresolved evidence questions in this run.</p>}
       </section>
@@ -166,6 +168,11 @@ type ProjectIntelligenceWorkspaceProps = {
   ) => void;
   onRunChange: (id: string | null, method: 'push' | 'replace') => void;
   onSectionChange: (section: OperatingDossierSection) => void;
+  dossierOpen: boolean;
+  locationLabel: string;
+  onCollapse: () => void;
+  onOpenLayers: () => void;
+  closeButtonRef?: Ref<HTMLButtonElement>;
 };
 
 export default function ProjectIntelligenceWorkspace({
@@ -176,7 +183,13 @@ export default function ProjectIntelligenceWorkspace({
   onSubjectChange,
   onRunChange,
   onSectionChange,
+  dossierOpen,
+  locationLabel,
+  onCollapse,
+  onOpenLayers,
+  closeButtonRef,
 }: ProjectIntelligenceWorkspaceProps) {
+  const [focusedClaimId, setFocusedClaimId] = useState<string | null>(null);
   const state = useProjectIntelligenceState(enabled, {
     selectedSubjectId,
     selectedRunId,
@@ -184,31 +197,21 @@ export default function ProjectIntelligenceWorkspace({
     onRunChange,
   });
   if (!enabled) return null;
+  const latestRun = state.runs[0] || null;
+  const viewingHistorical = !!(state.selectedRunId && latestRun && state.selectedRunId !== latestRun.id);
+  const openClaim = (claimId: string) => {
+    setFocusedClaimId(claimId);
+    onSectionChange('evidence');
+    requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-project-claim="${CSS.escape(claimId)}"]`)?.focus());
+  };
   return (
-    <section className="project-intelligence-workspace" aria-label="Project intelligence workspace">
-      <div className="heading intelligence-heading">
-        <div>
-          <p className="eyebrow">PROJECT INTELLIGENCE</p>
-          <h1>Investigate reported project state</h1>
-          <p>Exact source evidence → immutable binding → deterministic assessment.</p>
-        </div>
-        <div className="intelligence-as-of">
-          <Clock3 size={16} />
-          {state.run ? `Evidence as of ${formatEvidenceTime(state.run.evidence_binding.evidence_as_of)}` : 'No run selected'}
-        </div>
-      </div>
+    <EntityDossier className="project-intelligence-workspace" open={dossierOpen} ariaLabel="Project Subject intelligence dossier" entityKind="PROJECT SUBJECT"
+      title={state.selectedSubject?.name || 'Project intelligence'} location={locationLabel}
+      artifact={state.run ? `${state.run.result.model_version} · ${state.run.evidence_binding.bundles.length} evidence bundles` : 'No intelligence run selected'}
+      evidenceAsOf={state.run ? `Evidence as of ${formatEvidenceTime(state.run.evidence_binding.evidence_as_of)}` : undefined}
+      historyState={viewingHistorical && state.run ? { label: `Run created ${formatEvidenceTime(state.run.created)}`, onReturnLatest: () => state.setSelectedRunId(latestRun!.id) } : undefined}
+      closeButtonRef={closeButtonRef} onCollapse={onCollapse} onOpenLayers={onOpenLayers}>
       {state.error && <div className="alert error" role="alert">{state.error}<button onClick={state.retry}><RefreshCw size={14} /> Retry</button></div>}
-      <div className="intelligence-layout">
-        <aside className="subject-list" aria-label="Project Subjects">
-          <div className="subject-list-heading"><span>Project Subjects</span><b>{state.subjects.length}</b></div>
-          {state.subjects.map((subject) => (
-            <button key={subject.id} aria-pressed={subject.id === state.selectedSubjectId}
-              onClick={() => state.setSelectedSubjectId(subject.id)}>
-              <FileText size={17} />
-              <span><strong>{subject.name}</strong><small>{humanize(subject.project_type)}{subject.site_id ? ' · Site linked' : ' · No Site required'}</small></span>
-            </button>
-          ))}
-        </aside>
         <main className="intelligence-content">
           {state.loading && !state.run ? <WorkspaceLoading /> : !state.selectedSubject ? (
             <WorkspaceState
@@ -222,10 +225,6 @@ export default function ProjectIntelligenceWorkspace({
             <WorkspaceState kind="empty" title="No intelligence runs" description="No immutable reasoning run has been created for this Project Subject." />
           ) : state.run ? (
             <>
-              <div className="intelligence-titlebar">
-                <div><p className="eyebrow">MONITORED REAL-WORLD PROJECT</p><h2>{state.selectedSubject.name}</h2><p>{humanize(state.selectedSubject.project_type)} · {state.run.evidence_binding.bundles.length} bound evidence bundles</p></div>
-                <code>{state.run.result.model_version}</code>
-              </div>
               <Tabs
                 value={section}
                 onValueChange={(value) =>
@@ -238,9 +237,9 @@ export default function ProjectIntelligenceWorkspace({
                   <TabsTrigger value="issues">Conflicts &amp; unknowns</TabsTrigger>
                   <TabsTrigger value="history">History</TabsTrigger>
                 </TabsList>
-                <TabsContent value="overview"><Overview run={state.run} /></TabsContent>
-                <TabsContent value="evidence"><Evidence run={state.run} /></TabsContent>
-                <TabsContent value="issues"><Conflicts run={state.run} /></TabsContent>
+                <TabsContent value="overview"><Overview run={state.run} onOpenClaim={openClaim} /></TabsContent>
+                <TabsContent value="evidence"><Evidence run={state.run} focusedClaimId={focusedClaimId} /></TabsContent>
+                <TabsContent value="issues"><Conflicts run={state.run} onOpenClaim={openClaim} /></TabsContent>
                 <TabsContent value="history">
                   <div className="intelligence-tab-body">
                     <div className="intelligence-distinction"><span>IMMUTABLE RUN HISTORY</span><p>Selecting an earlier run changes the entire evidence and conclusion view. It never rewrites that run.</p></div>
@@ -256,7 +255,6 @@ export default function ProjectIntelligenceWorkspace({
             </>
           ) : null}
         </main>
-      </div>
-    </section>
+    </EntityDossier>
   );
 }

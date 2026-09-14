@@ -2,7 +2,7 @@
 
 > Repository implementation is authoritative where this document is stale.
 
-This is an operational map of what exists on 13 September 2026. Inspect the relevant code, tests and linked implementation reports before changing it.
+This is an operational map of what exists on 14 September 2026. Inspect the relevant code, tests and linked implementation reports before changing it.
 
 ## Product architecture
 
@@ -27,7 +27,7 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 - View and select persisted buildings, functional sites, railway tracks and railway stations on the Site Analysis Workspace map, with truthful per-layer availability and one shared parcel-relationship/source inspector.
 - Create/read minimal organization-owned Project Subjects without requiring a Site, and submit/list/read immutable human-structured `project_evidence_v1` source-assertion bundles.
 - Bind explicit Project Evidence bundles through `project_evidence_binding_v1`, run deterministic `project_intelligence_v1`, and list/read immutable project-specific runs.
-- Inspect Project Subjects, exact source assertions, Terrene conclusions, conflicts, unresolved questions and historical runs in a separate read-only Project Intelligence workspace.
+- Inspect Project Subjects, exact source assertions, Terrene conclusions, conflicts, unresolved questions and historical runs in the shared read-only entity dossier beside the persistent map.
 - Reproduce the Beacon Fen Sprint 003 validation baseline from a curated human-structured official consent excerpt without fabricating a Site, construction status or exact grid date; five semantically incompatible public assertions remain explicitly excluded from the v1 bundle.
 
 Implementation reports: [snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [snapshot-driven wetland runs](WETLAND-SNAPSHOT-MODULE-RUN.md), [evidence-aware site analysis](UI-STAGE-2.md), and [map-first home](UI-STAGE-3-MAP-HOME.md).
@@ -81,7 +81,7 @@ The detailed Evidence view is a compact index: source-bounded domains, facts, ga
 
 One shared site-workspace controller scopes the selected assessment, Screening Context lifecycle, history selection, map/evidence focus, exports and workspace controls. Switching sites or historical assessments clears stale artifact views and keys Screening Context to the exact assessment/site/boundary identity. Historical map, boundary, Earth evidence, context and model output move together. The desktop review panel is wider; at narrow widths the map and independently scrollable analytical workspace stack deliberately. The UI remains a small-portfolio application and fetches site/history collections without pagination.
 
-One typed Infrastructure Operating Picture navigation contract now owns operating mode, exact Site or Project Subject selection, selected historical Site assessment or Project Intelligence run, dossier section/visibility and meaningful layer visibility. That state is deterministically URL-addressable and restores through reload and browser Back/Forward. Invalid, inconsistent or unavailable authorized identities fail closed; late Site-history or Project Intelligence responses remain scoped and cannot replace the current entity. Map camera state remains session-local. A shared compact Terrene shell and one persistent primary MapLibre scene now span geographic overview, Site investigation and Project Intelligence. Global search and the map roster index both Sites and Project Subjects with evidence and location state. Project Subjects render spatially only through an explicit authorized Site relationship; Site-less subjects such as Beacon Fen remain visibly unlocated and selecting them does not manufacture a pin or move the map. The boundary editor remains isolated. See [Sprint 004 Task 1](SPRINT-004-TASK-1-OPERATING-PICTURE-STATE.md), [Task 2](SPRINT-004-TASK-2-OPERATING-SHELL.md) and [Task 3](SPRINT-004-TASK-3-ENTITY-MAP.md).
+One typed Infrastructure Operating Picture navigation contract now owns operating mode, exact Site or Project Subject selection, selected historical Site assessment or Project Intelligence run, dossier section/visibility and meaningful layer visibility. That state is deterministically URL-addressable and restores through reload and browser Back/Forward. Invalid, inconsistent or unavailable authorized identities fail closed; late Site-history or Project Intelligence responses remain scoped and cannot replace the current entity. Map camera state remains session-local. A shared compact Terrene shell, one persistent primary MapLibre scene and one docked entity-dossier pattern now span geographic overview, Site investigation and Project Intelligence. Global search and the map roster index both Sites and Project Subjects with evidence and location state; the Project dossier no longer repeats a second entity list. Project Subjects render spatially only through an explicit authorized Site relationship; Site-less subjects such as Beacon Fen remain visibly unlocated and selecting them does not manufacture a pin or move the map. The boundary editor remains isolated. See [Sprint 004 Task 1](SPRINT-004-TASK-1-OPERATING-PICTURE-STATE.md), [Task 2](SPRINT-004-TASK-2-OPERATING-SHELL.md), [Task 3](SPRINT-004-TASK-3-ENTITY-MAP.md) and [Task 4](SPRINT-004-TASK-4-ENTITY-DOSSIERS.md).
 
 The analytical map consumes the selected Screening Context run's map-feature contract and preserves its source-bounded layer states: available objects, mapped zero, unavailable, partial and unsupported historical evidence. Terrene-rendered built-world geometry is visually distinct from the raster basemap. Object selection is shared with Overview/Evidence, does not move the default parcel focus, and opens one inspector with plain parcel relationship, measurement, source/release and limitation; raw identities, fingerprints, exact predicates and detailed provenance remain under Advanced provenance. Locate object is intentional. Hiding its layer, changing run, site or historical assessment clears selection.
 
@@ -91,7 +91,7 @@ Screening Context is an explicit assessment action: POST creates/reuses a snapsh
 
 The Screening Context read lifecycle is finite: stored, absent, unsupported, authentication/authorization and server/network outcomes are distinct; unresolved reads recover to Retry after 15 seconds. Routine workspace refreshes do not restart an unchanged assessment read, and cancelled or stale assessment responses cannot replace the selected assessment's context.
 
-The read-only Project Intelligence workspace is isolated from the Site map. It lazily reads Project Subjects and immutable run history, allows explicit historical selection, and visually separates source assertions from Terrene conclusions. It provides no evidence/project editor or workflow action.
+The read-only Project Intelligence content is docked beside the persistent map through the same entity-dossier shell as Sites. It lazily reads Project Subjects and immutable run history, allows explicit historical selection, visually separates source assertions from Terrene conclusions, and routes conclusion references to exact retained source passages. It provides no evidence/project editor or workflow action.
 
 Versioned Design Studies remain API-only. The frontend has no Alternative editor, design map tools or Design Revision history UI.
 
@@ -135,6 +135,8 @@ Sprint 004 Task 2 verification: **60 frontend tests passed**, TypeScript and foc
 
 Sprint 004 Task 3 verification: **63 frontend tests passed**, TypeScript and focused lint passed, and the production build passed with the existing large-chunk advisory. `app/page.tsx` retains its existing 19 diagnostics with no additional page diagnostic. Browser QA at 1199 px and 390×844 exercised exact Site geography, one explicitly Site-linked synthetic Project Subject, the real Site-less Beacon Fen subject, global entity search, map/roster selection, evidence-section continuity, layer states and analysis collapse/reopen. DOM checks found exactly one primary map/canvas and the narrow document remained exactly 390 px wide. Backend/PostgreSQL suites were not rerun because no API, persistence, evidence or reasoning contract changed. See [Sprint 004 Task 3](SPRINT-004-TASK-3-ENTITY-MAP.md).
 
+Sprint 004 Task 4 verification: **68 frontend tests passed**, TypeScript and focused lint passed, and the production build passed with the existing large-chunk advisory. `app/page.tsx` retains its existing 19 diagnostics with no additional page diagnostic. Desktop browser QA covered the shared Site/Project dossier, mapped Site evidence, Beacon Fen's supported-consent/insufficient-construction result, exact source-assertion navigation, historical-run envelope, collapse/reopen and the unobstructed map-layer manager. Software-WebGL headless Chrome covered Site and Project dossier layouts at 390×844. Backend/PostgreSQL suites were not rerun because no API, persistence, evidence or reasoning contract changed. See [Sprint 004 Task 4](SPRINT-004-TASK-4-ENTITY-DOSSIERS.md).
+
 ## Known limitations
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
@@ -147,8 +149,8 @@ Sprint 004 Task 3 verification: **63 frontend tests passed**, TypeScript and foc
 
 ## Latest meaningful implementation
 
-Sprint 004 Task 3 was completed on 14 September 2026. Terrene now uses one persistent primary MapLibre scene as a spatial index across geographic overview, Site investigation and Project Intelligence. Exact Sites, explicitly Site-linked Project Subjects and unlocated Project Subjects share one searchable roster and selection controller without inferred geography. Environmental and built-world evidence retain their existing source-bounded layer semantics for the selected Site assessment.
+Sprint 004 Task 4 was completed on 14 September 2026. Sites and Project Subjects now use one docked entity-dossier pattern beside the persistent infrastructure map. Exact assessment/run identity, evidence time and historical state travel with the dossier; Project conclusions link to retained assertions, and collapse/reopen preserves the selected entity, section and immutable artifact.
 
 ## Current recommended engineering question
 
-Implement Sprint 004 Task 4: migrate the existing Site and Project Intelligence content into one coherent docked entity-dossier pattern without changing evidence or reasoning semantics.
+Implement Sprint 004 Task 5: remove superseded presentation paths, close remaining parity and responsive defects, and certify the complete Infrastructure Operating Picture without changing evidence or reasoning semantics.

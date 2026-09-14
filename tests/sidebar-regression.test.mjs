@@ -63,6 +63,6 @@ test('dossier collapse and reopen preserve keyboard focus', () => {
   );
   assert.match(
     page,
-    /ref=\{analysisCloseButton\}[\s\S]*onClick=\{collapseSitePanel\}/,
+    /closeButtonRef=\{analysisCloseButton\}[\s\S]*onCollapse=\{collapseSitePanel\}/,
   );
 });

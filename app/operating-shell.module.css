@@ -563,8 +563,7 @@
   left: auto;
 }
 
-.shell :global(.spatial-main > .site-workspace),
-.shell :global(.spatial-main > .project-intelligence-workspace) {
+.shell :global(.spatial-main > .entity-dossier) {
   position: absolute;
   z-index: 18;
   top: var(--topbar-height);
@@ -577,7 +576,7 @@
   box-shadow: -16px 0 32px rgb(0 0 0 / 24%);
 }
 
-.shell :global(.spatial-main > .site-workspace.dossier-collapsed) {
+.shell :global(.spatial-main > .entity-dossier.dossier-collapsed) {
   width: 0;
   border: 0;
   box-shadow: none;
@@ -594,13 +593,6 @@
 
 .shell :global(.spatial-main > .project-intelligence-workspace) {
   overflow: auto;
-}
-
-.shell
-  :global(
-    .spatial-main > .project-intelligence-workspace .intelligence-layout
-  ) {
-  grid-template-columns: minmax(11rem, 13rem) minmax(0, 1fr);
 }
 
 .shell :global(.portfolio-main > .sites-views) {
@@ -797,8 +789,7 @@
   background: #1b201e;
 }
 
-.shell :global(.site-heading),
-.shell :global(.intelligence-heading),
+.shell :global(.entity-dossier-heading),
 .shell :global(.analysis-context-bar),
 .shell :global(.assessment-snapshot),
 .shell :global(.analysis-panel-heading),
@@ -807,25 +798,6 @@
 .shell :global(.intelligence-titlebar) {
   border-color: #414a45;
   background: #222825;
-}
-
-.shell :global(.site-heading),
-.shell :global(.intelligence-heading) {
-  min-height: 4.5rem;
-  padding: 0.75rem var(--page-gutter);
-}
-
-.shell :global(.intelligence-heading h1) {
-  margin: 0.15rem 0;
-  font-size: 1rem;
-}
-
-.shell :global(.intelligence-heading p) {
-  font-size: 0.6875rem;
-}
-
-.shell :global(.intelligence-layout) {
-  min-height: calc(100dvh - var(--topbar-height) - 4.5rem);
 }
 
 .shell :global(.subject-list > button),
@@ -916,8 +888,7 @@
     --topbar-height: 6.5rem;
   }
 
-  .shell :global(.spatial-main > .site-workspace),
-  .shell :global(.spatial-main > .project-intelligence-workspace) {
+  .shell :global(.spatial-main > .entity-dossier) {
     top: 42%;
     width: 100%;
     border-top: 1px solid #4a554f;
@@ -932,13 +903,6 @@
         .operating-spatial-map
     ) {
     bottom: 58%;
-  }
-
-  .shell
-    :global(
-      .spatial-main > .project-intelligence-workspace .intelligence-layout
-    ) {
-    grid-template-columns: 1fr;
   }
 
   .shell > .rail,
