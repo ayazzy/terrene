@@ -4,6 +4,10 @@ Implemented 14 September 2026 on the approved [first-iteration scope](GEOGRAPHIC
 This establishes reusable area-based evidence collection. It does not validate a
 customer workflow, an environmental model or product–market fit.
 
+An additive [coverage v2 correction](GEOGRAPHIC-COVERAGE-V2.md) now supports the
+verified Broads tidal area through explicit BFE/extent-of-realm coverage. This
+report preserves the first iteration’s v1 behavior and verification record.
+
 ## Implemented contract
 
 `backend.acquisition.acquire(org, AcquisitionRequest)` collects the current
@@ -166,8 +170,7 @@ Hosted R2/Supabase access has not been verified.
 
 ## Recommended next bounded task
 
-Resolve the designation coverage contract for national expansion, including the
-observed coastal/tidal exclusion, then integrate and independently verify the
-first additional national publisher. Preserve Scotland/Wales SSSI and Northern
+The observed Broads tidal exclusion is addressed by explicit [coverage v2](GEOGRAPHIC-COVERAGE-V2.md).
+Next, integrate and independently verify the first additional national publisher. Preserve Scotland/Wales SSSI and Northern
 Ireland ASSI identities and explicit gaps. Add national adapters sequentially;
 authenticated application access and map integration follow in separate tasks.

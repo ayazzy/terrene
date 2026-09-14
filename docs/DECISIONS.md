@@ -319,3 +319,26 @@ England profile to Scotland, Wales or Northern Ireland.
 provider polygon queries. SQLite and PostgreSQL acquisition/legacy checks pass;
 retained Oxford results are unchanged. No customer/workflow validation is implied.
 See [implementation and verification](GEOGRAPHIC-EVIDENCE-ACQUISITION.md).
+
+
+## 2026-09-14 — Version England coverage independently of historical captures
+
+**Status:** Implemented as the next bounded coverage correction.
+
+**Decision:** Preserve `sssi_arcgis_v1` and its pinned ONS BFC high-water coverage.
+Introduce explicit `sssi_arcgis_v2` / `england_current_vector_v2` with an ONS
+December 2024 BFE extent-of-realm profile. Require matching adapter/profile
+versions and a new idempotency key for changed requests. Keep CLI defaults at v1
+for compatibility. Use the official full-resolution geometry without filling
+holes, clipping or buffering, and retain setup provenance and consistency checks.
+
+**Reason:** High-water clipping excluded tidal water inside the first Broads
+request. The new footprint supports that exact polygon; two SSSI features match
+an independent live provider query. This is an operational coverage correction,
+not an expanded claim about complete marine coverage or legal designation extent.
+The old rejection and prior successes remain unchanged. Country and jurisdiction
+support must stay specific to each publisher; other national adapters remain
+separate next iterations.
+
+**References:** [Coverage v2 implementation and verification](GEOGRAPHIC-COVERAGE-V2.md),
+[ONS boundary definitions](https://www.ons.gov.uk/methodology/geography/geographicalproducts/digitalboundaries).

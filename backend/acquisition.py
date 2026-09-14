@@ -17,7 +17,9 @@ from sqlalchemy.exc import IntegrityError
 
 from backend import core
 from backend.acquisition_contracts import AcquisitionError, AcquisitionRequest, digest, encode, MAX_REQUEST_BYTES
-from backend.acquisition_sources import DESCRIPTOR, fetch_sssi, prepare_coverage, validate_capabilities, load_coverage
+from backend.acquisition_sources import (
+    ADAPTER_COVERAGE, source_descriptor, fetch_sssi, prepare_coverage, validate_capabilities, load_coverage,
+)
 
 requests = core.geographic_acquisitions
 attempts = core.geographic_acquisition_attempts
@@ -153,7 +155,7 @@ def acquire(org: str, request: AcquisitionRequest | dict, *, client=None) -> dic
         'org': org, 'request': request.model_dump(), 'request_hash': row['request_hash'],
         'geometry_fingerprint': request.geometry_fingerprint,
         'started': claim['started'], 'completed': completed, 'state': state, 'error_code': error_code,
-        'source': DESCRIPTOR, 'result': result, 'diagnostics': diagnostics,
+        'source': source_descriptor(request.adapter_version), 'result': result, 'diagnostics': diagnostics,
         'processing': {'shapely': shapely.__version__, 'pyproj': pyproj.__version__,
                        'normalization_version': 'sssi_polygon_selection_v1',
                        'area_method': 'WGS84 ellipsoid geodesic area',
@@ -231,7 +233,8 @@ def read_acquisition(org: str, acquisition_id: str, *, attempt_id: str | None = 
                         'normalized_selection', 'normalization_lineage'}
             if set(references) != required or manifest['result'] is None or attempt['error_code'] is not None:
                 raise AcquisitionError('integrity_failure')
-            load_coverage(request.coverage_profile_sha256)
+            load_coverage(request.coverage_profile_sha256,
+                          expected_version=ADAPTER_COVERAGE[request.adapter_version])
     elif attempt and attempt['state'] == 'succeeded':
         raise AcquisitionError('integrity_failure')
     return {
@@ -254,8 +257,9 @@ def read_acquisition(org: str, acquisition_id: str, *, attempt_id: str | None = 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest='command', required=True)
-    commands.add_parser('sources')
-    commands.add_parser('prepare-coverage')
+    for name in ('sources', 'prepare-coverage'):
+        command = commands.add_parser(name)
+        command.add_argument('--adapter-version', choices=list(ADAPTER_COVERAGE), default='sssi_arcgis_v1')
     collect = commands.add_parser('acquire')
     collect.add_argument('--org', required=True)
     collect.add_argument('--request', required=True, type=Path)
@@ -266,9 +270,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if args.command == 'sources':
-            result = DESCRIPTOR
+            result = source_descriptor(args.adapter_version)
         elif args.command == 'prepare-coverage':
-            result = prepare_coverage()
+            result = prepare_coverage(adapter_version=args.adapter_version)
         elif args.command == 'acquire':
             with args.request.open('rb') as handle:
                 data = handle.read(MAX_REQUEST_BYTES + 1)

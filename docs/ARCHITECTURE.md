@@ -252,7 +252,11 @@ operate independently of Sites and analytical execution. Geometry is bounded
 WGS84 Polygon/MultiPolygon with geodesic area validation across all UK nations;
 source capability validation is separate. The first registered adapter serves the
 current Natural England SSSI publication and pins a privately retained ONS England
-coverage profile. Coastline/tidal exclusions in that profile are explicit limits.
+coverage profile. Historical v1 uses coastline-clipped BFC; explicit v2 uses BFE
+extent-of-realm geometry and resolves the verified Broads tidal exclusion.
+Adapter/profile versions must match on acquisition and successful readback. Old
+requests never gain coverage implicitly; neither profile proves full marine or
+legal designation coverage. See [coverage v2](GEOGRAPHIC-COVERAGE-V2.md).
 
 Migration 9 adds organization-scoped requests and append-only terminal attempts.
 Operational claims use optimistic concurrency, expiring leases and fenced

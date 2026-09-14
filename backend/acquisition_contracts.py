@@ -11,6 +11,7 @@ from shapely.geometry.polygon import orient
 
 SOURCE_ID = 'natural_england.sssi'
 ADAPTER_VERSION = 'sssi_arcgis_v1'
+FULL_EXTENT_ADAPTER_VERSION = 'sssi_arcgis_v2'
 MAX_AREA_HA = 100_000
 MAX_COORDINATES = 10_000
 MAX_REQUEST_BYTES = 500_000
@@ -97,7 +98,7 @@ class TemporalSelection(Contract):
 class AcquisitionRequest(Contract):
     contract_version: Literal['geographic_acquisition_request_v1']
     source_id: Literal['natural_england.sssi']
-    adapter_version: Literal['sssi_arcgis_v1']
+    adapter_version: Literal['sssi_arcgis_v1', 'sssi_arcgis_v2']
     coverage_profile_sha256: str = Field(pattern=r'^[0-9a-f]{64}$')
     area: dict
     temporal: TemporalSelection

@@ -8,7 +8,7 @@ from shapely.geometry import mapping, shape, box
 
 from backend import core
 from backend.acquisition_contracts import (
-    AcquisitionError, ADAPTER_VERSION, SOURCE_ID, MAX_AREA_HA, digest, encode,
+    AcquisitionError, ADAPTER_VERSION, FULL_EXTENT_ADAPTER_VERSION, SOURCE_ID, MAX_AREA_HA, digest, encode,
 )
 
 SSSI_URL = ('https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/'
@@ -17,6 +17,19 @@ COVERAGE_URL = ('https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/servi
                 'Countries_December_2024_Boundaries_UK_BFC/FeatureServer/0')
 COVERAGE_ITEM = 'https://www.arcgis.com/sharing/rest/content/items/d4f6b6bdf58a45b093c0c189bdf92e9d'
 COVERAGE_VERSION = 'ons_england_dec2024_bfc_v1'
+FULL_EXTENT_COVERAGE_VERSION = 'ons_england_dec2024_bfe_v1'
+FULL_EXTENT_COVERAGE_URL = ('https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/'
+                            'Countries_December_2024_Boundaries_UK_BFE/FeatureServer/0')
+FULL_EXTENT_COVERAGE_ITEM = 'https://www.arcgis.com/sharing/rest/content/items/2d18d8d4d0b341dfbddebd39d66dbe79'
+# Each adapter explicitly selects a policy; old requests must never gain coverage.
+COVERAGE_POLICIES = {
+    COVERAGE_VERSION: (COVERAGE_URL, COVERAGE_ITEM),
+    FULL_EXTENT_COVERAGE_VERSION: (FULL_EXTENT_COVERAGE_URL, FULL_EXTENT_COVERAGE_ITEM),
+}
+ADAPTER_COVERAGE = {
+    ADAPTER_VERSION: COVERAGE_VERSION,
+    FULL_EXTENT_ADAPTER_VERSION: FULL_EXTENT_COVERAGE_VERSION,
+}
 LIMITS = {'max_area_ha': MAX_AREA_HA, 'max_features': 2_000, 'batch_size': 100,
           'max_response_bytes': 20_000_000, 'max_total_bytes': 60_000_000,
           'network_deadline_seconds': 180, 'request_timeout_seconds': 25}
@@ -42,6 +55,21 @@ DESCRIPTOR = {
         'Before/after metadata and ID checks detect some changes, but the service has no snapshot transaction.',
     ],
 }
+
+
+def source_descriptor(adapter_version=ADAPTER_VERSION):
+    if adapter_version == ADAPTER_VERSION:
+        return DESCRIPTOR
+    if adapter_version != FULL_EXTENT_ADAPTER_VERSION:
+        raise AcquisitionError('unsupported_adapter')
+    return {
+        **DESCRIPTOR, 'adapter_version': FULL_EXTENT_ADAPTER_VERSION,
+        'capability_version': 'england_current_vector_v2',
+        'coverage_profile_version': FULL_EXTENT_COVERAGE_VERSION,
+        'coverage_method': 'Request must be wholly covered by pinned ONS England December 2024 BFE extent-of-realm polygon.',
+        'limitations': [line for line in DESCRIPTOR['limitations'] if not line.startswith('ONS BFC')]
+        + ['ONS BFE is an administrative operational footprint, generally to mean low water; it does not establish complete marine or legal designation coverage.'],
+    }
 
 
 class BoundedClient:
@@ -96,7 +124,7 @@ def _profile_key(sha):
     return f'geographic-acquisition/coverage/{sha}.json'
 
 
-def load_coverage(sha):
+def load_coverage(sha, *, expected_version=None):
     try:
         data = core.load_object(_profile_key(sha))
         if data is None:
@@ -104,9 +132,12 @@ def load_coverage(sha):
         if digest(data) != sha:
             raise AcquisitionError('coverage_integrity_failure')
         profile = json.loads(data)
-        if (profile['version'] != COVERAGE_VERSION or profile['endpoint'] != COVERAGE_URL
+        policy = COVERAGE_POLICIES.get(profile['version'])
+        if (policy is None or profile['endpoint'] != policy[0]
                 or profile['feature']['properties']['CTRY24CD'] != 'E92000001'):
             raise AcquisitionError('coverage_integrity_failure')
+        if expected_version is not None and profile['version'] != expected_version:
+            raise AcquisitionError('coverage_version_mismatch')
         geometry = shape(profile['feature']['geometry'])
         if geometry.geom_type not in ('Polygon', 'MultiPolygon') or geometry.is_empty or not geometry.is_valid:
             raise AcquisitionError('coverage_integrity_failure')
@@ -117,16 +148,26 @@ def load_coverage(sha):
         raise AcquisitionError('coverage_integrity_failure') from exc
 
 
-def prepare_coverage(*, client=None):
+def prepare_coverage(*, client=None, adapter_version=ADAPTER_VERSION):
     """Explicit one-time operator bootstrap; no boundary data is bundled in Git."""
+    if adapter_version not in ADAPTER_COVERAGE:
+        raise AcquisitionError('unsupported_adapter')
+    version = ADAPTER_COVERAGE[adapter_version]
+    endpoint, item_endpoint = COVERAGE_POLICIES[version]
     reader = BoundedClient(client, max_response=100_000_000, max_total=110_000_000,
                            seconds=240, request_timeout=75)
     try:
-        metadata = reader.get(COVERAGE_URL, {'f': 'json'})
-        item = reader.get(COVERAGE_ITEM, {'f': 'json'})
-        if item.get('id') != COVERAGE_ITEM.rsplit('/', 1)[1] or item.get('owner') != 'ONSGeography_data':
+        metadata = reader.get(endpoint, {'f': 'json'})
+        item = reader.get(item_endpoint, {'f': 'json'})
+        if item.get('id') != item_endpoint.rsplit('/', 1)[1] or item.get('owner') != 'ONSGeography_data':
             raise AcquisitionError('coverage_schema_changed')
-        collection = reader.get(COVERAGE_URL + '/query', {
+        if version == FULL_EXTENT_COVERAGE_VERSION:
+            spatial = metadata.get('extent', {}).get('spatialReference', {})
+            if (item.get('url') != endpoint.rsplit('/', 1)[0] or item.get('type') != 'Feature Service'
+                    or metadata.get('geometryType') != 'esriGeometryPolygon'
+                    or spatial.get('latestWkid', spatial.get('wkid')) != 27700):
+                raise AcquisitionError('coverage_schema_changed')
+        collection = reader.get(endpoint + '/query', {
             'f': 'geojson', 'where': "CTRY24CD='E92000001'", 'outFields': '*',
             'outSR': '4326', 'returnGeometry': 'true',
         })
@@ -138,16 +179,25 @@ def prepare_coverage(*, client=None):
         if (feature['properties'].get('CTRY24CD') != 'E92000001' or not geometry.is_valid
                 or geometry.is_empty or geometry.geom_type not in ('Polygon', 'MultiPolygon')):
             raise AcquisitionError('invalid_coverage_geometry')
-        profile = {'version': COVERAGE_VERSION, 'endpoint': COVERAGE_URL,
+        if version == FULL_EXTENT_COVERAGE_VERSION:
+            if collection.get('crs') != {'type': 'name', 'properties': {'name': 'EPSG:4326'}}:
+                raise AcquisitionError('coverage_schema_changed')
+            after = reader.get(endpoint, {'f': 'json'})
+            if encode(after) != encode(metadata):
+                raise AcquisitionError('coverage_changed_during_capture')
+        profile = {'version': version, 'endpoint': endpoint,
                    'captured_at': core.now(), 'metadata': metadata, 'item_metadata': item,
                    'feature': feature, 'responses': reader.responses,
                    'method': 'Whole-area covers test; no repair, buffer or clipping.',
                    'limitations': 'December 2024 full resolution, clipped to mean high water; operational coverage, not legal advice.'}
+        if version == FULL_EXTENT_COVERAGE_VERSION:
+            profile.update(metadata_after=after,
+                           limitations='December 2024 full resolution, extent of realm, generally mean low water. Operational administrative footprint; not complete marine or legal designation coverage.')
         data = encode(profile)
         sha = digest(data)
         core.store_object_immutable(_profile_key(sha), data)
-        load_coverage(sha)
-        return {'coverage_profile_sha256': sha, 'version': COVERAGE_VERSION,
+        load_coverage(sha, expected_version=version)
+        return {'coverage_profile_sha256': sha, 'version': version,
                 'captured_at': profile['captured_at'], 'country': 'England'}
     finally:
         reader.close()
@@ -156,7 +206,8 @@ def prepare_coverage(*, client=None):
 def validate_capabilities(request):
     if request.temporal.mode != 'current_publication':
         raise AcquisitionError('unsupported_time')
-    profile, coverage = load_coverage(request.coverage_profile_sha256)
+    profile, coverage = load_coverage(request.coverage_profile_sha256,
+                                      expected_version=ADAPTER_COVERAGE[request.adapter_version])
     if not coverage.covers(shape(request.area)):
         raise AcquisitionError('unsupported_geography')
     return profile

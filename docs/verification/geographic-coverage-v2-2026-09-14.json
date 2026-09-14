@@ -1,0 +1,471 @@
+{
+  "verification_version": "geographic_coverage_v2_verification_v1",
+  "verified_at": "2026-09-14T21:31:01.223383+00:00",
+  "coverage_profile_sha256": "e671d4095419d0df1f5ad8be40467aef759c666aa34d2f6ecdd8ef6fc8c061bf",
+  "coverage_source_url": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Countries_December_2024_Boundaries_UK_BFE/FeatureServer/0",
+  "coverage_source_item": "https://www.arcgis.com/sharing/rest/content/items/2d18d8d4d0b341dfbddebd39d66dbe79",
+  "capture": {
+    "verification_version": "geographic_acquisition_live_verification_v1",
+    "verified_at": "2026-09-14T21:30:43.013558+00:00",
+    "acquisition_id": "d43d57ee-f4c8-4bce-ab25-c37307404c47",
+    "request": {
+      "contract_version": "geographic_acquisition_request_v1",
+      "source_id": "natural_england.sssi",
+      "adapter_version": "sssi_arcgis_v2",
+      "coverage_profile_sha256": "e671d4095419d0df1f5ad8be40467aef759c666aa34d2f6ecdd8ef6fc8c061bf",
+      "area": {
+        "coordinates": [
+          [
+            [
+              1.38,
+              52.68
+            ],
+            [
+              1.38,
+              52.74
+            ],
+            [
+              1.48,
+              52.74
+            ],
+            [
+              1.48,
+              52.68
+            ],
+            [
+              1.38,
+              52.68
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "temporal": {
+        "mode": "current_publication",
+        "start": null,
+        "end": null
+      },
+      "idempotency_key": "live-2026-09-14-broads-bfe-v2"
+    },
+    "manifest_sha256": "5d1062def9f4e92310466ad14e4c03d30d7c3c5928d867e541baeba10b8b208b",
+    "artifact_checksums": {
+      "assembled_provider_candidates": {
+        "sha256": "61a0830550d7d7a000291e09ad165e10473da0ddb0afa746d29322f353888fbb",
+        "bytes": 533942
+      },
+      "normalization_lineage": {
+        "sha256": "c0f2188c1e7b74fda7696130d9bb51f283e47eb4950a3a80a929f82e77b67ef4",
+        "bytes": 282
+      },
+      "normalized_selection": {
+        "sha256": "f33a34f0f83dc4b6907a7648a4069569be90855b13a09434a529737bae01efbb",
+        "bytes": 518806
+      },
+      "provider_metadata_after": {
+        "sha256": "5ed8fe13594bc8c5b6815cd23d90601ab1bd2228f2541d087fc1c445ad287edc",
+        "bytes": 9568
+      },
+      "provider_metadata_before": {
+        "sha256": "5ed8fe13594bc8c5b6815cd23d90601ab1bd2228f2541d087fc1c445ad287edc",
+        "bytes": 9568
+      }
+    },
+    "capture_started": "2026-09-14T21:30:35.093028+00:00",
+    "capture_completed": "2026-09-14T21:30:39.011508+00:00",
+    "feature_count": 2,
+    "native_feature_ids": [
+      "1001720",
+      "1001694"
+    ],
+    "independent_object_ids": [
+      65,
+      601
+    ],
+    "independent_selection_match": true,
+    "publisher_editing_info": {
+      "lastEditDate": 1787126918861,
+      "schemaLastEditDate": 1787126918861,
+      "dataLastEditDate": 1787126918861
+    },
+    "independent_method": "New live ArcGIS polygon-intersection ID query; adapter uses envelope candidates plus local polygon selection.",
+    "independent_responses": [
+      {
+        "endpoint": "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/SSSI_England/FeatureServer/0",
+        "parameters": {
+          "f": "json"
+        },
+        "decoded_response_sha256": "35762851e94f9a7cbcb74ac76b4244ee20f63af3e992912b9db3d0cf041a1f5c",
+        "decoded_bytes": 9563
+      },
+      {
+        "endpoint": "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/SSSI_England/FeatureServer/0/query",
+        "parameters": {
+          "f": "json",
+          "where": "1=1",
+          "geometry": "{\"rings\": [[[1.38, 52.68], [1.38, 52.74], [1.48, 52.74], [1.48, 52.68], [1.38, 52.68]]], \"spatialReference\": {\"wkid\": 4326}}",
+          "geometryType": "esriGeometryPolygon",
+          "inSR": "4326",
+          "spatialRel": "esriSpatialRelIntersects",
+          "returnIdsOnly": "true"
+        },
+        "decoded_response_sha256": "e4049be4141ea0477324fa5bff85a0f034ead204ab943fe5e8186838ddbf496d",
+        "decoded_bytes": 53
+      },
+      {
+        "endpoint": "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/SSSI_England/FeatureServer/0",
+        "parameters": {
+          "f": "json"
+        },
+        "decoded_response_sha256": "35762851e94f9a7cbcb74ac76b4244ee20f63af3e992912b9db3d0cf041a1f5c",
+        "decoded_bytes": 9563
+      }
+    ],
+    "limits": "Current service comparison, not ecological/scientific validation; no atomic provider snapshot."
+  },
+  "coverage_checks": [
+    {
+      "label": "broads",
+      "area": {
+        "coordinates": [
+          [
+            [
+              1.38,
+              52.68
+            ],
+            [
+              1.38,
+              52.74
+            ],
+            [
+              1.48,
+              52.74
+            ],
+            [
+              1.48,
+              52.68
+            ],
+            [
+              1.38,
+              52.68
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "state": "supported"
+    },
+    {
+      "label": "oxford",
+      "area": {
+        "coordinates": [
+          [
+            [
+              -1.31,
+              51.75
+            ],
+            [
+              -1.31,
+              51.79
+            ],
+            [
+              -1.26,
+              51.79
+            ],
+            [
+              -1.26,
+              51.75
+            ],
+            [
+              -1.31,
+              51.75
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "state": "supported"
+    },
+    {
+      "label": "scilly-coastal-sample",
+      "area": {
+        "coordinates": [
+          [
+            [
+              -6.313,
+              49.915
+            ],
+            [
+              -6.313,
+              49.916
+            ],
+            [
+              -6.312,
+              49.916
+            ],
+            [
+              -6.312,
+              49.915
+            ],
+            [
+              -6.313,
+              49.915
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "state": "unsupported_geography"
+    },
+    {
+      "label": "wales",
+      "area": {
+        "coordinates": [
+          [
+            [
+              -3.18,
+              51.48
+            ],
+            [
+              -3.18,
+              51.481
+            ],
+            [
+              -3.179,
+              51.481
+            ],
+            [
+              -3.179,
+              51.48
+            ],
+            [
+              -3.18,
+              51.48
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "state": "unsupported_geography"
+    },
+    {
+      "label": "scotland",
+      "area": {
+        "coordinates": [
+          [
+            [
+              -3.19,
+              55.95
+            ],
+            [
+              -3.19,
+              55.951
+            ],
+            [
+              -3.189,
+              55.951
+            ],
+            [
+              -3.189,
+              55.95
+            ],
+            [
+              -3.19,
+              55.95
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "state": "unsupported_geography"
+    },
+    {
+      "label": "northern-ireland",
+      "area": {
+        "coordinates": [
+          [
+            [
+              -5.94,
+              54.59
+            ],
+            [
+              -5.94,
+              54.591
+            ],
+            [
+              -5.939,
+              54.591
+            ],
+            [
+              -5.939,
+              54.59
+            ],
+            [
+              -5.94,
+              54.59
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "state": "unsupported_geography"
+    },
+    {
+      "label": "shetland",
+      "area": {
+        "coordinates": [
+          [
+            [
+              -1.14,
+              60.15
+            ],
+            [
+              -1.14,
+              60.151
+            ],
+            [
+              -1.139,
+              60.151
+            ],
+            [
+              -1.139,
+              60.15
+            ],
+            [
+              -1.14,
+              60.15
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "state": "unsupported_geography"
+    },
+    {
+      "label": "england-wales-border",
+      "area": {
+        "coordinates": [
+          [
+            [
+              -2.685,
+              51.635
+            ],
+            [
+              -2.685,
+              51.65
+            ],
+            [
+              -2.655,
+              51.65
+            ],
+            [
+              -2.655,
+              51.635
+            ],
+            [
+              -2.685,
+              51.635
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "state": "unsupported_geography"
+    },
+    {
+      "label": "offshore",
+      "area": {
+        "coordinates": [
+          [
+            [
+              3.0,
+              52.0
+            ],
+            [
+              3.0,
+              52.001
+            ],
+            [
+              3.001,
+              52.001
+            ],
+            [
+              3.001,
+              52.0
+            ],
+            [
+              3.0,
+              52.0
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "state": "unsupported_geography"
+    },
+    {
+      "label": "st-marys-island-interior",
+      "area": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.299,
+              49.92
+            ],
+            [
+              -6.299,
+              49.921
+            ],
+            [
+              -6.3,
+              49.921
+            ],
+            [
+              -6.3,
+              49.92
+            ],
+            [
+              -6.299,
+              49.92
+            ]
+          ]
+        ]
+      },
+      "state": "supported"
+    }
+  ],
+  "previous_records": [
+    {
+      "label": "oxford",
+      "acquisition_id": "479183bb-923c-4f8d-b7db-75b424d016b8",
+      "manifest_sha256": "dbb02b4e051d36e5e953375792ca42be37010b82278152f0c6388c39130bebab",
+      "summary_unchanged": true
+    },
+    {
+      "label": "norfolk",
+      "acquisition_id": "e3221ce9-9b1c-4598-90d6-e7983c694ff4",
+      "manifest_sha256": "ccc50b567464ebe9c7dde590c6ba2a8f80d96d7950c68fbb0057e6f56bfd37bc",
+      "summary_unchanged": true
+    },
+    {
+      "label": "norfolk-broads",
+      "acquisition_id": "fa940c13-4bf7-4902-954f-abb9be4cdece",
+      "manifest_sha256": "16cf6e285142d842bf00809399e4bd864420bbac52bf2cb74a74ada4a709cc16",
+      "summary_unchanged": true
+    }
+  ],
+  "isolated_legacy_table_counts": {
+    "sites": 0,
+    "assessments": 0,
+    "datasets": 0,
+    "features": 0,
+    "land_evidence_snapshots": 0,
+    "module_runs": 0
+  },
+  "limitations": [
+    "Coverage checks use retained official England BFE geometry; they do not establish other nations data coverage.",
+    "Extent of realm is an administrative footprint, not full marine or legal designation coverage.",
+    "No raw boundary geometry, SSSI features or database is included."
+  ],
+  "fresh_process_v2_read_matches": true
+}
