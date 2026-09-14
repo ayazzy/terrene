@@ -268,3 +268,27 @@ Future time requests must fail explicitly when the selected source cannot serve
 them. Source collection must not silently execute a model or fabricate a Site.
 
 **References:** [Architecture](ARCHITECTURE.md), [first acquisition iteration](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md), [Customer Discovery](CUSTOMER-DISCOVERY.md).
+
+## 2026-09-14 — UK-wide coverage is a near-term requirement
+
+**Decision:** Following the founder's clarification, prioritize delivery across
+England, Scotland, Wales and Northern Ireland, including their islands. The
+initial two-area England proof remains bounded, but its shared geometry, identity
+and capability contracts must accommodate the whole UK from the outset. Follow
+it promptly with four-nation source expansion and application access, ahead of
+optional new data-family work. No calendar deadline has been agreed.
+
+**Rationale:** Natural England coverage cannot establish UK coverage. Provider
+jurisdictions, source types, temporal support and coordinate systems differ.
+Represent these through explicit adapters and coverage metadata rather than
+reusing an England bounding box or silently renaming all designations as SSSI.
+Maintain a source-family coverage matrix; a missing national source remains a gap.
+
+**Completion meaning:** A UK-capable request schema and four demonstration sites
+are insufficient to claim complete UK data. Each delivered evidence family needs
+verified publisher coverage, acquisition limits, representative tests in all four
+nations and truthful application availability. Broader terrain, imagery, climate
+and infrastructure coverage must be tracked separately from the first designation
+family. Preserve all existing Oxford evidence and historical processing methods.
+
+**References:** [Architecture](ARCHITECTURE.md), [UK expansion plan](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md).

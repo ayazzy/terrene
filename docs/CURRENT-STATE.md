@@ -235,6 +235,9 @@ independently of assessments, without changing the legacy Oxford dataset selecti
 The approved direction is an extensible intelligence platform with an undecided
 initial market. The next proposed implementation is the bounded
 [geographic acquisition iteration](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md), followed
-by separate imagery and historical-weather iterations. These are planned
+immediately by prioritized UK coverage work across England, Scotland, Wales and
+Northern Ireland. The first contract must accommodate all four nations even
+while only the England adapter is implemented. Imagery and historical weather
+remain separate subsequent data-family iterations. These are planned
 capabilities; the implemented state above is unchanged. Full wetland ModuleRun
 result sharing remains an unresolved capability, outside this next iteration.

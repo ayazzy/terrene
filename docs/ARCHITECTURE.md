@@ -175,6 +175,14 @@ separation of objects, relationships, observations, interpretations and decision
 extend it through concrete implementations rather than introduce an exhaustive
 ontology, generic workflow engine or new database technology in advance.
 
+UK-wide coverage is a near-term delivery requirement: England, Scotland, Wales
+and Northern Ireland, including their islands. The first England source is an
+implementation proof, not the geographic boundary of the platform. New geometry
+validation must accommodate all four nations independently of adapter coverage;
+source jurisdictions, native coordinate systems and designation identities remain
+explicit. The current Site boundary validation and England source semantics must
+not become defaults in the new contract.
+
 The intended acquisition and analysis flow is:
 
 ```text
@@ -220,8 +228,10 @@ The intended shared capabilities are:
   public. Purchased data must retain usage terms and acquisition-cost context.
 
 First establish [independent geographic acquisition](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md)
-using one existing vector source in Oxford and a second bounded area. Subsequent
-iterations should test dated Sentinel-2 imagery, then historical weather data,
+using one existing vector source in Oxford and a second bounded area. Prioritize
+four-nation source expansion and application access immediately after that proof,
+with a coverage matrix and explicit gaps for each evidence family. Subsequent
+data-family iterations should test dated Sentinel-2 imagery, then historical weather data,
 with their appropriate processing and presentation. Radar, climate projections,
 commercial feeds and richer workflows remain later candidates. This sequence
 approves architectural direction, not a claim that those integrations exist or

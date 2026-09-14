@@ -11,6 +11,12 @@ explicit supported area without creating an assessment, running a model or
 changing the legacy Oxford source catalogue. Demonstrate the same implementation
 in Oxford and a second bounded area outside the pilot rectangle.
 
+**Near-term delivery target:** the whole UK: England, Scotland, Wales and Northern
+Ireland, including their islands. The founder clarified this after approving the
+first plan. The first source remains an England proof; four-nation expansion is
+the immediate follow-on priority, not an indefinite future extension. No calendar
+deadline has been specified.
+
 This improves Terrene's ability to represent reality by making evidence collection
 reusable across geographies and independent of a particular analytical workflow.
 It is an architectural proof, not validation of a customer or scientific model.
@@ -52,6 +58,12 @@ The request must have a versioned schema and include:
 - An explicit WGS84 Polygon/MultiPolygon area, with a stable geometry fingerprint.
   A Site or Project record is not required. Validate finite coordinates, topology,
   coordinate count, payload size and area limits; never repair the user's geometry.
+  Shared validation must accommodate valid areas across all four UK nations,
+  including Northern Ireland and northern Scottish islands. Do not reuse the
+  legacy `boundary()` England envelope or assume EPSG:27700 for every source or
+  area calculation. Record native CRS and use an appropriate explicit method.
+  Separate valid geometry from unsupported source coverage: a Scottish area is
+  not invalid merely because the first adapter serves England.
 - A registered source identifier and adapter/capability version. Resolve endpoints
   from server-owned configuration; do not accept arbitrary fetch URLs.
 - An explicit temporal selection. V1 supports current publication. A supplied
@@ -65,6 +77,9 @@ temporal requests, publisher and access requirements, attribution/usage terms,
 known scale or resolution, and acquisition limits. Unknown resolution stays
 unknown. Distinguish publisher coverage, the area we retrieved and completeness
 of this retrieval; none establishes a complete real-world inventory.
+Source identity includes publisher/jurisdiction and native feature identifiers.
+Do not require a single nation per request: a cross-border area is valid geometry,
+although v1 may explicitly decline it if its selected source lacks full support.
 
 Keep this contract narrow. It must have an extension path for dated imagery and
 time series without implementing pretend raster, stream or paid-provider adapters.
@@ -145,12 +160,55 @@ The implementation is complete only when:
    feature selection with the provider's query results for both areas. A live test
    must not accept synthetic fallback or compare only two views of the same cached
    result. Service/credential blockers must be reported as incomplete verification.
+7. Synthetic contract tests accept representative geometries in England, Wales,
+   Scotland (including a northern island) and Northern Ireland at the geometry
+   validation stage. The England source must return explicit unsupported coverage
+   for non-covered areas, including a cross-border request, without acquisition or
+   fabricated empty evidence. These tests establish contract flexibility, not live
+   four-nation data coverage.
 
 Choose and verify the second small England area during implementation; Norfolk is
 a candidate, not a selected customer market or a claim of current retained coverage.
 Keep downloaded data and local databases outside Git. Commit only permitted small
 verification manifests/reports with exact provenance; test fixtures must remain
 clearly synthetic. No live provider download was performed for this scoping task.
+
+## Immediate follow-on: deliver UK coverage
+
+Prioritize these bounded iterations before optional new data-family integrations:
+
+1. **Four-nation designation acquisition:** implement the remaining national
+   adapters sequentially against the proven contract. Preserve native designation
+   types, publishers, identifiers, release dates and usage terms. Independently
+   verify national coverage metadata and sample acquisitions, including islands
+   and jurisdiction edges. Record missing feeds and access blockers explicitly.
+2. **UK application access:** provide the authenticated acquisition/read and
+   evidence-assembly contracts, then update Site creation and map availability in
+   a separate UI iteration. Review the existing England-only validation before
+   exposing the workflow; broad basemap coverage alone does not deliver evidence.
+3. **Coverage completion review:** publish a matrix by nation and evidence family
+   with source, supported extent, time support, resolution, acquisition status and
+   verification date. The initial designation family is the first milestone;
+   terrain, rivers, habitats, infrastructure, imagery and climate each need their
+   own coverage plan. Confirm bounded on-demand acquisition works across supported
+   extents without requiring a fresh national download for every request.
+
+Candidate official routes for the first designation family, checked as discovery
+references on 14 September 2026 (not newly connected or downloaded datasets):
+
+| Nation | Publisher / native designation | Route to verify when implementing |
+|---|---|---|
+| England | Natural England / SSSI | Existing registered ArcGIS source in [the importer](../backend/import_data.py) |
+| Scotland | NatureScot / SSSI | [NatureScot data services](https://www.nature.scot/information-hub/naturescot-data-services) and [SSSI metadata](https://www.data.gov.uk/dataset/d64bf689-4ce8-465b-b00e-6a57dec94a22/site-of-special-scientific-interest-scotland) |
+| Wales | Natural Resources Wales / SSSI | [NRW spatial data and DataMapWales access](https://naturalresources.wales/evidence-and-data/maps/browse-map-of-data-about-the-natural-environment/?lang=en) |
+| Northern Ireland | DAERA / ASSI | [ASSI digital datasets](https://www.daera-ni.gov.uk/publications/assi-digital-datasets) |
+
+This is one comparable evidence family, not a claim of identical designation
+semantics or complete environmental coverage. Preserve ASSI as ASSI. Recheck
+endpoint currency, schemas, licences and CRS before each integration. Later
+cross-border orchestration should assemble explicit per-source acquisitions,
+retaining uncovered portions and component lineage rather than silently dropping
+part of an area or erasing jurisdiction distinctions.
 
 ## Scope boundary and follow-on sequence
 
@@ -160,8 +218,7 @@ ordering, monitoring schedules, entity resolution, scenario calculations, model
 changes or generalized source migration. It requires no new runtime dependency
 unless implementation demonstrates a concrete need.
 
-After this proof, separately scope the authenticated acquisition/read integration
-and evidence assembly needed by applications. Then introduce dated Sentinel-2
+After this proof, prioritize the UK coverage sequence above. Then introduce dated Sentinel-2
 imagery and its presentation, followed by historical weather, in bounded iterations
 with source-specific processing and validation. Preserve the distinction between
 historical weather and future climate projections. Commercial access agreements,
@@ -173,6 +230,8 @@ Implement the first geographic evidence acquisition iteration described in this
 plan: a typed backend service and operator CLI for the current Natural England
 SSSI inventory, explicit bounded geometry and temporal capability validation,
 immutable organization-scoped acquisition records, and integrity-checked readback.
+Make shared geometry and source-capability contracts accommodate all four UK
+nations from the outset; source-specific England coverage remains explicit.
 Keep results out of the legacy dataset catalogue and do not create assessments or
 run models. Verify one Oxford area and one bounded area outside the pilot using
 the same implementation, complete the focused acceptance checks, and report any
