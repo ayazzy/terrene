@@ -67,7 +67,7 @@ test('high-frequency dossier spacing follows the shared rhythm', () => {
   );
   assert.match(
     globalCss,
-    /\.evidence-register-overview \{[\s\S]*?margin-top: var\(--space-5\);[\s\S]*?padding: var\(--space-4\) 0;/,
+    /\.evidence-register-overview \{[\s\S]*?margin-top: var\(--space-5\);[\s\S]*?padding: var\(--space-4\);[\s\S]*?border-radius: var\(--radius-panel\);/,
   );
 });
 

@@ -122,6 +122,76 @@ const FACT_POLICY: Record<
   },
 };
 
+const EVIDENCE_FACT_LABELS: Record<string, string> = {
+  'physical.elevation.mean': 'Average ground elevation',
+  'physical.elevation.minimum': 'Lowest ground elevation',
+  'physical.elevation.maximum': 'Highest ground elevation',
+  'physical.elevation.stddev': 'Ground elevation variation',
+  'physical.slope.mean': 'Average ground slope',
+  'physical.slope.p90': 'Upper-range ground slope',
+  'physical.slope.maximum': 'Maximum ground slope',
+  'physical.watercourse.distance_min': 'Nearest mapped watercourse',
+  'physical.watercourse.intersects': 'Watercourse intersects the parcel',
+  'physical.watercourse.proximity_area_fraction':
+    'Land near a mapped watercourse',
+  'ecology.land_cover.class_distribution': 'Mapped land-cover mix',
+  'ecology.land_cover.dominant_class': 'Dominant mapped land cover',
+  'built.mapped_built_up_fraction': 'Mapped built-up land',
+  'ecology.mapped_herbaceous_wetland_fraction': 'Mapped herbaceous wetland',
+  'physical.mapped_permanent_water_fraction': 'Mapped permanent water',
+  'physical.flood.mapped_extent_fraction': 'Mapped flood-zone context',
+  'designations.overlap_fraction': 'SSSI mapped overlap',
+  'ecology.ancient_woodland.mapped_overlap_fraction':
+    'Ancient Woodland mapped overlap',
+  'ecology.priority_habitat.mapped_overlap_fraction':
+    'Mapped priority-habitat overlap by type',
+  'ecology.priority_habitat.any_mapped_overlap_fraction':
+    'Priority-habitat mapped overlap',
+  'built.building.mapped_overlap_fraction': 'Mapped building footprint',
+  'built.functional_site.mapped_overlap_fraction':
+    'Mapped functional-site footprint',
+  'built.building.height_estimate': 'Historical surface-height estimate',
+  'transport.railway_track.mapped_length_within':
+    'Mapped railway within the parcel',
+  'transport.railway_track.distance_min': 'Nearest mapped railway track',
+  'transport.railway_station.distance_min': 'Nearest mapped railway station',
+};
+
+const GAP_REASON_LABELS: Record<string, string> = {
+  absent_legacy_finding: 'Earlier assessment did not retain this finding',
+  absent_observation: 'Observation was not retained',
+  acquisition_failure: 'Source acquisition failed',
+  category_uninterpretable: 'Saved category could not be interpreted',
+  incomplete_inventory: 'Source inventory is incomplete',
+  legacy_distribution_format_unrecognized:
+    'Earlier distribution format is unsupported',
+  legacy_distribution_malformed: 'Earlier distribution record is invalid',
+  legacy_finding_required: 'Earlier mapped finding is required',
+  missing_object_outcome: 'Building estimate was not produced',
+  no_mapped_object_within_search_radius:
+    'No mapped object found within the retained search area',
+  outside_acquired_coverage: 'Parcel is outside acquired source coverage',
+  outside_acquired_extent: 'Parcel is outside the retained source extent',
+  partial_acquired_coverage: 'Only part of the parcel has source coverage',
+  partial_search_coverage: 'Mapped search coverage is incomplete',
+  processing_unavailable: 'Processing result is unavailable',
+  source_not_connected: 'Required source is not connected',
+  source_unavailable: 'Source data is unavailable',
+  source_unconnected: 'Required source is not connected',
+  value_uninterpretable: 'Saved value could not be interpreted',
+};
+
+const GAP_DEFINITION_LABELS: Record<string, string> = {
+  'physical.flood.mapped_extent_fraction': 'Flood-zone evidence',
+  'built.infrastructure.complete_footprint_fraction':
+    'Complete infrastructure footprint',
+};
+
+function readableToken(value: string) {
+  const text = value.replaceAll('_', ' ');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 const GAP_PRIORITY: Array<[string, number, string]> = [
   ['soil.drainage', 120, 'Soil drainage evidence'],
   ['groundwater', 116, 'Groundwater evidence'],
@@ -199,6 +269,40 @@ export function siteBriefLabel(
   return fact.briefLabel;
 }
 
+export function evidenceFactLabel(
+  fact: ScreeningFact,
+  map?: ScreeningMapFeatures | null,
+) {
+  const policy = FACT_POLICY[fact.definition_id];
+  if (policy) return siteBriefLabel({ ...fact, ...policy }, map);
+  return EVIDENCE_FACT_LABELS[fact.definition_id] || fact.label;
+}
+
+export function evidenceAvailabilityLabel(fact: ScreeningFact) {
+  if (fact.availability === 'partial') return 'Partial source coverage';
+  if (fact.known_zero) {
+    if (fact.unit === 'fraction') return 'No overlap mapped in retained source';
+    if (fact.value.kind === 'boolean')
+      return 'No intersection mapped in retained source';
+    if (fact.definition_id.endsWith('.distance_min'))
+      return 'Zero mapped distance in retained source';
+    return 'Known zero in retained source';
+  }
+  return 'Retained source evidence';
+}
+
+export function evidenceGapReasonLabel(gap: ScreeningGap) {
+  return GAP_REASON_LABELS[gap.reason_code] || readableToken(gap.reason_code);
+}
+
+export function evidenceGapStateLabel(gap: ScreeningGap) {
+  if (gap.state === 'source_not_connected') return 'Source not connected';
+  if (gap.state === 'incomplete_inventory') return 'Inventory incomplete';
+  if (gap.state === 'absent_observation') return 'Not retained';
+  if (gap.state === 'unavailable') return 'Not established';
+  return readableToken(gap.state);
+}
+
 export function sitePictureFacts(result: ScreeningResult): SiteBriefFact[] {
   const ranked = prioritizeFacts(result, 20);
   const meaningful = ranked.filter((fact) => !fact.known_zero);
@@ -231,6 +335,8 @@ function gapIdentity(gap: ScreeningGap) {
 export function gapLabel(gap: ScreeningGap) {
   const identity = gapIdentity(gap);
   return (
+    GAP_DEFINITION_LABELS[gap.definition_id || ''] ||
+    GAP_DEFINITION_LABELS[gap.legacy_variable || ''] ||
     GAP_PRIORITY.find(([term]) => identity.includes(term))?.[2] ||
     (gap.definition_id || gap.legacy_variable || gap.reason_code)
       .replaceAll('.', ' · ')

@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  evidenceAvailabilityLabel,
+  evidenceFactLabel,
+  evidenceGapReasonLabel,
+  evidenceGapStateLabel,
+  gapLabel,
   prioritizeFacts,
   prioritizeGaps,
   prioritizeQuestions,
@@ -164,5 +169,71 @@ test('site picture spans distinct useful domains and unknowns stay concise', () 
   assert.equal(
     prioritizeQuestions(result, result.review_questions.length).length,
     3,
+  );
+});
+
+test('evidence labels translate registry language without changing values', () => {
+  assert.equal(
+    evidenceFactLabel(fact('physical.elevation.maximum', 68)),
+    'Highest ground elevation',
+  );
+  assert.equal(
+    evidenceFactLabel(fact('built.building.mapped_overlap_fraction', 0.43), {
+      layers: [{ id: 'buildings', feature_count: 5 }],
+      features: [],
+    }),
+    '5 mapped buildings',
+  );
+  assert.equal(
+    evidenceAvailabilityLabel(fact('designations.overlap_fraction', 0, true)),
+    'No overlap mapped in retained source',
+  );
+  assert.equal(
+    evidenceAvailabilityLabel({
+      ...fact('physical.flood.mapped_extent_fraction'),
+      availability: 'partial',
+    }),
+    'Partial source coverage',
+  );
+  assert.equal(
+    evidenceAvailabilityLabel({
+      ...fact('transport.railway_track.distance_min', 0, true),
+      unit: 'm',
+    }),
+    'Zero mapped distance in retained source',
+  );
+});
+
+test('gap labels explain coverage while preserving the exact gap record', () => {
+  const missingSource = {
+    ...gap('soil', 'soil.drainage.class'),
+    state: 'source_not_connected',
+    reason_code: 'source_unconnected',
+  };
+  assert.equal(
+    evidenceGapReasonLabel(missingSource),
+    'Required source is not connected',
+  );
+  assert.equal(evidenceGapStateLabel(missingSource), 'Source not connected');
+  assert.equal(
+    gapLabel({
+      ...missingSource,
+      definition_id: 'physical.flood.mapped_extent_fraction',
+    }),
+    'Flood-zone evidence',
+  );
+  assert.equal(
+    gapLabel({
+      ...missingSource,
+      definition_id: 'built.infrastructure.complete_footprint_fraction',
+    }),
+    'Complete infrastructure footprint',
+  );
+  assert.equal(
+    evidenceGapReasonLabel({
+      ...missingSource,
+      reason_code: 'future_reason_code',
+    }),
+    'Future reason code',
   );
 });

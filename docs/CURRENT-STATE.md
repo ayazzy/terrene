@@ -80,7 +80,7 @@ The current home is a map-first portfolio view with a preserved list workflow. I
 
 Site identity, boundary, area, assessment state/date, team review status and secondary actions share one compact band. Wetland export is contained within its Models module. Unprepared Screening Context and no-assessment states retain useful site/boundary context and one explicit action; ordinary reads still create no immutable records.
 
-The detailed Evidence view is a compact index: source-bounded domains, facts, gaps, review context and provenance are progressively disclosed instead of rendered as one continuous technical document. Models initially presents one truthful card for the only implemented module, including its exact version and current evidence/result state. The wetland detail opens only after explicit analyst selection, remains summary-first, keeps analytical components and mapped reference layers collapsed until requested, and opens observation provenance in a closable drawer that preserves the originating list and section. Catalogue/detail choice is presentation-only, session-local and reset when the selected Site assessment changes.
+The detailed Evidence view is a compact analyst-facing index: a coverage summary leads into plain-language retained observations and explicit unknowns by domain, followed by source context and the audit trail. Measurement-aware labels distinguish no mapped overlap, no mapped intersection and zero mapped distance rather than flattening every known zero into one message. Exact definitions, gap records, source/object references and immutable identifiers remain progressively disclosed. Models initially presents one truthful card for the only implemented module, including its exact version and current evidence/result state. The wetland detail opens only after explicit analyst selection, remains summary-first, keeps analytical components and mapped reference layers collapsed until requested, and opens observation provenance in a closable drawer that preserves the originating list and section. Catalogue/detail choice is presentation-only, session-local and reset when the selected Site assessment changes.
 
 One shared site-workspace controller scopes the selected assessment, Screening Context lifecycle, history selection, map/evidence focus, exports and workspace controls. Switching sites or historical assessments clears stale artifact views and keys Screening Context to the exact assessment/site/boundary identity. Historical map, boundary, Earth evidence, context and model output move together. The desktop review panel is wider; at narrow widths the map and independently scrollable analytical workspace stack deliberately. The UI remains a small-portfolio application and fetches site/history collections without pagination.
 
@@ -182,6 +182,8 @@ Analyst-brief progressive-disclosure verification: all **106 frontend tests**, T
 
 Model-catalogue verification: all **109 frontend tests**, TypeScript, focused component lint and focused formatting passed, and the production build completed with the existing large-chunk advisory. `app/page.tsx` retains its existing **19** lint diagnostics. Live Oxford browser QA at 1102×941 confirmed that Models opens to one implemented Wetland assessment card with exact version and explicit insufficient-evidence state, mounts the unchanged module only after `Open model`, and returns through `Back to model catalogue` while the primary map remains visible. Backend/PostgreSQL suites were not rerun because this pass changes frontend presentation and session-local disclosure state only.
 
+Evidence-language hierarchy verification: all **112 frontend tests**, TypeScript, focused lint and focused formatting passed, and the production build completed with the existing large-chunk advisory. `app/page.tsx` retains its existing **19** lint diagnostics. Live Oxford browser QA at 1102×941 covered all three evidence domains, the new coverage card, analyst-readable observation and gap labels, mapped-zero distinctions, technical-definition disclosure and source/object references while the map remained visible. It confirmed that 0% mapped overlap and 0 m mapped distance are not presented as the same evidence state. Backend/PostgreSQL suites were not rerun because evidence values, registry records, persistence, APIs and reasoning are unchanged.
+
 ## Known limitations
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
@@ -196,8 +198,8 @@ Model-catalogue verification: all **109 frontend tests**, TypeScript, focused co
 
 ## Latest meaningful implementation
 
-The Site Models tab became catalogue-first on 14 September 2026. It now asks the analyst to choose the implemented wetland module, exposes exact version and evidence/result state before entry, and leaves the existing immutable model output and evidence bindings unchanged.
+The Site Evidence tab was reorganized for analyst review on 14 September 2026. It now leads with coverage, plain-language observations and explicit unknowns, distinguishes measurement-specific zero semantics, and keeps the exact immutable audit record available on demand.
 
 ## Current recommended engineering question
 
-Can the Evidence tab replace remaining engineering-oriented labels with analyst-readable source coverage and gap language while retaining exact technical provenance on demand?
+Can the History tab become an analyst-readable assessment timeline that explains what changed between retained boundaries and evidence states without implying unsupported causal comparison?

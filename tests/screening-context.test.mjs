@@ -115,5 +115,6 @@ test('workspace hierarchy keeps Screening Context primary and team decisions sep
   assert.doesNotMatch(panel, /state !== 'loading'/);
   assert.doesNotMatch(panel, /PATCH|\/sites\/|statuses|setSelectedAssessment/);
   assert.match(state, /contextPath\(assessment.id\) \+ '\/report'/);
-  assert.match(panel, /source-semantic context/i);
+  assert.match(panel, /How sources should be compared/);
+  assert.match(panel, /result\.cross_source_contexts/);
 });

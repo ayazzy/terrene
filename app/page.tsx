@@ -1561,7 +1561,7 @@ export default function Home() {
                       />
                     )}
                     <details className="module-evidence">
-                      <summary>Wetland module input evidence</summary>
+                      <summary>Wetland model inputs</summary>
                       <NaturePanel
                         key={(assessment?.id || current.id) + ':evidence'}
                         section="evidence"

@@ -45,6 +45,22 @@ test('evidence register is an index of compact expandable records', () => {
   assert.match(css, /\.screening-evidence \.evidence-record > summary/);
 });
 
+test('evidence reads as analyst coverage before exposing the audit record', () => {
+  assert.match(screening, /Assessment evidence/);
+  assert.match(screening, /Evidence available for review/);
+  assert.match(screening, /Retained observations/);
+  assert.match(screening, /What the sources show/);
+  assert.match(screening, /What is not established/);
+  assert.match(screening, /Available data not used here/);
+  assert.match(screening, /How sources should be compared/);
+  assert.match(screening, /Source and mapped-object index/);
+  assert.match(screening, /Technical definition and support/);
+  assert.match(screening, /Technical gap record/);
+  assert.match(page, /Wetland model inputs/);
+  assert.doesNotMatch(screening, /Source-bounded Earth facts/);
+  assert.doesNotMatch(screening, /Registered but unconnected capabilities/);
+});
+
 test('Site brief follows analyst questions without repeating headline facts', () => {
   assert.match(screening, /const pictureFactIds = new Set/);
   assert.match(

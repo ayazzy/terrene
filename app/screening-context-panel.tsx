@@ -37,6 +37,10 @@ import {
   mapLayerStatus,
 } from './screening-map-features';
 import {
+  evidenceAvailabilityLabel,
+  evidenceFactLabel,
+  evidenceGapReasonLabel,
+  evidenceGapStateLabel,
   gapLabel,
   prioritizeFacts,
   prioritizeGaps,
@@ -114,8 +118,11 @@ export default function ScreeningContextPanel({
     const ids = Object.values(refs).flatMap((values) => values || []);
     return (
       <details>
-        <summary>Evidence references · {ids.length}</summary>
-        <div className="screening-refs" aria-label="Evidence references">
+        <summary>Source and object references · {ids.length}</summary>
+        <div
+          className="screening-refs"
+          aria-label="Source and object references"
+        >
           {ids.map((id: string) => {
             const record = catalogue.find((item) => item.id === id);
             const source = result?.sources.find((item) => item.id === id);
@@ -167,8 +174,8 @@ export default function ScreeningContextPanel({
     if (mapEvidence.state === 'failed')
       return (
         <p role="alert">
-          Built-world map evidence could not be loaded. Missing evidence is not
-          treated as zero. {mapEvidence.error}
+          Mapped infrastructure evidence could not be loaded. Missing evidence
+          is not treated as zero. {mapEvidence.error}
         </p>
       );
     if (mapEvidence.state === 'unsupported')
@@ -181,8 +188,8 @@ export default function ScreeningContextPanel({
     if (mapEvidence.state === 'unavailable')
       return (
         <p>
-          Built-world map evidence is unavailable for this assessment. Missing
-          evidence is not treated as zero.
+          Mapped infrastructure evidence is unavailable for this assessment.
+          Missing evidence is not treated as zero.
         </p>
       );
     if (!mapEvidence.features)
@@ -296,6 +303,10 @@ export default function ScreeningContextPanel({
                 : state === 'idle'
                   ? 'Select a saved assessment to inspect its context.'
                   : 'Screening Context could not be loaded.';
+  const visibleStatus =
+    mode === 'evidence' && state === 'available'
+      ? `Retained · boundary v${assessment.version}`
+      : status;
 
   return (
     <section
@@ -311,19 +322,19 @@ export default function ScreeningContextPanel({
           <FileText size={18} />
           <span>
             <p className="eyebrow">
-              {mode === 'overview' ? 'SITE DILIGENCE' : 'EVIDENCE RECORD'}
+              {mode === 'overview' ? 'SITE DILIGENCE' : 'SITE EVIDENCE'}
             </p>
             <h2>
-              {mode === 'overview' ? 'Analyst brief' : 'Evidence register'}
+              {mode === 'overview' ? 'Analyst brief' : 'Assessment evidence'}
             </h2>
           </span>
         </span>
-        <output>{status}</output>
+        <output>{visibleStatus}</output>
       </div>
       <p className="nature-muted">
         {mode === 'overview'
-          ? 'Source-bounded context for deciding what to inspect next. This brief does not score the site or make a team decision.'
-          : 'Exact observations, gaps, limitations and provenance for the selected immutable assessment.'}
+          ? 'Evidence tied to retained sources for deciding what to inspect next. This brief does not score the site or make a team decision.'
+          : 'Review what the retained sources show, what remains unknown and the audit trail behind each item.'}
       </p>
       {error && (
         <p role="alert" className="alert">
@@ -349,8 +360,8 @@ export default function ScreeningContextPanel({
           >
             <Download size={14} />
             {context.exporting
-              ? 'Exporting Screening Context…'
-              : 'Export Screening Context'}
+              ? 'Preparing evidence record…'
+              : 'Download evidence record'}
           </button>
         )}
       </div>
@@ -493,12 +504,7 @@ export default function ScreeningContextPanel({
                           <small>{fact.category}</small>
                           {siteBriefLabel(fact, mapEvidence.features)}
                         </span>
-                        <small>
-                          {fact.availability}
-                          {fact.known_zero
-                            ? ' · known source-bounded zero'
-                            : ''}
-                        </small>
+                        <small>{evidenceAvailabilityLabel(fact)}</small>
                       </span>
                       <span className="brief-row-value">
                         <strong>{siteBriefValue(fact)}</strong>
@@ -557,13 +563,13 @@ export default function ScreeningContextPanel({
             className="evidence-register-overview"
             aria-labelledby="evidence-register-overview-heading"
           >
-            <p className="context-kind">Evidence coverage</p>
+            <p className="context-kind">Coverage summary</p>
             <h3 id="evidence-register-overview-heading">
-              What this assessment contains
+              Evidence available for review
             </h3>
             <dl>
               <div>
-                <dt>Observations</dt>
+                <dt>Retained observations</dt>
                 <dd>{factCount}</dd>
               </div>
               <div>
@@ -571,15 +577,15 @@ export default function ScreeningContextPanel({
                 <dd>{gapCount}</dd>
               </div>
               <div>
-                <dt>Sources</dt>
+                <dt>Source records</dt>
                 <dd>{result.sources.length}</dd>
               </div>
             </dl>
           </section>
           <details className="screening-section evidence-run-record">
             <summary>
-              <span>Assessment record</span>
-              <small>Run, snapshot and boundary identity</small>
+              <span>Technical record</span>
+              <small>Run, snapshot and boundary identifiers</small>
             </summary>
             <dl>
               <dt>Module</dt>
@@ -606,36 +612,33 @@ export default function ScreeningContextPanel({
               <summary>
                 <span>{group.label}</span>
                 <small>
-                  {group.facts.length} fact
+                  {group.facts.length} observation
                   {group.facts.length === 1 ? '' : 's'} · {group.gaps.length}{' '}
                   gap{group.gaps.length === 1 ? '' : 's'}
                 </small>
               </summary>
-              <h3 className="evidence-subheading">
-                Source-bounded Earth facts
-              </h3>
+              <h3 className="evidence-subheading">What the sources show</h3>
               {!group.facts.length && (
                 <p>
-                  No source-backed observations retained in this group; this is
-                  not mapped zero.
+                  No observations are retained in this group. This does not
+                  establish mapped absence.
                 </p>
               )}
               {group.facts.map((fact) => (
                 <details className="evidence-record" key={fact.id}>
                   <summary>
                     <span>
-                      <strong>{fact.label}</strong>
-                      <small>
-                        {fact.availability}
-                        {fact.known_zero ? ' · known source-bounded zero' : ''}
-                      </small>
+                      <strong>
+                        {evidenceFactLabel(fact, mapEvidence.features)}
+                      </strong>
+                      <small>{evidenceAvailabilityLabel(fact)}</small>
                     </span>
                     <b>{screeningValue(fact)}</b>
                   </summary>
                   <div className="evidence-record-detail">
                     <p className="nature-muted">{fact.limitations}</p>
-                    <details>
-                      <summary>Definition, support and provenance</summary>
+                    <details className="technical-evidence-record">
+                      <summary>Technical definition and support</summary>
                       <pre>{JSON.stringify(fact, null, 2)}</pre>
                     </details>
                     {references(fact.references)}
@@ -662,11 +665,11 @@ export default function ScreeningContextPanel({
                   </div>
                 </details>
               ))}
-              <h3 className="evidence-subheading">Evidence gaps</h3>
+              <h3 className="evidence-subheading">What is not established</h3>
               {!group.gaps.length && (
                 <p>
-                  No explicit gaps recorded in this group; evidence completeness
-                  is not established.
+                  No explicit gaps are recorded in this group. This does not
+                  establish evidence completeness.
                 </p>
               )}
               {group.gaps.map((gap) => (
@@ -674,12 +677,16 @@ export default function ScreeningContextPanel({
                   <summary>
                     <span>
                       <strong>{gapLabel(gap)}</strong>
-                      <small>{gap.reason_code.replaceAll('_', ' ')}</small>
+                      <small>{evidenceGapReasonLabel(gap)}</small>
                     </span>
-                    <b>{gap.state.replaceAll('_', ' ')}</b>
+                    <b>{evidenceGapStateLabel(gap)}</b>
                   </summary>
                   <div className="evidence-record-detail">
                     <p>{gap.reason}</p>
+                    <details className="technical-evidence-record">
+                      <summary>Technical gap record</summary>
+                      <pre>{JSON.stringify(gap, null, 2)}</pre>
+                    </details>
                     {references({
                       gap_ids: [gap.id],
                       source_reference_ids: gap.source_reference_ids,
@@ -691,16 +698,16 @@ export default function ScreeningContextPanel({
             </details>
           ))}
           <details className="screening-section">
-            <summary>Built-world map evidence</summary>
+            <summary>Mapped infrastructure evidence</summary>
             {mappedLayerEvidence(true)}
           </details>
           <div className="evidence-supporting-heading">
-            <p className="context-kind">Supporting records</p>
-            <h3>Review context and provenance</h3>
+            <p className="context-kind">Audit trail</p>
+            <h3>Source context and technical records</h3>
           </div>
           <details className="screening-section evidence-context-group">
             <summary>
-              <span>Registered but unconnected capabilities</span>
+              <span>Available data not used here</span>
               <small>{result.unconnected_capabilities.length} records</small>
             </summary>
             {result.unconnected_capabilities.map((capability) => (
@@ -727,20 +734,17 @@ export default function ScreeningContextPanel({
             ))}
           </details>
           {contextItems(
-            'Mapped-zero qualifications',
+            'Confirmed mapped absences',
             result.mapped_zero_qualifications,
           )}
           {contextItems(
-            'Source-semantic context',
+            'How sources should be compared',
             result.cross_source_contexts,
           )}
-          {contextItems(
-            'Unresolved human-review questions',
-            allReviewQuestions,
-          )}
+          {contextItems('Questions for analyst review', allReviewQuestions)}
           <details className="screening-section evidence-context-group">
             <summary>
-              <span>Source and object catalogue</span>
+              <span>Source and mapped-object index</span>
               <small>
                 {result.sources.length +
                   result.objects.length +
@@ -783,9 +787,9 @@ export default function ScreeningContextPanel({
       >
         <DialogContent className="report-dialog">
           <DialogHeader>
-            <DialogTitle>Screening Context export</DialogTitle>
+            <DialogTitle>Evidence record export</DialogTitle>
             <DialogDescription>
-              Saved calculated context with current team review status labelled
+              Saved evidence context with current team review status labelled
               separately.
             </DialogDescription>
           </DialogHeader>
@@ -795,11 +799,11 @@ export default function ScreeningContextPanel({
               href={context.exportUrl}
               download="terrene-screening-context.html"
             >
-              Download Screening Context HTML
+              Download evidence record HTML
             </a>
           </div>
           <iframe
-            title="Screening Context HTML preview"
+            title="Evidence record HTML preview"
             srcDoc={context.exportHtml}
             sandbox=""
           />
@@ -814,7 +818,7 @@ export default function ScreeningContextPanel({
         >
           <SheetContent className="evidence-sheet screening-inspector">
             <SheetHeader>
-              <SheetTitle>Screening evidence reference</SheetTitle>
+              <SheetTitle>Source or object reference</SheetTitle>
               <SheetDescription>{inspected?.id}</SheetDescription>
             </SheetHeader>
             <pre>{JSON.stringify(inspected?.value, null, 2)}</pre>

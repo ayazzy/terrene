@@ -3435,9 +3435,10 @@ summary {
 }
 .evidence-register-overview {
   margin-top: var(--space-5);
-  padding: var(--space-4) 0;
-  border-top: 2px solid var(--border-strong);
-  border-bottom: 1px solid var(--border-default);
+  padding: var(--space-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-panel);
+  background: var(--surface-subtle);
 }
 .evidence-register-overview h3,
 .evidence-supporting-heading h3 { margin: var(--space-1) 0 var(--space-3); font-size: var(--font-size-body); }
@@ -3563,7 +3564,15 @@ summary {
 .evidence-record-detail > p { margin: 2px 0 10px; }
 .evidence-record-detail details { margin-top: 8px; }
 .evidence-record-detail pre { max-height: 18rem; overflow: auto; }
-.evidence-supporting-heading { margin-top: var(--space-6); }
+.technical-evidence-record > summary {
+  color: var(--text-secondary);
+  font-size: var(--font-size-micro);
+}
+.evidence-supporting-heading {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-default);
+}
 .evidence-context-group .evidence-record:last-child { border-bottom: 0; }
 
 /* One-model workspace: status and decisions first, methods on demand. */
