@@ -18,6 +18,7 @@ import MapFeatureInspector from './map-feature-inspector';
 import SiteEditorPanel from './site-editor-panel';
 import SiteModelCatalogue from './site-model-catalogue';
 import SiteAssessmentTimeline from './site-assessment-timeline';
+import AssessmentPreflight from './assessment-preflight';
 import {
   useSiteWorkspaceState,
   type WorkspaceTab,
@@ -199,12 +200,14 @@ export default function Home() {
     [email, setEmail] = useState(''),
     [password, setPassword] = useState(''),
     [rawGeometry, setRawGeometry] = useState<any>(null),
+    [assessmentPreflightOpen, setAssessmentPreflightOpen] = useState(false),
     [navigationCompact, setNavigationCompact] = useState(true),
     [mobileNavigation, setMobileNavigation] = useState(false),
     [mapLayersOpen, setMapLayersOpen] = useState(false);
   const operatingProjection = projectOperatingPictureState(operatingState);
   const { view, sitesView, activeSiteId: active } = operatingProjection;
   function setView(next: string) {
+    setAssessmentPreflightOpen(false);
     if (next === 'workspace') {
       operatingPicture.transition((currentState) => ({
         ...currentState,
@@ -576,11 +579,13 @@ export default function Home() {
     }
   }
   function openSite(s: any) {
+    setAssessmentPreflightOpen(false);
     workspace.resetForSite();
     setHistory([]);
     operatingPicture.selectEntity({ kind: 'site', id: s.id }, 'site');
   }
   function startNew() {
+    setAssessmentPreflightOpen(false);
     setEditing(false);
     setName('');
     setNotes('');
@@ -672,10 +677,13 @@ export default function Home() {
     });
   }
   async function createAssessment() {
+    let submitted = false;
     await act(async () => {
       await api('/sites/' + active + '/assessments', 'POST');
       workspace.resetForSite();
+      submitted = true;
     });
+    if (submitted) setAssessmentPreflightOpen(false);
   }
   const filtered = sites.filter(
     (s) =>
@@ -1335,7 +1343,7 @@ export default function Home() {
                     busy ||
                     ['queued', 'running'].includes(current.assessment?.state)
                   }
-                  onClick={() => void createAssessment()}
+                  onClick={() => setAssessmentPreflightOpen(true)}
                 >
                   <Play size={15} />
                   {['queued', 'running'].includes(current.assessment?.state)
@@ -1887,6 +1895,30 @@ export default function Home() {
           />
         )}
       </section>
+      {current && (
+        <AssessmentPreflight
+          open={assessmentPreflightOpen}
+          siteId={current.id}
+          siteName={current.name}
+          boundaryVersion={current.version}
+          boundaryType={current.geometry?.type || ''}
+          sources={datasets}
+          retainedSceneSources={retainedSceneSources}
+          sourceReadState={
+            loading && !datasets.length
+              ? 'loading'
+              : readErrors.datasets && !datasets.length
+                ? 'unavailable'
+                : readErrors.datasets
+                  ? 'partial'
+                  : 'ready'
+          }
+          viewingHistorical={viewingHistorical}
+          busy={busy}
+          onOpenChange={setAssessmentPreflightOpen}
+          onConfirm={() => void createAssessment()}
+        />
+      )}
       <Dialog
         open={!!workspace.reportHtml}
         onOpenChange={(v) => {
