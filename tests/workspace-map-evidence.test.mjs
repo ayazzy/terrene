@@ -146,7 +146,7 @@ test('workspace integration shares selection and never auto-focuses an off-site 
   assert.match(inspector, /Show related objects/);
   assert.match(inspector, /No object-to-object network is inferred/);
   assert.match(map, /feature-state', 'related'/);
-  assert.match(map, /Portfolio/);
+  assert.match(map, /All sites/);
   assert.match(map, /Site diligence/);
   assert.match(map, /Asset intelligence/);
   assert.match(

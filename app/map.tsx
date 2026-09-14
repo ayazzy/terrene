@@ -5,9 +5,12 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Box,
+  Compass,
   Layers,
   ListTree,
   LocateFixed,
+  RotateCcw,
+  RotateCw,
   ArrowUpRight,
   FileSearch,
   MapPin,
@@ -714,6 +717,9 @@ export default function SiteMap({
       style: BASEMAP.style,
       center: [-1.29, 51.78],
       zoom: 10,
+      dragRotate: true,
+      pitchWithRotate: true,
+      touchPitch: true,
     });
     map.current = m;
     let evidenceOnlyFallback = BASEMAP.productionConfigurationMissing;
@@ -1226,6 +1232,24 @@ export default function SiteMap({
   const legendFeatures = builtFeatures.filter((feature) =>
     builtLayerVisible(feature.properties.layer_id),
   );
+  const legendObjectRows = (() => {
+    const totals = new Map<string, number>();
+    const positions = new Map<string, number>();
+    for (const feature of legendFeatures) {
+      const label = mapFeatureName(feature);
+      totals.set(label, (totals.get(label) || 0) + 1);
+    }
+    return legendFeatures.map((feature) => {
+      const label = mapFeatureName(feature);
+      const position = (positions.get(label) || 0) + 1;
+      const total = totals.get(label) || 1;
+      positions.set(label, position);
+      return {
+        feature,
+        label: total > 1 ? `${label} ${position} of ${total}` : label,
+      };
+    });
+  })();
   const railClassifications = [
     ...new Set(
       legendFeatures
@@ -1405,6 +1429,40 @@ export default function SiteMap({
           </button>
         )}
         <button
+          aria-label="Rotate map anticlockwise"
+          title="Rotate map 15° anticlockwise. Right-drag or Control-drag the map for free rotation."
+          onClick={() =>
+            map.current?.easeTo({
+              bearing: map.current.getBearing() - 15,
+              duration: 250,
+            })
+          }
+        >
+          <RotateCcw size={16} />
+          <span className="sr-only">Rotate left</span>
+        </button>
+        <button
+          aria-label="Reset map to north"
+          title="Reset map to north"
+          onClick={() => map.current?.easeTo({ bearing: 0, duration: 250 })}
+        >
+          <Compass size={16} />
+          <span className="sr-only">North</span>
+        </button>
+        <button
+          aria-label="Rotate map clockwise"
+          title="Rotate map 15° clockwise. Right-drag or Control-drag the map for free rotation."
+          onClick={() =>
+            map.current?.easeTo({
+              bearing: map.current.getBearing() + 15,
+              duration: 250,
+            })
+          }
+        >
+          <RotateCw size={16} />
+          <span className="sr-only">Rotate right</span>
+        </button>
+        <button
           aria-label="Fit site boundary"
           title="Fit site boundary"
           disabled={!geometry && !siteEntities.length}
@@ -1419,9 +1477,14 @@ export default function SiteMap({
           aria-label="Spatial intelligence level"
         >
           {workflowLevel === 'portfolio' ? (
-            <strong aria-current="page">Portfolio</strong>
+            <strong aria-current="page">All sites</strong>
           ) : (
-            <button onClick={onOpenPortfolio}>Portfolio</button>
+            <button
+              title="Return to the all-sites map"
+              onClick={onOpenPortfolio}
+            >
+              All sites
+            </button>
           )}
           {workflowLevel !== 'portfolio' && (
             <>
@@ -1761,16 +1824,20 @@ export default function SiteMap({
             </section>
             {!!legendFeatures.length && (
               <section>
-                <h3>Keyboard object index</h3>
+                <h3>Objects in this snapshot</h3>
+                <p className={infrastructureStyles.objectIndexNote}>
+                  One row per retained mapped object. Repeated classifications
+                  can form one apparent line on the map.
+                </p>
                 <div className={infrastructureStyles.legendObjects}>
-                  {legendFeatures.map((feature) => (
+                  {legendObjectRows.map(({ feature, label }) => (
                     <button
                       key={feature.id}
                       aria-pressed={feature.id === selectedMapObject}
                       onClick={() => onInspectMapObject?.(feature.id)}
                     >
                       <i style={{ background: featureSwatchColor(feature) }} />
-                      <span>{mapFeatureName(feature)}</span>
+                      <span>{label}</span>
                     </button>
                   ))}
                 </div>

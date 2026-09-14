@@ -611,7 +611,7 @@
 
 .legendObjects button:hover,
 .legendObjects button[aria-pressed='true'] {
-  border-color: #46574f;
+  border-color: transparent;
   background: #1d2a25;
 }
 
@@ -627,6 +627,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.objectIndexNote {
+  margin: -0.2rem 0 0.55rem;
+  color: #84948c;
+  font-size: 0.6875rem;
+  line-height: 1.45;
 }
 
 .sourceList {

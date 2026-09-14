@@ -101,9 +101,31 @@ test('operator controls preserve 2D truth and mutually exclusive left surfaces',
   assert.match(map, /!perspectiveActive/);
   assert.match(map, /heightAvailableCount > 0/);
   assert.match(map, /id="map-legend"/);
-  assert.match(map, /Keyboard object index/);
+  assert.match(map, /Objects in this snapshot/);
+  assert.match(map, /Repeated classifications/);
   assert.match(map, /Retrieved \{sourceDate\(source\.retrieved_at\)\}/);
   assert.match(map, /className: 'terrene-map-hover'/);
+});
+
+test('map orientation is available without reaching controls behind the dossier', () => {
+  assert.match(map, /dragRotate: true/);
+  assert.match(map, /pitchWithRotate: true/);
+  assert.match(map, /touchPitch: true/);
+  assert.match(map, /aria-label="Rotate map anticlockwise"/);
+  assert.match(map, /aria-label="Reset map to north"/);
+  assert.match(map, /aria-label="Rotate map clockwise"/);
+  assert.match(
+    shellCss,
+    /entity-dossier:not\(\.dossier-collapsed\)\) \.map-toolbar[\s\S]*?max-width: calc\(52% - 1\.5rem\)[\s\S]*?flex-wrap: wrap/,
+  );
+});
+
+test('object roster distinguishes retained objects without a selected perimeter', () => {
+  assert.match(map, /`\$\{label\} \$\{position\} of \$\{total\}`/);
+  assert.match(
+    mapCss,
+    /\.legendObjects button\[aria-pressed='true'\][\s\S]*?border-color:\s*transparent/,
+  );
 });
 
 test('perspective visibility is synchronized while the map camera is moving', () => {

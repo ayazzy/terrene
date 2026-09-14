@@ -603,8 +603,14 @@ export default function Home() {
   const availableSourceCount = datasets.filter(
     (dataset) => dataset.state === 'available',
   ).length;
-  const sourceTimes = datasets
-    .map((dataset) => Date.parse(dataset.retrieved))
+  const retainedSceneSources =
+    view === 'site' ? mapEvidence.scene?.sources || [] : [];
+  const sourceTimes = (
+    retainedSceneSources.length
+      ? retainedSceneSources.map((source) => source.retrieved_at)
+      : datasets.map((dataset) => dataset.retrieved)
+  )
+    .map((retrieved) => Date.parse(retrieved))
     .filter(Number.isFinite);
   const latestSourceTime = sourceTimes.length ? Math.max(...sourceTimes) : null;
   const sourceAsOf = latestSourceTime
@@ -616,22 +622,28 @@ export default function Home() {
     : loading
       ? 'Dates loading'
       : 'Dates unavailable';
-  const sourceState =
-    loading && !datasets.length
+  const sourceState = retainedSceneSources.length
+    ? 'available'
+    : view === 'site' && mapEvidence.sceneState === 'loading'
       ? 'loading'
-      : !datasets.length
-        ? 'unavailable'
-        : readErrors.datasets || availableSourceCount < datasets.length
-          ? 'partial'
-          : 'available';
-  const sourceStatus =
-    loading && !datasets.length
+      : loading && !datasets.length
+        ? 'loading'
+        : !datasets.length
+          ? 'unavailable'
+          : readErrors.datasets || availableSourceCount < datasets.length
+            ? 'partial'
+            : 'available';
+  const sourceStatus = retainedSceneSources.length
+    ? `${retainedSceneSources.length} retained`
+    : view === 'site' && mapEvidence.sceneState === 'loading'
       ? 'Loading'
-      : !datasets.length
-        ? readErrors.datasets
-          ? 'Unavailable'
-          : 'No sources recorded'
-        : `${availableSourceCount} / ${datasets.length} available`;
+      : loading && !datasets.length
+        ? 'Loading'
+        : !datasets.length
+          ? readErrors.datasets
+            ? 'Unavailable'
+            : 'No sources recorded'
+          : `${availableSourceCount} / ${datasets.length} available`;
   const commandSearchResults: ShellSearchResult[] =
     searchableInfrastructureEntities(infrastructureEntities, query, 8).map(
       (entity) => ({
@@ -845,7 +857,8 @@ export default function Home() {
           }
           closeButtonRef={analysisCloseButton}
           onCollapse={collapseSitePanel}
-          onOpenLayers={() => setMapLayersOpen(true)}
+          layersOpen={mapLayersOpen}
+          onOpenLayers={() => setMapLayersOpen((open) => !open)}
           onSubjectChange={(id, method) =>
             operatingPicture.transition(
               (currentState) => ({
@@ -1271,7 +1284,8 @@ export default function Home() {
             }
             closeButtonRef={analysisCloseButton}
             onCollapse={collapseSitePanel}
-            onOpenLayers={() => setMapLayersOpen(true)}
+            layersOpen={mapLayersOpen}
+            onOpenLayers={() => setMapLayersOpen((open) => !open)}
           >
             {stale && (
               <div className="alert">
@@ -1305,30 +1319,6 @@ export default function Home() {
                     </small>
                   </span>
                 </div>
-                {mapEvidence.selectedObject && mapEvidence.scene && (
-                  <MapFeatureInspector
-                    feature={mapEvidence.selectedObject}
-                    layer={mapEvidence.scene.layers.find(
-                      (layer) =>
-                        layer.id ===
-                        mapEvidence.selectedObject?.properties.layer_id,
-                    )}
-                    sources={mapEvidence.scene.sources}
-                    limitations={mapEvidence.scene.limitations}
-                    relatedVisible={operatingState.showRelated}
-                    onToggleRelated={() =>
-                      operatingPicture.transition((currentState) => ({
-                        ...currentState,
-                        showRelated: !currentState.showRelated,
-                      }))
-                    }
-                    onLocate={() =>
-                      mapEvidence.locateObject(mapEvidence.selectedObject!.id)
-                    }
-                    onClose={mapEvidence.clearSelection}
-                  />
-                )}
-                {refreshNotice}
                 <Tabs
                   value={tab}
                   onValueChange={(value) =>
@@ -1344,6 +1334,30 @@ export default function Home() {
                     <TabsTrigger value="models">Models</TabsTrigger>
                     <TabsTrigger value="history">History</TabsTrigger>
                   </TabsList>
+                  {mapEvidence.selectedObject && mapEvidence.scene && (
+                    <MapFeatureInspector
+                      feature={mapEvidence.selectedObject}
+                      layer={mapEvidence.scene.layers.find(
+                        (layer) =>
+                          layer.id ===
+                          mapEvidence.selectedObject?.properties.layer_id,
+                      )}
+                      sources={mapEvidence.scene.sources}
+                      limitations={mapEvidence.scene.limitations}
+                      relatedVisible={operatingState.showRelated}
+                      onToggleRelated={() =>
+                        operatingPicture.transition((currentState) => ({
+                          ...currentState,
+                          showRelated: !currentState.showRelated,
+                        }))
+                      }
+                      onLocate={() =>
+                        mapEvidence.locateObject(mapEvidence.selectedObject!.id)
+                      }
+                      onClose={mapEvidence.clearSelection}
+                    />
+                  )}
+                  {refreshNotice}
                   <TabsContent value="overview">
                     {assessment ? (
                       <ScreeningContextPanel

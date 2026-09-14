@@ -23,6 +23,7 @@ type EntityDossierProps = {
   historyState?: HistoryState;
   closeButtonRef?: Ref<HTMLButtonElement>;
   onCollapse: () => void;
+  layersOpen?: boolean;
   onOpenLayers?: () => void;
   children: ReactNode;
 };
@@ -41,6 +42,7 @@ export default function EntityDossier({
   historyState,
   closeButtonRef,
   onCollapse,
+  layersOpen = false,
   onOpenLayers,
   children,
 }: EntityDossierProps) {
@@ -65,7 +67,12 @@ export default function EntityDossier({
         <div className={styles.actions}>
           {actions}
           {onOpenLayers && (
-            <button className="text-btn" onClick={onOpenLayers}>
+            <button
+              className="text-btn"
+              aria-expanded={layersOpen}
+              aria-controls="map-layers"
+              onClick={onOpenLayers}
+            >
               <Layers3 size={15} /> Map layers
             </button>
           )}

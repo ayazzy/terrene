@@ -47,11 +47,24 @@ test('the project dossier relies on the shared map roster instead of a duplicate
 test('both dossiers expose map layers while controlled layer state stays on the persistent map', () => {
   assert.match(page, /layersOpen=\{mapLayersOpen\}/);
   assert.match(page, /onLayersOpenChange=\{setMapLayersOpen\}/);
-  assert.match(page, /onOpenLayers=\{\(\) => setMapLayersOpen\(true\)\}/g);
+  assert.match(
+    page,
+    /onOpenLayers=\{\(\) => setMapLayersOpen\(\(open\) => !open\)\}/g,
+  );
+  assert.match(dossier, /aria-expanded=\{layersOpen\}/);
+  assert.match(dossier, /aria-controls="map-layers"/);
   assert.match(map, /const layerPanelOpen = layersOpen \?\? localLayersOpen/);
   assert.match(map, /setRosterOpen\(false\);[\s\S]*setLegendOpen\(false\)/);
   assert.match(map, /rosterOpen &&[\s\S]*!layerPanelOpen &&[\s\S]*!legendOpen/);
   assert.match(mapCss, /\.legendPanel\s*\{/);
+});
+
+test('site analysis navigation stays above the optional object inspector', () => {
+  const analysisTabs = page.indexOf('aria-label="Site analysis sections"');
+  const objectInspector = page.indexOf('<MapFeatureInspector', analysisTabs);
+  assert.notEqual(analysisTabs, -1);
+  assert.notEqual(objectInspector, -1);
+  assert.ok(analysisTabs < objectInspector);
 });
 
 test('collapse preserves the entity and immutable artifact URL state', () => {

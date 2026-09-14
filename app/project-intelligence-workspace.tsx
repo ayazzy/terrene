@@ -171,6 +171,7 @@ type ProjectIntelligenceWorkspaceProps = {
   dossierOpen: boolean;
   locationLabel: string;
   onCollapse: () => void;
+  layersOpen: boolean;
   onOpenLayers: () => void;
   closeButtonRef?: Ref<HTMLButtonElement>;
 };
@@ -186,6 +187,7 @@ export default function ProjectIntelligenceWorkspace({
   dossierOpen,
   locationLabel,
   onCollapse,
+  layersOpen,
   onOpenLayers,
   closeButtonRef,
 }: ProjectIntelligenceWorkspaceProps) {
@@ -210,7 +212,7 @@ export default function ProjectIntelligenceWorkspace({
       artifact={state.run ? `${state.run.result.model_version} · ${state.run.evidence_binding.bundles.length} evidence bundles` : 'No intelligence run selected'}
       evidenceAsOf={state.run ? `Evidence as of ${formatEvidenceTime(state.run.evidence_binding.evidence_as_of)}` : undefined}
       historyState={viewingHistorical && state.run ? { label: `Run created ${formatEvidenceTime(state.run.created)}`, onReturnLatest: () => state.setSelectedRunId(latestRun!.id) } : undefined}
-      closeButtonRef={closeButtonRef} onCollapse={onCollapse} onOpenLayers={onOpenLayers}>
+      closeButtonRef={closeButtonRef} onCollapse={onCollapse} layersOpen={layersOpen} onOpenLayers={onOpenLayers}>
       {state.error && <div className="alert error" role="alert">{state.error}<button onClick={state.retry}><RefreshCw size={14} /> Retry</button></div>}
         <main className="intelligence-content">
           {state.loading && !state.run ? <WorkspaceLoading /> : !state.selectedSubject ? (

@@ -35,8 +35,10 @@ test('command bar exposes entity search, scope, source records, and selection', 
   assert.match(shell, /<small>Sources<\/small>[\s\S]*\{sourceStatus\}/);
   assert.match(shell, /<small>Source records<\/small>[\s\S]*\{sourceAsOf\}/);
   assert.match(shell, /<small>Selection<\/small>/);
-  assert.match(page, /Date\.parse\(dataset\.retrieved\)/);
+  assert.match(page, /datasets\.map\(\(dataset\) => dataset\.retrieved\)/);
   assert.match(page, /dataset\.state === 'available'/);
+  assert.match(page, /mapEvidence\.scene\?\.sources \|\| \[\]/);
+  assert.match(page, /`\$\{retainedSceneSources\.length\} retained`/);
   assert.match(page, /operatingState\.selection\?\.kind === 'site'/);
 });
 
