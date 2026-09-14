@@ -1,0 +1,324 @@
+{
+  "report_version": "geographic_acquisition_engineering_verification_v1",
+  "verified_at": "2026-09-14T21:20:20.674906+00:00",
+  "source_url": "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/SSSI_England/FeatureServer/0",
+  "coverage_url": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Countries_December_2024_Boundaries_UK_BFC/FeatureServer/0",
+  "coverage_profile_sha256": "5d6761b3f11633e68a15deaa98face13e34ca7c674586f623bc8a7e783a2ddb2",
+  "captures": [
+    {
+      "verification_version": "geographic_acquisition_live_verification_v1",
+      "verified_at": "2026-09-14T21:17:00.017595+00:00",
+      "acquisition_id": "479183bb-923c-4f8d-b7db-75b424d016b8",
+      "request": {
+        "contract_version": "geographic_acquisition_request_v1",
+        "source_id": "natural_england.sssi",
+        "adapter_version": "sssi_arcgis_v1",
+        "coverage_profile_sha256": "5d6761b3f11633e68a15deaa98face13e34ca7c674586f623bc8a7e783a2ddb2",
+        "area": {
+          "coordinates": [
+            [
+              [
+                -1.31,
+                51.75
+              ],
+              [
+                -1.31,
+                51.79
+              ],
+              [
+                -1.26,
+                51.79
+              ],
+              [
+                -1.26,
+                51.75
+              ],
+              [
+                -1.31,
+                51.75
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "temporal": {
+          "mode": "current_publication",
+          "start": null,
+          "end": null
+        },
+        "idempotency_key": "live-2026-09-14-oxford"
+      },
+      "manifest_sha256": "dbb02b4e051d36e5e953375792ca42be37010b82278152f0c6388c39130bebab",
+      "artifact_checksums": {
+        "assembled_provider_candidates": {
+          "sha256": "a57f3ee86ae159a66a7884f51e1a443230de6ce37c716f6ace7969d297252962",
+          "bytes": 332213
+        },
+        "normalization_lineage": {
+          "sha256": "7fd5c623f0dededcb17ebced63cc9ee231ea6b241b945477317ab7a21ea27660",
+          "bytes": 492
+        },
+        "normalized_selection": {
+          "sha256": "45f7c7b17d90bb5ebe4019660d9d9c93670acc316afa71ef9782a59972fb6950",
+          "bytes": 332200
+        },
+        "provider_metadata_after": {
+          "sha256": "5ed8fe13594bc8c5b6815cd23d90601ab1bd2228f2541d087fc1c445ad287edc",
+          "bytes": 9568
+        },
+        "provider_metadata_before": {
+          "sha256": "5ed8fe13594bc8c5b6815cd23d90601ab1bd2228f2541d087fc1c445ad287edc",
+          "bytes": 9568
+        }
+      },
+      "capture_started": "2026-09-14T21:13:32.912368+00:00",
+      "capture_completed": "2026-09-14T21:13:36.833954+00:00",
+      "feature_count": 5,
+      "native_feature_ids": [
+        "1000569",
+        "1000777",
+        "1000778",
+        "1000952",
+        "1000812"
+      ],
+      "independent_object_ids": [
+        1850,
+        2778,
+        2807,
+        4052,
+        4109
+      ],
+      "independent_selection_match": true,
+      "publisher_editing_info": {
+        "lastEditDate": 1787126918861,
+        "schemaLastEditDate": 1787126918861,
+        "dataLastEditDate": 1787126918861
+      },
+      "independent_method": "New live ArcGIS polygon-intersection ID query; adapter uses envelope candidates plus local polygon selection.",
+      "independent_responses": [
+        {
+          "endpoint": "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/SSSI_England/FeatureServer/0",
+          "parameters": {
+            "f": "json"
+          },
+          "decoded_response_sha256": "35762851e94f9a7cbcb74ac76b4244ee20f63af3e992912b9db3d0cf041a1f5c",
+          "decoded_bytes": 9563
+        },
+        {
+          "endpoint": "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/SSSI_England/FeatureServer/0/query",
+          "parameters": {
+            "f": "json",
+            "where": "1=1",
+            "geometry": "{\"rings\": [[[-1.31, 51.75], [-1.31, 51.79], [-1.26, 51.79], [-1.26, 51.75], [-1.31, 51.75]]], \"spatialReference\": {\"wkid\": 4326}}",
+            "geometryType": "esriGeometryPolygon",
+            "inSR": "4326",
+            "spatialRel": "esriSpatialRelIntersects",
+            "returnIdsOnly": "true"
+          },
+          "decoded_response_sha256": "a2df731f6ef5956167e6a989da85e179b2f4cea121d6f0f2fcb0edcb5c3c5163",
+          "decoded_bytes": 71
+        },
+        {
+          "endpoint": "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/SSSI_England/FeatureServer/0",
+          "parameters": {
+            "f": "json"
+          },
+          "decoded_response_sha256": "35762851e94f9a7cbcb74ac76b4244ee20f63af3e992912b9db3d0cf041a1f5c",
+          "decoded_bytes": 9563
+        }
+      ],
+      "limits": "Current service comparison, not ecological/scientific validation; no atomic provider snapshot."
+    },
+    {
+      "verification_version": "geographic_acquisition_live_verification_v1",
+      "verified_at": "2026-09-14T21:17:37.125515+00:00",
+      "acquisition_id": "e3221ce9-9b1c-4598-90d6-e7983c694ff4",
+      "request": {
+        "contract_version": "geographic_acquisition_request_v1",
+        "source_id": "natural_england.sssi",
+        "adapter_version": "sssi_arcgis_v1",
+        "coverage_profile_sha256": "5d6761b3f11633e68a15deaa98face13e34ca7c674586f623bc8a7e783a2ddb2",
+        "area": {
+          "coordinates": [
+            [
+              [
+                0.5,
+                52.65
+              ],
+              [
+                0.5,
+                52.7
+              ],
+              [
+                0.55,
+                52.7
+              ],
+              [
+                0.55,
+                52.65
+              ],
+              [
+                0.5,
+                52.65
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "temporal": {
+          "mode": "current_publication",
+          "start": null,
+          "end": null
+        },
+        "idempotency_key": "live-2026-09-14-norfolk-west"
+      },
+      "manifest_sha256": "ccc50b567464ebe9c7dde590c6ba2a8f80d96d7950c68fbb0057e6f56bfd37bc",
+      "artifact_checksums": {
+        "assembled_provider_candidates": {
+          "sha256": "ecc340e54a8951866f97e12568cd64edb5ea70275ed34c54ec22ea4609721d64",
+          "bytes": 569131
+        },
+        "normalization_lineage": {
+          "sha256": "000cbd6407c4007d31489e010e7c6d6e3feeeed516b844c81a009f20d8ffe061",
+          "bytes": 96
+        },
+        "normalized_selection": {
+          "sha256": "ecc340e54a8951866f97e12568cd64edb5ea70275ed34c54ec22ea4609721d64",
+          "bytes": 569131
+        },
+        "provider_metadata_after": {
+          "sha256": "5ed8fe13594bc8c5b6815cd23d90601ab1bd2228f2541d087fc1c445ad287edc",
+          "bytes": 9568
+        },
+        "provider_metadata_before": {
+          "sha256": "5ed8fe13594bc8c5b6815cd23d90601ab1bd2228f2541d087fc1c445ad287edc",
+          "bytes": 9568
+        }
+      },
+      "capture_started": "2026-09-14T21:15:35.615852+00:00",
+      "capture_completed": "2026-09-14T21:15:39.857881+00:00",
+      "feature_count": 1,
+      "native_feature_ids": [
+        "1001656"
+      ],
+      "independent_object_ids": [
+        2990
+      ],
+      "independent_selection_match": true,
+      "publisher_editing_info": {
+        "lastEditDate": 1787126918861,
+        "schemaLastEditDate": 1787126918861,
+        "dataLastEditDate": 1787126918861
+      },
+      "independent_method": "New live ArcGIS polygon-intersection ID query; adapter uses envelope candidates plus local polygon selection.",
+      "independent_responses": [
+        {
+          "endpoint": "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/SSSI_England/FeatureServer/0",
+          "parameters": {
+            "f": "json"
+          },
+          "decoded_response_sha256": "35762851e94f9a7cbcb74ac76b4244ee20f63af3e992912b9db3d0cf041a1f5c",
+          "decoded_bytes": 9563
+        },
+        {
+          "endpoint": "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/SSSI_England/FeatureServer/0/query",
+          "parameters": {
+            "f": "json",
+            "where": "1=1",
+            "geometry": "{\"rings\": [[[0.5, 52.65], [0.5, 52.7], [0.55, 52.7], [0.55, 52.65], [0.5, 52.65]]], \"spatialReference\": {\"wkid\": 4326}}",
+            "geometryType": "esriGeometryPolygon",
+            "inSR": "4326",
+            "spatialRel": "esriSpatialRelIntersects",
+            "returnIdsOnly": "true"
+          },
+          "decoded_response_sha256": "a20324bb1cee5bb437db8bba2f42b4530e7f87615e77ad63cd34f9df6f0c33f1",
+          "decoded_bytes": 51
+        },
+        {
+          "endpoint": "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/SSSI_England/FeatureServer/0",
+          "parameters": {
+            "f": "json"
+          },
+          "decoded_response_sha256": "35762851e94f9a7cbcb74ac76b4244ee20f63af3e992912b9db3d0cf041a1f5c",
+          "decoded_bytes": 9563
+        }
+      ],
+      "limits": "Current service comparison, not ecological/scientific validation; no atomic provider snapshot."
+    }
+  ],
+  "isolated_live_database_legacy_table_counts": {
+    "sites": 0,
+    "assessments": 0,
+    "datasets": 0,
+    "features": 0,
+    "land_evidence_snapshots": 0,
+    "module_runs": 0
+  },
+  "process_reload_and_idempotent_retry_match": true,
+  "retained_oxford_result_hashes_unchanged": {
+    "hook-meadow-after.json": "9a6784883a3a7dff251151986eba33dadde7ec3b8e3e576f60fdf4b489224672",
+    "iffley-meadows-after.json": "8441aa3e28d42fd8733ceb9eb32eaccfa2584ffcac3c1c25046b834281799dfe",
+    "new-marston-after.json": "2166cb2a003d1ce245b0c4c4bb3a79c7e035251bcc0eb98954c857ea9decbcc0",
+    "osney-mead-after.json": "8854ab4c8eb823be759d6df10494d7297e89a6c6cfdee4c0c0293ca0cb10d5a3",
+    "oxford-station-after.json": "61b9e0e94bb05d6ef518e25b97becbf47ab6501642f96d71c7ee77938f9e4d50",
+    "pixey-yarnton-after.json": "45a6c8aef51d116073655eaecca6761eb5d5ce2eb4922eb7f23cc95a5283b555",
+    "port-meadow-after.json": "1277310273cd630a01573acb475fd7348477dc2079da50f973042f69b7052bbc",
+    "redbridge-after.json": "1efd5ee105e69e0698b78be042ae7b0217b9f55e608461b61503ed6d58e124cd",
+    "seacourt-after.json": "db7a4a16924466930604e7bdb3227167d2c315ad860d0f6d65b9ccbb0611c44c",
+    "westgate-after.json": "777d7b6ce1cdb244e3daf6cddd105ba24e63b866419c24b30d713ae757128203",
+    "wolvercote-meadows-after.json": "ac2a3a401d56765e725cd9a084f39d9b70847fa50d11c7ca7100b39c3b662a39",
+    "wytham-slope-after.json": "42f791a4f40546ecd89801927f22111afd4667d0b0e2fa1ac350827a2b99313d"
+  },
+  "explicit_coverage_rejection": {
+    "acquisition_id": "fa940c13-4bf7-4902-954f-abb9be4cdece",
+    "attempt_id": "2b8c9820-b169-4a6e-ab00-2e5f846818b1",
+    "state": "failed",
+    "error_code": "unsupported_geography",
+    "request": {
+      "contract_version": "geographic_acquisition_request_v1",
+      "source_id": "natural_england.sssi",
+      "adapter_version": "sssi_arcgis_v1",
+      "coverage_profile_sha256": "5d6761b3f11633e68a15deaa98face13e34ca7c674586f623bc8a7e783a2ddb2",
+      "area": {
+        "coordinates": [
+          [
+            [
+              1.38,
+              52.68
+            ],
+            [
+              1.38,
+              52.74
+            ],
+            [
+              1.48,
+              52.74
+            ],
+            [
+              1.48,
+              52.68
+            ],
+            [
+              1.38,
+              52.68
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "temporal": {
+        "mode": "current_publication",
+        "start": null,
+        "end": null
+      },
+      "idempotency_key": "live-2026-09-14-norfolk"
+    },
+    "manifest_sha256": "16cf6e285142d842bf00809399e4bd864420bbac52bf2cb74a74ada4a709cc16"
+  },
+  "limitations": [
+    "Two bounded England locations; not national coverage certification.",
+    "ONS full-resolution coastline-clipped boundary excludes some coastal and tidal waters, including the first Broads request.",
+    "No Site, assessment, model run, API endpoint or UI layer was created by these acquisitions.",
+    "Private raw objects and databases are intentionally excluded from Git."
+  ]
+}

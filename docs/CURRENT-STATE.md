@@ -16,6 +16,8 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 
 ## Implemented capabilities
 
+- Acquire the current Natural England SSSI publication independently for an explicit supported area through a typed service/operator CLI. Shared geometry accepts all four UK nations; this first source uses a pinned, conservative England coverage profile. Organization-scoped immutable attempts, safe integrity reads, retries and live Oxford/western Norfolk verification are implemented. See [geographic acquisition](GEOGRAPHIC-EVIDENCE-ACQUISITION.md).
+
 - Create sites from a drawn or uploaded Polygon/MultiPolygon in a contextual editor over the persistent operating map; validate, version and preserve boundary history.
 - Submit deterministic assessments with pinned dataset/model configuration, deduplication, worker leases/retries/fencing and immutable saved results.
 - Inspect portfolio sites in map-first or list mode; open the Site Analysis Workspace across Overview, Evidence, Models and History. Screening Context is the default Overview and the wetland assessment is a secondary Terrene Reasoning module.
@@ -213,7 +215,7 @@ produced no new browser warnings or errors.
 ## Known limitations
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
-- Most acquisition is bounded to the Oxford pilot; flood coverage is narrower, and source-specific mapped absence never proves real-world absence.
+- Most legacy acquisition is bounded to the Oxford pilot; flood coverage is narrower. Independent SSSI acquisition now supports bounded areas wholly inside a pinned ONS England BFC footprint; its coastal/tidal-water exclusions can decline otherwise English requests. National publisher coverage and customer-facing acquisition remain incomplete. Source-specific mapped absence never proves real-world absence.
 - The wetland model is unvalidated and cannot yet rank the retained real locations defensibly.
 - Hosted Supabase/Render/R2 credentials and end-to-end tenant acceptance have not been configured or verified; the reserved Sites frontend is not a deployed product.
 - Team review status is not yet an immutable historical Decision record.
@@ -225,19 +227,31 @@ produced no new browser warnings or errors.
 
 ## Latest meaningful implementation
 
-Models now durably discovers the Site's verified snapshot-bound wetland runs through a narrow read-only catalogue. It keeps them visibly separate from the selected legacy assessment, excludes Screening Context runs, exposes exact immutable identity and current/historical boundary state, and refreshes after a successful new run.
+Independent geographic acquisition now collects the current Natural England SSSI
+publication without a Site, assessment or model run. It retains immutable,
+organization-scoped attempt manifests and separate original/normalized artifacts,
+with explicit coverage/time failures, retries, fenced publication and integrity
+readback. Legacy catalogue selection and saved results are unchanged. Shared
+geometry accommodates the whole UK; only the first England source is connected.
+
+The acquisition suite passed 45 tests on both SQLite and PostgreSQL/PostGIS;
+46 relevant legacy tests passed on each backend, and 21 retained snapshot/wetland
+regressions passed on SQLite. Live Oxford (5 SSSIs) and western Norfolk (1 SSSI)
+selections matched independent provider polygon queries. All 12 retained Oxford
+result hashes remained unchanged. Migration 9 was verified idempotent, with RLS
+on both new PostgreSQL tables. See the [implementation and limits](GEOGRAPHIC-EVIDENCE-ACQUISITION.md)
+and [verification record](verification/geographic-acquisition-2026-09-14.json).
 
 ## Current recommended engineering question
 
-How can one existing vector source be acquired for an explicit supported area,
-independently of assessments, without changing the legacy Oxford dataset selection?
+How should designation coverage handle coastal/tidal areas and national publisher
+boundaries before integrating the next UK nation?
 
-The approved direction is an extensible intelligence platform with an undecided
-initial market. The next proposed implementation is the bounded
-[geographic acquisition iteration](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md), followed
-immediately by prioritized UK coverage work across England, Scotland, Wales and
-Northern Ireland. The first contract must accommodate all four nations even
-while only the England adapter is implemented. Imagery and historical weather
-remain separate subsequent data-family iterations. These are planned
-capabilities; the implemented state above is unchanged. Full wetland ModuleRun
-result sharing remains an unresolved capability, outside this next iteration.
+Prioritize this bounded coverage-contract decision and the first additional
+national adapter, then continue national adapters sequentially across Scotland,
+Wales and Northern Ireland. Preserve native SSSI/ASSI meanings. The approved
+[UK expansion sequence](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md) remains the near-term
+priority; authenticated acquisition/evidence assembly and map access are later
+separate tasks. Imagery and historical weather follow the UK coverage work.
+The initial commercial market remains undecided and unvalidated. Full wetland
+ModuleRun result sharing remains outside this acquisition iteration.

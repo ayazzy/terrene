@@ -15,6 +15,25 @@ ROOT = Path(os.getenv('CRC_DATA_DIR','data')); ROOT.mkdir(exist_ok=True,parents=
 DATABASE_URL=os.getenv('DATABASE_URL',f'sqlite:///{ROOT}/crc.db')
 engine=create_engine(DATABASE_URL, connect_args={'check_same_thread':False,'timeout':30} if DATABASE_URL.startswith('sqlite') else {},pool_pre_ping=True)
 meta=MetaData()
+# Geographic acquisitions deliberately do not enter the legacy dataset catalogue.
+geographic_acquisitions=Table(
+    'geographic_acquisitions',meta,
+    Column('id',String,primary_key=True),Column('org',String,nullable=False,index=True),
+    Column('idempotency_key',String,nullable=False),Column('request_hash',String,nullable=False),
+    Column('request',JSON,nullable=False),Column('created',String,nullable=False),
+    Column('attempt_number',Integer,nullable=False),Column('state',String,nullable=False),
+    Column('token',String),Column('lease',Float),Column('completed_attempt_id',String),
+    UniqueConstraint('org','idempotency_key',name='uq_geographic_acquisition_request'),
+)
+geographic_acquisition_attempts=Table(
+    'geographic_acquisition_attempts',meta,
+    Column('id',String,primary_key=True),Column('org',String,nullable=False,index=True),
+    Column('acquisition_id',String,nullable=False,index=True),Column('number',Integer,nullable=False),
+    Column('started',String,nullable=False),Column('completed',String),
+    Column('state',String,nullable=False),Column('error_code',String),
+    Column('manifest_key',Text),Column('manifest_sha256',String),
+    UniqueConstraint('acquisition_id','number',name='uq_geographic_acquisition_attempt'),
+)
 sites=Table('sites',meta,Column('id',String,primary_key=True),Column('org',String,index=True,nullable=False),Column('name',String),Column('notes',Text),Column('status',String),Column('version',Integer),Column('geometry',JSON),Column('created',String))
 assessments=Table('assessments',meta,Column('id',String,primary_key=True),Column('org',String,index=True),Column('site_id',String,index=True),Column('version',Integer),Column('geometry',JSON),Column('site_name',String),Column('state',String),Column('attempts',Integer),Column('lease',Float),Column('token',String),Column('error',Text),Column('result',JSON),Column('created',String),Column('dataset_ids',JSON),Column('dedupe',String,unique=True),Column('model_spec',JSON))
 datasets=Table('datasets',meta,Column('id',String,primary_key=True),Column('key',String,index=True),Column('state',String),Column('retrieved',String),Column('metadata',JSON))

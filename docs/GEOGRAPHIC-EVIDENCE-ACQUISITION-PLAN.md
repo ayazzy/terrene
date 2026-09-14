@@ -3,8 +3,9 @@
 ## Status and objective
 
 Scoped on 14 September 2026 against repository baseline `bf6e927`. This document
-records a proposed implementation following the approved intelligence-platform
-direction. No acquisition contract or new integration is implemented by this plan.
+records the approved scope following the intelligence-platform direction. The
+first iteration is now implemented; see [implementation, verification and limits](GEOGRAPHIC-EVIDENCE-ACQUISITION.md).
+The remaining national expansion steps below are still planned.
 
 **Primary outcome:** acquire and integrity-read one existing vector source for an
 explicit supported area without creating an assessment, running a model or

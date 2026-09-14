@@ -227,8 +227,8 @@ The intended shared capabilities are:
   derived results. Public provider data does not make customer areas or queries
   public. Purchased data must retain usage terms and acquisition-cost context.
 
-First establish [independent geographic acquisition](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md)
-using one existing vector source in Oxford and a second bounded area. Prioritize
+The first [independent geographic acquisition iteration](GEOGRAPHIC-EVIDENCE-ACQUISITION.md)
+now covers one existing vector source in Oxford and a second bounded area. Prioritize
 four-nation source expansion and application access immediately after that proof,
 with a coverage matrix and explicit gaps for each evidence family. Subsequent
 data-family iterations should test dated Sentinel-2 imagery, then historical weather data,
@@ -244,6 +244,28 @@ Scenario will compute consequences or alternative/future state from a pinned Des
 ### Terrene Applications
 
 The current UI implements early screening, portfolio navigation and evidence review. Screen, Diligence, Scenario, Monitor, Portfolio, Nature/BNG, Restoration, Field Evidence and infrastructure/renewable workflows are strategic application candidates, not a list of completed products. Customer evidence should determine which vertical workflow is hardened first.
+
+## Independent geographic acquisition (implemented)
+
+`geographic_acquisition_request_v1` and the trusted `backend.acquisition` service/CLI
+operate independently of Sites and analytical execution. Geometry is bounded
+WGS84 Polygon/MultiPolygon with geodesic area validation across all UK nations;
+source capability validation is separate. The first registered adapter serves the
+current Natural England SSSI publication and pins a privately retained ONS England
+coverage profile. Coastline/tidal exclusions in that profile are explicit limits.
+
+Migration 9 adds organization-scoped requests and append-only terminal attempts.
+Operational claims use optimistic concurrency, expiring leases and fenced
+publication. Immutable manifests retain exact request/source identities,
+processing versions, original candidate features, normalized selections and
+provenance. Integrity reads verify database envelopes and all referenced objects.
+Acquisitions never enter the geography-unaware legacy `datasets`/`features`
+catalogue or automatically become Land Evidence Snapshots. A refresh creates new
+capture history; it cannot silently replace evidence used by historical models.
+
+See [the operator contract and verified limits](GEOGRAPHIC-EVIDENCE-ACQUISITION.md).
+This is reusable evidence infrastructure, not an authenticated customer API,
+a new analytical model or evidence of product–market fit.
 
 ## Architectural constraints
 

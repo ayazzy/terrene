@@ -292,3 +292,30 @@ and infrastructure coverage must be tracked separately from the first designatio
 family. Preserve all existing Oxford evidence and historical processing methods.
 
 **References:** [Architecture](ARCHITECTURE.md), [UK expansion plan](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md).
+
+
+## 2026-09-14 — Isolate geographic acquisition history and pin operational coverage
+
+**Status:** Implemented within the approved first acquisition iteration.
+
+**Decision:** Retain geographic requests/attempts in separate organization-scoped
+tables and immutable objects. Do not publish them into the legacy latest-by-key
+dataset catalogue. Use a bounded synchronous operator service with idempotency,
+expiring claims and token-fenced publication; leave HTTP access and scheduling
+for later iterations. Preserve original provider candidates separately from
+normalized full-feature selections and record publisher/capture-time distinctions.
+
+**Coverage:** Keep general WGS84 area validation independent from source coverage.
+The first England SSSI adapter pins an immutable ONS December 2024 full-resolution,
+coastline-clipped coverage profile, acquired once from its registered official
+endpoint. A profile hash is explicit in the request. Require whole-area support
+without clipping or filling exclusions. This is an intentionally conservative
+operational footprint, not complete publisher or legal coverage. Live Broads
+verification demonstrated tidal-water exclusions; resolve those in a versioned
+coverage contract before offering broad national access. Do not generalize an
+England profile to Scotland, Wales or Northern Ireland.
+
+**Evidence:** Live Oxford and western Norfolk selections match independent
+provider polygon queries. SQLite and PostgreSQL acquisition/legacy checks pass;
+retained Oxford results are unchanged. No customer/workflow validation is implied.
+See [implementation and verification](GEOGRAPHIC-EVIDENCE-ACQUISITION.md).
