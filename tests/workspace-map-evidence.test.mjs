@@ -29,8 +29,7 @@ function collection(overrides = {}) {
     boundary_version: run.boundary_version,
     evidence_snapshot_id: run.evidence_snapshot_id,
     evidence_content_hash: run.result.evidence_content_hash,
-    boundary_geometry_fingerprint:
-      run.result.boundary_geometry_fingerprint,
+    boundary_geometry_fingerprint: run.result.boundary_geometry_fingerprint,
     presentation_crs: 'EPSG:4326',
     authoritative_geometry_crs: 'EPSG:27700',
     layers: [],
@@ -124,7 +123,10 @@ test('workspace integration shares selection and never auto-focuses an off-site 
     'utf8',
   );
   const map = readFileSync(new URL('../app/map.tsx', import.meta.url), 'utf8');
-  const page = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
+  const page = readFileSync(
+    new URL('../app/page.tsx', import.meta.url),
+    'utf8',
+  );
   const inspector = readFileSync(
     new URL('../app/map-feature-inspector.tsx', import.meta.url),
     'utf8',
@@ -136,7 +138,19 @@ test('workspace integration shares selection and never auto-focuses an off-site 
   assert.match(map, /if \(!ready \|\| !mapObjectFocusRequest\) return/);
   assert.match(map, /onClearMapObject\?\.\(\)/);
   assert.match(page, /<MapFeatureInspector/);
+  assert.match(page, /selectedMapObjectId: operatingState\.assetId/);
+  assert.match(page, /showRelatedObjects=/);
   assert.match(page, /tab, assessment\?\.id, mapEvidence\.selectedObjectId/);
+  assert.match(page, /closest<HTMLElement>\('\.entity-dossier'\)/);
   assert.match(inspector, /Advanced provenance/);
-  assert.match(inspector, /not surveyed,[\s\S]*cadastral,[\s\S]*legal or engineering/);
+  assert.match(inspector, /Show related objects/);
+  assert.match(inspector, /No object-to-object network is inferred/);
+  assert.match(map, /feature-state', 'related'/);
+  assert.match(map, /Portfolio/);
+  assert.match(map, /Site diligence/);
+  assert.match(map, /Asset intelligence/);
+  assert.match(
+    inspector,
+    /not surveyed,[\s\S]*cadastral,[\s\S]*legal or engineering/,
+  );
 });

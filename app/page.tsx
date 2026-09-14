@@ -44,6 +44,7 @@ import {
   type InfrastructureEntity,
 } from './infrastructure-entities';
 import { useInfrastructureEntities } from './use-infrastructure-entities';
+import { mapFeatureName } from './infrastructure-map-scene';
 import {
   EvidenceBadge,
   WorkspaceLoading,
@@ -242,19 +243,33 @@ export default function Home() {
   );
   const workspace = useSiteWorkspaceState(current, history, {
     selectedAssessmentId: requestedSiteAssessmentId,
+    selectedMapObjectId: operatingState.assetId,
     tab: requestedSiteSection,
     panelOpen: operatingState.dossierOpen,
     onAssessmentChange: (id, method) =>
       operatingPicture.transition(
-        {
+        (currentState) => ({
+          ...currentState,
           artifact: id ? { kind: 'site_assessment', id } : null,
-        },
+          assetId: null,
+          showRelated: false,
+        }),
         method,
       ),
     onTabChange: (section, method) =>
       operatingPicture.transition({ section }, method),
     onPanelOpenChange: (dossierOpen, method) =>
       operatingPicture.transition({ dossierOpen }, method),
+    onMapObjectChange: (assetId, method) =>
+      operatingPicture.transition(
+        (currentState) => ({
+          ...currentState,
+          assetId,
+          showRelated: false,
+          dossierOpen: assetId ? true : currentState.dossierOpen,
+        }),
+        method,
+      ),
   });
   const {
     assessment,
@@ -323,6 +338,9 @@ export default function Home() {
   const showRefreshNotice = refreshFailures.length > 0 && !criticalRead;
   useEffect(() => {
     analysisPanel.current?.scrollTo({ top: 0 });
+    analysisPanel.current
+      ?.closest<HTMLElement>('.entity-dossier')
+      ?.scrollTo({ top: 0 });
   }, [tab, assessment?.id, mapEvidence.selectedObjectId]);
   useEffect(() => {
     const intent = dossierFocusIntent.current;
@@ -386,6 +404,15 @@ export default function Home() {
             siteAssessmentIds: history.map((item) => String(item.id)),
           }
         : {}),
+      ...(mapEvidence.sceneState === 'available' && mapEvidence.scene
+        ? {
+            mapObjectIds: mapEvidence.scene.features.map((item) => item.id),
+          }
+        : ['failed', 'unavailable', 'unsupported'].includes(
+              mapEvidence.sceneState,
+            )
+          ? { mapObjectIds: [] }
+          : {}),
     };
     const reconciled = reconcileOperatingPictureState(
       operatingState,
@@ -399,6 +426,8 @@ export default function Home() {
     history,
     historyRead.loaded,
     historyRead.siteId,
+    mapEvidence.scene,
+    mapEvidence.sceneState,
     operatingPicture,
     operatingState,
     sites,
@@ -735,19 +764,17 @@ export default function Home() {
                 setFinding(finding);
               }}
               mapScene={view === 'site' ? mapEvidence.scene : null}
-              mapSceneState={
-                view === 'site' ? mapEvidence.sceneState : 'idle'
-              }
+              mapSceneState={view === 'site' ? mapEvidence.sceneState : 'idle'}
               mapSceneError={view === 'site' ? mapEvidence.sceneError : ''}
               selectedMapObject={
                 view === 'site' ? mapEvidence.selectedObjectId : null
               }
+              showRelatedObjects={view === 'site' && operatingState.showRelated}
               mapObjectFocusRequest={
                 view === 'site' ? mapEvidence.focusRequest : 0
               }
               onInspectMapObject={(id) => {
                 if (view !== 'site') return;
-                changeSitePanel(true);
                 mapEvidence.selectObject(id);
               }}
               onClearMapObject={mapEvidence.clearSelection}
@@ -778,6 +805,20 @@ export default function Home() {
                 (!!projectEntityIndex.error &&
                   !projectEntityIndex.subjects.length)
               }
+              workflowLevel={
+                view === 'site'
+                  ? mapEvidence.selectedObject
+                    ? 'asset'
+                    : 'site'
+                  : 'portfolio'
+              }
+              workflowAssetLabel={
+                mapEvidence.selectedObject
+                  ? mapFeatureName(mapEvidence.selectedObject)
+                  : undefined
+              }
+              onOpenPortfolio={() => setView('workspace')}
+              onOpenSiteDiligence={() => mapEvidence.clearSelection()}
             />
             {(view === 'site' || view === 'project-intelligence') &&
               !panelOpen && (
@@ -1274,6 +1315,13 @@ export default function Home() {
                     )}
                     sources={mapEvidence.scene.sources}
                     limitations={mapEvidence.scene.limitations}
+                    relatedVisible={operatingState.showRelated}
+                    onToggleRelated={() =>
+                      operatingPicture.transition((currentState) => ({
+                        ...currentState,
+                        showRelated: !currentState.showRelated,
+                      }))
+                    }
                     onLocate={() =>
                       mapEvidence.locateObject(mapEvidence.selectedObject!.id)
                     }

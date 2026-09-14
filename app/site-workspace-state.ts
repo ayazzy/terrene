@@ -44,17 +44,13 @@ export type ContextState =
 
 export type SiteWorkspaceNavigation = {
   selectedAssessmentId: string | null;
+  selectedMapObjectId: string | null;
   tab: WorkspaceTab;
   panelOpen: boolean;
-  onAssessmentChange: (
-    id: string | null,
-    method: 'push' | 'replace',
-  ) => void;
+  onAssessmentChange: (id: string | null, method: 'push' | 'replace') => void;
   onTabChange: (tab: WorkspaceTab, method: 'push' | 'replace') => void;
-  onPanelOpenChange: (
-    panelOpen: boolean,
-    method: 'push' | 'replace',
-  ) => void;
+  onPanelOpenChange: (panelOpen: boolean, method: 'push' | 'replace') => void;
+  onMapObjectChange: (id: string | null, method: 'push' | 'replace') => void;
 };
 
 export function useSiteWorkspaceState(
@@ -104,15 +100,18 @@ export function useSiteWorkspaceState(
     'idle' | 'loading' | 'available' | 'failed'
   >('idle');
   const [mapSceneError, setMapSceneError] = useState('');
-  const [selectedMapObjectId, setSelectedMapObjectId] = useState<string | null>(
-    null,
-  );
+  const [localSelectedMapObjectId, setLocalSelectedMapObjectId] = useState<
+    string | null
+  >(null);
   const [mapObjectFocusRequest, setMapObjectFocusRequest] = useState(0);
   const selectedAssessmentId = navigation
     ? navigation.selectedAssessmentId
     : localSelectedAssessmentId;
   const tab = navigation ? navigation.tab : localTab;
   const panelOpen = navigation ? navigation.panelOpen : localPanelOpen;
+  const selectedMapObjectId = navigation
+    ? navigation.selectedMapObjectId
+    : localSelectedMapObjectId;
   const setSelectedAssessmentId = (
     id: string | null,
     method: 'push' | 'replace' = 'push',
@@ -120,19 +119,20 @@ export function useSiteWorkspaceState(
     if (navigation) navigation.onAssessmentChange(id, method);
     else setLocalSelectedAssessmentId(id);
   };
-  const setTab = (
-    next: WorkspaceTab,
-    method: 'push' | 'replace' = 'push',
-  ) => {
+  const setTab = (next: WorkspaceTab, method: 'push' | 'replace' = 'push') => {
     if (navigation) navigation.onTabChange(next, method);
     else setLocalTab(next);
   };
-  const setPanelOpen = (
-    next: boolean,
-    method: 'push' | 'replace' = 'push',
-  ) => {
+  const setPanelOpen = (next: boolean, method: 'push' | 'replace' = 'push') => {
     if (navigation) navigation.onPanelOpenChange(next, method);
     else setLocalPanelOpen(next);
+  };
+  const setSelectedMapObjectId = (
+    id: string | null,
+    method: 'push' | 'replace' = 'push',
+  ) => {
+    if (navigation) navigation.onMapObjectChange(id, method);
+    else setLocalSelectedMapObjectId(id);
   };
 
   const assessment = useMemo(
@@ -147,7 +147,7 @@ export function useSiteWorkspaceState(
   function clearArtifactViews() {
     setFinding(null);
     setMapFocus(null);
-    setSelectedMapObjectId(null);
+    setSelectedMapObjectId(null, 'replace');
     setMapObjectFocusRequest(0);
     setReportHtml('');
     setContextExportHtml('');
@@ -229,7 +229,6 @@ export function useSiteWorkspaceState(
         setMapFeaturesAssessmentKey(assessmentKey);
         setMapFeaturesState('available');
         setMapFeaturesError('');
-        setSelectedMapObjectId(null);
       })
       .catch((cause: Error) => {
         if (abort.signal.aborted || generation !== mapRequestGeneration.current)
@@ -238,7 +237,6 @@ export function useSiteWorkspaceState(
         setMapFeaturesAssessmentKey(assessmentKey);
         setMapFeaturesState('failed');
         setMapFeaturesError(cause.message);
-        setSelectedMapObjectId(null);
       });
     return () => {
       mapRequestGeneration.current += 1;
@@ -252,22 +250,26 @@ export function useSiteWorkspaceState(
     const generation = ++sceneRequestGeneration.current;
     void readInfrastructureMapScene(contextRun, abort.signal)
       .then((next) => {
-        if (abort.signal.aborted || generation !== sceneRequestGeneration.current)
+        if (
+          abort.signal.aborted ||
+          generation !== sceneRequestGeneration.current
+        )
           return;
         setMapScene(next);
         setMapSceneAssessmentKey(assessmentKey);
         setMapSceneState('available');
         setMapSceneError('');
-        setSelectedMapObjectId(null);
       })
       .catch((cause: Error) => {
-        if (abort.signal.aborted || generation !== sceneRequestGeneration.current)
+        if (
+          abort.signal.aborted ||
+          generation !== sceneRequestGeneration.current
+        )
           return;
         setMapScene(null);
         setMapSceneAssessmentKey(assessmentKey);
         setMapSceneState('failed');
         setMapSceneError(cause.message);
-        setSelectedMapObjectId(null);
       });
     return () => {
       sceneRequestGeneration.current += 1;
@@ -394,11 +396,10 @@ export function useSiteWorkspaceState(
       : null;
 
   function selectMapObject(id: string) {
-    if (!scopedMapScene?.features.some((feature) => feature.id === id))
-      return;
+    if (!scopedMapScene?.features.some((feature) => feature.id === id)) return;
     setFinding(null);
     setMapFocus(null);
-    setPanelOpen(true);
+    if (!navigation) setPanelOpen(true);
     setSelectedMapObjectId(id);
   }
 
@@ -413,25 +414,25 @@ export function useSiteWorkspaceState(
     ) || null;
   const effectiveMapFeaturesState =
     contextAssessmentKey === assessmentKey && contextState === 'unsupported'
-        ? ('unsupported' as const)
-        : contextAssessmentKey === assessmentKey && contextState === 'absent'
-          ? ('unavailable' as const)
-          : contextAssessmentKey !== assessmentKey ||
-              contextState === 'checking' ||
-              contextState === 'preparing'
-            ? ('loading' as const)
-            : contextState === 'failed' || contextState === 'unauthorized'
-              ? ('failed' as const)
-              : scopedMapFeatures
-                ? ('available' as const)
-                : mapFeaturesAssessmentKey === assessmentKey &&
-                    contextRun &&
-                    mapFeatures?.run_id === contextRun.id &&
-                    mapFeaturesState === 'failed'
-                  ? ('failed' as const)
-                  : contextRun
-                    ? ('loading' as const)
-                    : ('idle' as const);
+      ? ('unsupported' as const)
+      : contextAssessmentKey === assessmentKey && contextState === 'absent'
+        ? ('unavailable' as const)
+        : contextAssessmentKey !== assessmentKey ||
+            contextState === 'checking' ||
+            contextState === 'preparing'
+          ? ('loading' as const)
+          : contextState === 'failed' || contextState === 'unauthorized'
+            ? ('failed' as const)
+            : scopedMapFeatures
+              ? ('available' as const)
+              : mapFeaturesAssessmentKey === assessmentKey &&
+                  contextRun &&
+                  mapFeatures?.run_id === contextRun.id &&
+                  mapFeaturesState === 'failed'
+                ? ('failed' as const)
+                : contextRun
+                  ? ('loading' as const)
+                  : ('idle' as const);
   const effectiveMapSceneState =
     contextAssessmentKey === assessmentKey && contextState === 'unsupported'
       ? ('unsupported' as const)

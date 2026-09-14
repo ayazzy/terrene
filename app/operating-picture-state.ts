@@ -30,6 +30,8 @@ export type OperatingPictureState = {
   mode: OperatingMode;
   selection: OperatingEntitySelection;
   artifact: OperatingArtifactSelection;
+  assetId: string | null;
+  showRelated: boolean;
   section: OperatingDossierSection;
   dossierOpen: boolean;
   hiddenLayers: string[];
@@ -40,6 +42,7 @@ export type OperatingPictureAvailability = {
   projectSubjectIds?: readonly string[];
   siteAssessmentIds?: readonly string[];
   projectIntelligenceRunIds?: readonly string[];
+  mapObjectIds?: readonly string[];
 };
 
 export type OperatingPictureHistoryAdapter = {
@@ -75,6 +78,8 @@ export const defaultOperatingPictureState: OperatingPictureState = {
   mode: 'map',
   selection: null,
   artifact: null,
+  assetId: null,
+  showRelated: false,
   section: 'overview',
   dossierOpen: true,
   hiddenLayers: [],
@@ -110,10 +115,7 @@ function sectionForSelection(
   selection: OperatingEntitySelection,
 ) {
   if (selection?.kind === 'site' && siteSections.has(section)) return section;
-  if (
-    selection?.kind === 'project_subject' &&
-    projectSections.has(section)
-  )
+  if (selection?.kind === 'project_subject' && projectSections.has(section))
     return section;
   return 'overview';
 }
@@ -122,10 +124,7 @@ function artifactForSelection(
   artifact: OperatingArtifactSelection,
   selection: OperatingEntitySelection,
 ) {
-  if (
-    selection?.kind === 'site' &&
-    artifact?.kind === 'site_assessment'
-  )
+  if (selection?.kind === 'site' && artifact?.kind === 'site_assessment')
     return artifact;
   if (
     selection?.kind === 'project_subject' &&
@@ -153,14 +152,19 @@ export function normalizeOperatingPictureState(
     mode = 'map';
   }
   if (mode === 'compare' || mode === 'data') selection = null;
+  const assetId =
+    mode === 'site' &&
+    selection?.kind === 'site' &&
+    validIdentifier(value.assetId)
+      ? value.assetId
+      : null;
 
   return {
-    mode:
-      mode === 'site' && !selection
-        ? 'map'
-        : mode,
+    mode: mode === 'site' && !selection ? 'map' : mode,
     selection,
     artifact: artifactForSelection(value.artifact, selection),
+    assetId,
+    showRelated: !!value.showRelated && !!assetId,
     section: sectionForSelection(value.section, selection),
     dossierOpen: !!value.dossierOpen,
     hiddenLayers: normalizeHiddenLayers(value.hiddenLayers),
@@ -171,8 +175,7 @@ export function projectOperatingPictureState(
   value: OperatingPictureState,
 ): OperatingPictureProjection {
   const state = normalizeOperatingPictureState(value);
-  const siteId =
-    state.selection?.kind === 'site' ? state.selection.id : null;
+  const siteId = state.selection?.kind === 'site' ? state.selection.id : null;
   return {
     view:
       state.mode === 'site'
@@ -188,9 +191,7 @@ export function projectOperatingPictureState(
     activeSiteId: state.mode === 'site' ? siteId : null,
     selectedMapSiteId: siteId,
     selectedProjectSubjectId:
-      state.selection?.kind === 'project_subject'
-        ? state.selection.id
-        : null,
+      state.selection?.kind === 'project_subject' ? state.selection.id : null,
     selectedProjectRunId:
       state.artifact?.kind === 'project_intelligence_run'
         ? state.artifact.id
@@ -216,6 +217,8 @@ export function changeOperatingMode(
     mode,
     selection,
     artifact: selection ? current.artifact : null,
+    assetId: null,
+    showRelated: false,
     section: selection ? current.section : 'overview',
   });
 }
@@ -231,6 +234,8 @@ export function selectOperatingEntity(
     mode: mode ?? current.mode,
     selection,
     artifact: null,
+    assetId: null,
+    showRelated: false,
     section: 'overview',
     dossierOpen: true,
   });
@@ -281,6 +286,10 @@ export function parseOperatingPictureUrl(input: string): OperatingPictureState {
     mode: selectionWasRequested && !selection ? 'map' : mode,
     selection,
     artifact: parseArtifact(url.searchParams),
+    assetId: validIdentifier(url.searchParams.get('asset'))
+      ? url.searchParams.get('asset')
+      : null,
+    showRelated: url.searchParams.get('related') === '1',
     section,
     dossierOpen: url.searchParams.get('dossier') !== 'closed',
     hiddenLayers: (url.searchParams.get('hidden') || '')
@@ -305,6 +314,8 @@ export function serializeOperatingPictureState(
     parameters.set('assessment', state.artifact.id);
   if (state.artifact?.kind === 'project_intelligence_run')
     parameters.set('run', state.artifact.id);
+  if (state.assetId) parameters.set('asset', state.assetId);
+  if (state.showRelated) parameters.set('related', '1');
   if (state.section !== 'overview') parameters.set('section', state.section);
   if (!state.dossierOpen) parameters.set('dossier', 'closed');
   if (state.hiddenLayers.length)
@@ -313,10 +324,7 @@ export function serializeOperatingPictureState(
   return `${current.pathname}${query ? `?${query}` : ''}${current.hash}`;
 }
 
-function unavailable(
-  id: string,
-  available: readonly string[] | undefined,
-) {
+function unavailable(id: string, available: readonly string[] | undefined) {
   return available !== undefined && !available.includes(id);
 }
 
@@ -344,6 +352,8 @@ export function reconcileOperatingPictureState(
     artifact = null;
     section = 'overview';
   }
+  let assetId = state.assetId;
+  let showRelated = state.showRelated;
   if (
     artifact?.kind === 'site_assessment' &&
     unavailable(artifact.id, availability.siteAssessmentIds)
@@ -358,11 +368,17 @@ export function reconcileOperatingPictureState(
     artifact = null;
     section = 'overview';
   }
+  if (assetId && unavailable(assetId, availability.mapObjectIds)) {
+    assetId = null;
+    showRelated = false;
+  }
 
   return normalizeOperatingPictureState({
     ...state,
     selection,
     artifact,
+    assetId,
+    showRelated,
     section,
   });
 }
@@ -377,6 +393,8 @@ export function operatingPictureStatesEqual(
     left.selection?.id === right.selection?.id &&
     left.artifact?.kind === right.artifact?.kind &&
     left.artifact?.id === right.artifact?.id &&
+    left.assetId === right.assetId &&
+    left.showRelated === right.showRelated &&
     left.section === right.section &&
     left.dossierOpen === right.dossierOpen &&
     left.hiddenLayers.length === right.hiddenLayers.length &&

@@ -1,6 +1,6 @@
 'use client';
 
-import { LocateFixed, X } from 'lucide-react';
+import { Link2, LocateFixed, X } from 'lucide-react';
 import {
   mapFeatureName,
   mapLayerLabel,
@@ -15,6 +15,8 @@ type Props = {
   layer?: InfrastructureSceneLayer;
   sources: SceneSource[];
   limitations: string[];
+  relatedVisible: boolean;
+  onToggleRelated: () => void;
   onLocate: () => void;
   onClose: () => void;
 };
@@ -24,6 +26,8 @@ export default function MapFeatureInspector({
   layer,
   sources,
   limitations,
+  relatedVisible,
+  onToggleRelated,
   onLocate,
   onClose,
 }: Props) {
@@ -90,7 +94,8 @@ export default function MapFeatureInspector({
             {height.state === 'available' || height.state === 'partial' ? (
               <>
                 <p>
-                  P90 {height.p90_height_m?.toLocaleString('en-GB', {
+                  P90{' '}
+                  {height.p90_height_m?.toLocaleString('en-GB', {
                     maximumFractionDigits: 2,
                   })}{' '}
                   m · P50{' '}
@@ -121,7 +126,19 @@ export default function MapFeatureInspector({
         <button onClick={onLocate}>
           <LocateFixed size={14} /> Locate object
         </button>
+        {!!properties.relationships.length && (
+          <button aria-pressed={relatedVisible} onClick={onToggleRelated}>
+            <Link2 size={14} />
+            {relatedVisible ? 'Hide related objects' : 'Show related objects'}
+          </button>
+        )}
       </div>
+      {!!properties.relationships.length && (
+        <p className="map-relationship-note">
+          Highlights the retained parcel endpoint for these typed relationships.
+          No object-to-object network is inferred.
+        </p>
+      )}
       <details className="map-feature-provenance">
         <summary>Advanced provenance</summary>
         <dl>
@@ -152,7 +169,9 @@ export default function MapFeatureInspector({
           {layer && (
             <>
               <dt>Layer source references</dt>
-              <dd>{layer.source_reference_ids.join(' · ') || 'None retained'}</dd>
+              <dd>
+                {layer.source_reference_ids.join(' · ') || 'None retained'}
+              </dd>
             </>
           )}
         </dl>

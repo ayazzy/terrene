@@ -197,12 +197,16 @@ const terreneLayerDefinitions = [
     paint: {
       'fill-color': [
         'case',
+        ['boolean', ['feature-state', 'related'], false],
+        MAP_PALETTE.selection,
         ['boolean', ['feature-state', 'selected'], false],
         MAP_PALETTE.selection,
         MAP_PALETTE.boundaryFill,
       ],
       'fill-opacity': [
         'case',
+        ['boolean', ['feature-state', 'related'], false],
+        0.28,
         ['boolean', ['feature-state', 'selected'], false],
         0.24,
         0.08,
@@ -216,12 +220,16 @@ const terreneLayerDefinitions = [
     paint: {
       'line-color': [
         'case',
+        ['boolean', ['feature-state', 'related'], false],
+        MAP_PALETTE.selection,
         ['boolean', ['feature-state', 'selected'], false],
         MAP_PALETTE.selection,
         MAP_PALETTE.boundary,
       ],
       'line-width': [
         'case',
+        ['boolean', ['feature-state', 'related'], false],
+        5.5,
         ['boolean', ['feature-state', 'selected'], false],
         3.5,
         2,
@@ -519,6 +527,7 @@ type Props = {
     | 'unsupported';
   mapSceneError?: string;
   selectedMapObject?: string | null;
+  showRelatedObjects?: boolean;
   mapObjectFocusRequest?: number;
   onInspectMapObject?: (id: string) => void;
   onClearMapObject?: () => void;
@@ -532,6 +541,10 @@ type Props = {
   onOpenEntity?: (entity: InfrastructureEntity) => void;
   entityLoading?: boolean;
   entityUnavailable?: boolean;
+  workflowLevel?: 'portfolio' | 'site' | 'asset';
+  workflowAssetLabel?: string;
+  onOpenPortfolio?: () => void;
+  onOpenSiteDiligence?: () => void;
 };
 export default function SiteMap({
   geometry,
@@ -546,6 +559,7 @@ export default function SiteMap({
   mapSceneState = 'idle',
   mapSceneError = '',
   selectedMapObject,
+  showRelatedObjects = false,
   mapObjectFocusRequest = 0,
   onInspectMapObject,
   onClearMapObject,
@@ -559,10 +573,15 @@ export default function SiteMap({
   onOpenEntity,
   entityLoading = false,
   entityUnavailable = false,
+  workflowLevel,
+  workflowAssetLabel,
+  onOpenPortfolio,
+  onOpenSiteDiligence,
 }: Props) {
   const el = useRef<HTMLDivElement>(null),
     map = useRef<maplibregl.Map | null>(null);
   const basemapLayerIds = useRef<string[]>([]);
+  const relatedNativeFeatures = useRef<{ source: string; id: string }[]>([]);
   const [projection, setProjection] = useState<maplibregl.Map | null>(null),
     [readyMs, setReadyMs] = useState<number | null>(null),
     [points, setPoints] = useState<number[][]>([]),
@@ -900,42 +919,73 @@ export default function SiteMap({
   ]);
   useEffect(() => {
     const currentMap = map.current;
-    if (!ready || !currentMap?.isStyleLoaded()) return;
-    for (const feature of selectedNativeFeatures.current)
-      currentMap.removeFeatureState(feature, 'selected');
-    const next: { source: string; id: string }[] = [];
-    if (selectedMapObject)
-      next.push({ source: SOURCE_IDS.infrastructure, id: selectedMapObject });
-    if (activeSelection)
-      next.push({
-        source: SOURCE_IDS.environment,
-        id: `environment:${activeSelection}`,
-      });
-    if (selectedEntity?.kind === 'site')
-      next.push({ source: SOURCE_IDS.sites, id: `site:${selectedEntity.id}` });
-    if (selectedEntity?.kind === 'project_subject') {
-      next.push({
-        source: SOURCE_IDS.projects,
-        id: `project_subject:${selectedEntity.id}`,
-      });
-      if (
-        chosenEntity?.kind === 'project_subject' &&
-        chosenEntity.subject.site_id
-      )
+    if (!ready || !currentMap) return;
+    const synchronizeFeatureState = () => {
+      for (const feature of selectedNativeFeatures.current)
+        currentMap.removeFeatureState(feature, 'selected');
+      for (const feature of relatedNativeFeatures.current)
+        currentMap.removeFeatureState(feature, 'related');
+      const next: { source: string; id: string }[] = [];
+      const related: { source: string; id: string }[] = [];
+      if (selectedMapObject)
+        next.push({
+          source: SOURCE_IDS.infrastructure,
+          id: selectedMapObject,
+        });
+      if (activeSelection)
+        next.push({
+          source: SOURCE_IDS.environment,
+          id: `environment:${activeSelection}`,
+        });
+      if (selectedEntity?.kind === 'site')
         next.push({
           source: SOURCE_IDS.sites,
-          id: `site:${chosenEntity.subject.site_id}`,
+          id: `site:${selectedEntity.id}`,
         });
-    }
-    for (const feature of next)
-      currentMap.setFeatureState(feature, { selected: true });
-    selectedNativeFeatures.current = next;
+      if (selectedEntity?.kind === 'project_subject') {
+        next.push({
+          source: SOURCE_IDS.projects,
+          id: `project_subject:${selectedEntity.id}`,
+        });
+        if (
+          chosenEntity?.kind === 'project_subject' &&
+          chosenEntity.subject.site_id
+        )
+          next.push({
+            source: SOURCE_IDS.sites,
+            id: `site:${chosenEntity.subject.site_id}`,
+          });
+      }
+      if (showRelatedObjects && selectedMapObject) {
+        const relatedSiteId =
+          selectedEntity?.kind === 'site'
+            ? `site:${selectedEntity.id}`
+            : geometry
+              ? 'site:current-boundary'
+              : null;
+        if (relatedSiteId)
+          related.push({ source: SOURCE_IDS.sites, id: relatedSiteId });
+      }
+      for (const feature of next)
+        currentMap.setFeatureState(feature, { selected: true });
+      for (const feature of related)
+        currentMap.setFeatureState(feature, { related: true });
+      selectedNativeFeatures.current = next;
+      relatedNativeFeatures.current = related;
+    };
+    if (currentMap.isStyleLoaded()) synchronizeFeatureState();
+    else currentMap.once('idle', synchronizeFeatureState);
+    return () => {
+      currentMap.off('idle', synchronizeFeatureState);
+    };
   }, [
     ready,
     selectedMapObject,
+    showRelatedObjects,
     activeSelection,
     selectedEntity,
     chosenEntity,
+    geometry,
     mapScene,
     findings,
     entities,
@@ -1086,6 +1136,16 @@ export default function SiteMap({
     })[layer];
   const builtLayerVisible = (layer: InfrastructureLayerId) =>
     !hiddenLayerSet.has(`built:${layer}`);
+  const selectedBuiltFeature = builtFeatures.find(
+    (feature) => feature.id === selectedMapObject,
+  );
+  const selectedRelationshipTypes = [
+    ...new Set(
+      (selectedBuiltFeature?.properties.relationships || []).map(
+        (relationship) => relationship.predicate,
+      ),
+    ),
+  ];
   const featureSwatchColor = (feature: (typeof builtFeatures)[number]) => {
     if (feature.properties.layer_id !== 'railway_tracks')
       return builtLayerColor(feature.properties.layer_id);
@@ -1251,6 +1311,37 @@ export default function SiteMap({
           <LocateFixed size={17} />
         </button>
       </div>
+      {workflowLevel && (
+        <nav
+          className={infrastructureStyles.workflowPath}
+          aria-label="Spatial intelligence level"
+        >
+          {workflowLevel === 'portfolio' ? (
+            <strong aria-current="page">Portfolio</strong>
+          ) : (
+            <button onClick={onOpenPortfolio}>Portfolio</button>
+          )}
+          {workflowLevel !== 'portfolio' && (
+            <>
+              <span aria-hidden="true">›</span>
+              {workflowLevel === 'site' ? (
+                <strong aria-current="page">Site diligence</strong>
+              ) : (
+                <button onClick={onOpenSiteDiligence}>Site diligence</button>
+              )}
+            </>
+          )}
+          {workflowLevel === 'asset' && (
+            <>
+              <span aria-hidden="true">›</span>
+              <strong aria-current="page">
+                Asset intelligence
+                {workflowAssetLabel && <small>{workflowAssetLabel}</small>}
+              </strong>
+            </>
+          )}
+        </nav>
+      )}
       {layerPanelOpen && (
         <section
           id="map-layers"
@@ -1778,6 +1869,11 @@ export default function SiteMap({
                   (feature) => feature.id === selectedMapObject,
                 )!,
               )}
+              {showRelatedObjects && selectedRelationshipTypes.length
+                ? ` · Related parcel: ${selectedRelationshipTypes
+                    .map((value) => value.replaceAll('_', ' '))
+                    .join(', ')}`
+                : ''}
             </span>
           </div>
         )}

@@ -53,6 +53,8 @@ test('URL state round-trips a complete Site investigation deterministically', ()
     mode: 'site',
     selection: { kind: 'site', id: 'site-123' },
     artifact: { kind: 'site_assessment', id: 'assessment-456' },
+    assetId: 'building:abc123',
+    showRelated: true,
     section: 'evidence',
     dossierOpen: false,
     hiddenLayers: ['built:railways', 'environment:flood', 'built:railways'],
@@ -60,7 +62,7 @@ test('URL state round-trips a complete Site investigation deterministically', ()
   const url = serializeOperatingPictureState(expected, '/workspace#review');
   assert.equal(
     url,
-    '/workspace?mode=site&entity=site&id=site-123&assessment=assessment-456&section=evidence&dossier=closed&hidden=built%3Arailways%2Cenvironment%3Aflood#review',
+    '/workspace?mode=site&entity=site&id=site-123&assessment=assessment-456&asset=building%3Aabc123&related=1&section=evidence&dossier=closed&hidden=built%3Arailways%2Cenvironment%3Aflood#review',
   );
   assert.deepEqual(parseOperatingPictureUrl(url), expected);
 });
@@ -70,6 +72,8 @@ test('URL state round-trips Project Intelligence run and issue context', () => {
     mode: 'project',
     selection: { kind: 'project_subject', id: 'subject-123' },
     artifact: { kind: 'project_intelligence_run', id: 'run:abc123' },
+    assetId: null,
+    showRelated: false,
     section: 'issues',
     dossierOpen: true,
     hiddenLayers: [],
@@ -137,6 +141,31 @@ test('availability reconciliation treats deleted and unauthorized identities as 
       ...defaultOperatingPictureState,
       mode: 'project',
       selection: { kind: 'project_subject', id: 'subject-1' },
+    },
+  );
+});
+
+test('asset intelligence fails closed to the selected immutable scene', () => {
+  const asset = parseOperatingPictureUrl(
+    '/?mode=site&entity=site&id=site-1&assessment=assessment-1&asset=building:one&related=1',
+  );
+  assert.equal(asset.assetId, 'building:one');
+  assert.equal(asset.showRelated, true);
+  assert.deepEqual(
+    reconcileOperatingPictureState(asset, { mapObjectIds: ['building:two'] }),
+    {
+      ...asset,
+      assetId: null,
+      showRelated: false,
+    },
+  );
+  assert.deepEqual(
+    parseOperatingPictureUrl(
+      '/?mode=map&entity=site&id=site-1&asset=building:one&related=1',
+    ),
+    {
+      ...defaultOperatingPictureState,
+      selection: { kind: 'site', id: 'site-1' },
     },
   );
 });
@@ -210,32 +239,66 @@ test('history restores dossier visibility and exact historical artifact', () => 
   controller.destroy();
 });
 
+test('history restores portfolio, site diligence, and exact asset intelligence', () => {
+  const history = fakeHistory('/?mode=map');
+  const controller = createOperatingPictureController(history.adapter);
+  controller.transition({
+    ...defaultOperatingPictureState,
+    mode: 'site',
+    selection: { kind: 'site', id: 'site-1' },
+  });
+  controller.transition((current) => ({
+    ...current,
+    assetId: 'building:one',
+  }));
+  controller.transition((current) => ({
+    ...current,
+    showRelated: true,
+  }));
+
+  assert.equal(controller.getState().assetId, 'building:one');
+  assert.equal(controller.getState().showRelated, true);
+  history.back();
+  assert.equal(controller.getState().showRelated, false);
+  assert.equal(controller.getState().assetId, 'building:one');
+  history.back();
+  assert.equal(controller.getState().assetId, null);
+  history.back();
+  assert.equal(controller.getState().mode, 'map');
+  history.forward();
+  history.forward();
+  assert.equal(controller.getState().assetId, 'building:one');
+
+  const reloaded = createOperatingPictureController(history.adapter);
+  assert.deepEqual(reloaded.getState(), controller.getState());
+  reloaded.destroy();
+  controller.destroy();
+});
+
 test('layer visibility is canonical, bounded and rejects unsafe values', () => {
-  const layers = Array.from({ length: 70 }, (_, index) => `built:layer-${index}`);
+  const layers = Array.from(
+    { length: 70 },
+    (_, index) => `built:layer-${index}`,
+  );
   const canonical = normalizeOperatingPictureState({
     ...defaultOperatingPictureState,
-    hiddenLayers: [
-      'environment:flood',
-      'environment:flood',
-      '<unsafe>',
-    ],
+    hiddenLayers: ['environment:flood', 'environment:flood', '<unsafe>'],
   });
   const state = normalizeOperatingPictureState({
     ...defaultOperatingPictureState,
-    hiddenLayers: [
-      '<unsafe>',
-      ...layers,
-    ],
+    hiddenLayers: ['<unsafe>', ...layers],
   });
 
   assert.equal(state.hiddenLayers.length, 64);
   assert.equal(state.hiddenLayers.includes('<unsafe>'), false);
   assert.equal(
-    canonical.hiddenLayers.filter((layer) => layer === 'environment:flood').length,
+    canonical.hiddenLayers.filter((layer) => layer === 'environment:flood')
+      .length,
     1,
   );
   assert.deepEqual(
-    parseOperatingPictureUrl(serializeOperatingPictureState(state)).hiddenLayers,
+    parseOperatingPictureUrl(serializeOperatingPictureState(state))
+      .hiddenLayers,
     state.hiddenLayers,
   );
 });

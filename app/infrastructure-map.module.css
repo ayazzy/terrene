@@ -40,6 +40,84 @@
   z-index: 22;
 }
 
+.operatingMap .workflowPath {
+  position: absolute;
+  z-index: 19;
+  bottom: 1.75rem;
+  right: calc(43% + 0.75rem);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: calc(57% - 6rem);
+  min-height: 2.25rem;
+  margin-top: 0;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid #34433d;
+  border-radius: 2px;
+  background: rgb(13 20 18 / 94%);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 34%);
+  color: #84948c;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  backdrop-filter: blur(12px);
+}
+
+@media (min-width: 90.625rem) {
+  .operatingMap .workflowPath {
+    right: calc(42% + 0.75rem);
+    max-width: calc(58% - 6rem);
+  }
+}
+
+@media (max-width: 68.75rem) and (min-width: 56.3125rem) {
+  .operatingMap .workflowPath {
+    right: calc(46% + 0.75rem);
+    max-width: calc(54% - 6rem);
+  }
+}
+
+@media (max-width: 56.25rem) {
+  .operatingMap .workflowPath {
+    right: 0.75rem;
+    bottom: calc(60% + 0.75rem);
+    left: 0.75rem;
+    justify-content: center;
+    max-width: none;
+  }
+}
+
+.workflowPath button {
+  min-height: 1.5rem;
+  padding: 0 0.2rem;
+  border: 0;
+  background: transparent;
+  color: #aebbb4;
+  font: inherit;
+}
+
+.workflowPath button:hover {
+  color: #f1f6f3;
+}
+
+.workflowPath strong {
+  color: #e7ede9;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.workflowPath small {
+  display: block;
+  max-width: 10rem;
+  margin-top: 0.1rem;
+  overflow: hidden;
+  color: #7f9188;
+  font-size: 0.625rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .operatingMap :global(.map-toolbar button),
 .operatingMap :global(.map-boundary-label),
 .operatingMap :global(.map-selection),
@@ -575,6 +653,14 @@
   }
 
   .operatingMap :global(.map-toolbar .layer-count) {
+    display: none;
+  }
+
+  .operatingMap .workflowPath {
+    bottom: calc(60% + 0.75rem);
+  }
+
+  .workflowPath small {
     display: none;
   }
 
