@@ -28,7 +28,7 @@ test('command bar exposes search and source records without redundant context', 
   assert.match(shell, /aria-label="Search infrastructure entities"/);
   assert.match(shell, /Search Sites and Project Subjects/);
   assert.match(shell, /entity\.kind === 'site'/);
-  assert.match(shell, /<small>Sources<\/small>[\s\S]*\{sourceStatus\}/);
+  assert.match(shell, /<small>\{sourceLabel\}<\/small>[\s\S]*\{sourceStatus\}/);
   assert.match(shell, /<small>Source records<\/small>[\s\S]*\{sourceAsOf\}/);
   assert.doesNotMatch(shell, /<small>Scope<\/small>/);
   assert.doesNotMatch(shell, /<small>Selection<\/small>/);
@@ -43,7 +43,7 @@ test('responsive shell keeps context explicit without claiming telemetry', () =>
   assert.match(css, /@media \(max-width: 47\.5rem\)/);
   assert.match(css, /--topbar-height: 6\.5rem/);
   assert.match(css, /\.mobileContext[\s\S]*display: block/);
-  assert.match(shell, /Oxfordshire · \{sourceAsOf\.replace/);
+  assert.match(shell, /\{contextLabel\} · \{sourceAsOf\.replace/);
   assert.match(page, /'Dates unavailable'/);
   assert.match(page, /'No sources recorded'/);
   assert.doesNotMatch(shell, /confidence|latency|sensor|readiness/i);

@@ -16,6 +16,8 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 
 ## Implemented capabilities
 
+- Browse independent retained captures in Data sources, with source, location and evidence/capture-date filters, explicit continuation through empty batches, exact file-verified detail, per-variable availability and source caveats. The assessment source library stays separately accessible. See [capture browser](ACQUISITION-BROWSER.md).
+
 - Discover successful independent captures through an authenticated, organization-scoped catalogue filtered by source, requested location and evidence/capture dates. Open one exact capture through a separate read-only detail contract that verifies retained artifacts. Catalogue browsing verifies manifests only and explicitly reports that artifact bytes are unchecked. See [acquisition catalogue](ACQUISITION-CATALOGUE.md).
 
 - Acquire the current Natural England SSSI publication independently for an explicit supported area through a typed service/operator CLI. Shared geometry accepts all four UK nations; this first source offers explicitly versioned England coverage: historical BFC/high-water v1 and BFE/extent-of-realm v2. Organization-scoped immutable attempts, safe integrity reads, retries and live Oxford/western Norfolk verification are implemented. See [geographic acquisition](GEOGRAPHIC-EVIDENCE-ACQUISITION.md).
@@ -136,6 +138,8 @@ Versioned Design Studies remain API-only. The frontend has no Alternative editor
 
 ## Verification baseline
 
+Retained capture browser: all **136 frontend tests** pass, including 15 new contract/read/state tests. TypeScript, focused lint/formatting and the production build pass; `app/page.tsx` retains its 19 existing lint diagnostics and the build retains its large-chunk advisory. Desktop QA and a 390 CSS-pixel iframe of the actual app verified search, selection, exact detail, long references, focus restoration and failure/retry without horizontal overflow. Real Oxford/Cardiff weather captures were opened through an isolated read-only verification tenant; the frontend parser accepted all 15 retained captures across six sources. The API is restored to the original external Oxford database, and its completed analysis, five scene sources and mapped infrastructure are verified in the browser. The ignored local `.env` now pins its database/object paths for `scripts/dev.sh`. This organization has no independent captures yet. See [browser acceptance](ACQUISITION-BROWSER.md).
+
 Acquisition catalogue: 41 new contract/authentication/integrity tests and all **273 affected tests** pass on SQLite and PostgreSQL/PostGIS. Read-only API verification finds 15 retained successful real captures across vector, DTM/DSM, satellite and weather; all 16 original summaries replay unchanged, including the failed acquisition. Retained database and object files remain byte-identical. Production JWT validation is tested with locally signed tokens and a stubbed JWKS lookup; hosted acceptance and frontend integration remain unverified. See [catalogue acceptance](ACQUISITION-CATALOGUE.md).
 
 Housekeeping verification on 10 September 2026:
@@ -234,7 +238,7 @@ produced no new browser warnings or errors.
 
 ## Known limitations
 
-- Acquisition discovery is a backend read-only contract. Each response scans at most 50 retained successful request manifests and returns at most 20 matches; filtered pages can be empty with a continuation cursor. This is a live scan, not a national spatial index or a transactional snapshot. The frontend does not yet consume it; no endpoint for starting acquisitions or downloading raw artifacts is added.
+- Acquisition discovery has a read-only browser in Data sources. Each backend response scans at most 50 retained successful request manifests and returns at most 20 matches (the browser requests 10); filtered pages can be empty with continuation. This is a live scan, not a national spatial index or transactional snapshot. Browser filters/selection are session-local, with no dedicated deep links, map overlays, acquisition controls or raw-artifact downloads. The normal development organization has no independent captures; verification datasets remain isolated.
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
 - Most legacy acquisition is bounded to the Oxford pilot; flood coverage is narrower. Independent SSSI acquisition supports bounded areas wholly inside the selected publisher's pinned England or Scotland footprint. England BFE v2 resolves the verified Broads tidal exclusion; historical BFC v1 retains its original limits. No profile establishes complete marine or legal designation coverage. Wales, Northern Ireland, cross-border composition and customer-facing acquisition remain incomplete. Source-specific mapped absence never proves real-world absence.
@@ -252,30 +256,31 @@ produced no new browser warnings or errors.
 
 ## Latest meaningful implementation
 
-`acquisition_catalogue_v1` and `acquisition_detail_v1` expose retained successful
-independent evidence through authenticated GET routes. Results pin request,
-geometry, acquisition, terminal attempt and manifest identities. Location filters
-intersect the requested area or weather point; counts are never clipped to the
-search window. Evidence dates distinguish satellite observation time, requested
-weather daily intervals and unknown vector/LIDAR survey dates. Explicit capture-date
-filtering never changes those evidence semantics.
+Data sources now contains a read-only retained capture browser consuming
+`acquisition_catalogue_v1` and `acquisition_detail_v1`. Source, bounding-box location
+and inclusive UTC dates apply on explicit search. Empty continuation batches,
+unknown evidence dates, point-versus-area semantics and full original availability
+counts remain visible. Exact detail verifies retained files before exposing its
+availability and immutable references. Aborts and request fencing prevent late
+search/detail responses from replacing a newer selection; access failures clear
+previously displayed captures. The same-origin proxy preserves backend cache policy.
 
-Browsing verifies manifests and their database envelopes without fetching artifact
-bytes. Opening an exact capture runs existing retained-artifact integrity checks.
-The routes omit private object keys, provider payloads and raw download URLs, and
-perform no provider acquisition, evidence write, migration or model binding.
-All 273 affected tests pass on SQLite and PostgreSQL/PostGIS, with 15 real retained
-captures checked. See [catalogue implementation and acceptance](ACQUISITION-CATALOGUE.md).
+The existing assessment registry is separately disclosed and labelled in application
+chrome. No capture, source adapter, data schema, assessment or model binding changes.
+All 136 frontend tests pass; desktop and 390-pixel browser checks include real
+weather and failed-read recovery. See [capture browser acceptance](ACQUISITION-BROWSER.md).
 
 ## Current recommended engineering question
 
 The founder has deferred Wales and Northern Ireland designation adapters to
 prioritize additional data families. Independent terrain, surface elevation,
 dated satellite imagery and historical weather now exist through operator services.
-The next bounded task is a read-only frontend acquisition browser consuming the
-verified catalogue/detail contracts, preserving point-versus-area and evidence-date
-semantics. It should show retained captures and their exact details before any
-separate raster-rendering or acquisition-control task. Higher-resolution
+The browser now makes retained acquisitions discoverable. The next bounded task
+should acquire an explicit area/date/source selection under the active development
+organization, using the existing operator services and fresh immutable requests.
+This turns the empty operational library into inspectable evidence without relabelling
+or moving historical verification captures between tenants. Raster display and
+acquisition controls remain separate iterations. Higher-resolution
 weather, temporal analysis and validated climate/impact modelling remain separate
 work. Keep UK-wide capability as the broader objective and source-specific gaps
 explicit. The initial commercial market remains undecided and unvalidated.

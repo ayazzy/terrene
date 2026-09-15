@@ -1,0 +1,40 @@
+{
+  "date": "2026-09-15",
+  "frontend_tests_passed": 136,
+  "new_behavior_tests": 15,
+  "typecheck": "passed",
+  "focused_lint_and_format": "passed",
+  "existing_page_lint_findings": 19,
+  "production_build": "passed_with_existing_large_chunk_advisory",
+  "client_contract_real_captures": 15,
+  "client_contract_real_sources": 6,
+  "browser_real_weather_entries": 4,
+  "desktop_css_width": 1280,
+  "mobile_method": "Actual app inside isolated fixed-width iframe; browser viewport override was ineffective",
+  "mobile_css_width": 390,
+  "mobile_document_scroll_width": 390,
+  "mobile_detail_width": 358,
+  "checked": [
+    "Normal development tenant empty state and separate assessment registry",
+    "Oxford area and 2024-02-29 evidence-date search",
+    "Original February 2024 interval and six 29-of-29 availability counts preserved",
+    "Cardiff point selection and verified detail at 390 CSS pixels",
+    "Exact acquisition/attempt/manifest references and expanded hashes",
+    "Focus to detail on selection and return to originating capture on close",
+    "Unavailable API clears verified detail; retry restores it after service recovery",
+    "Temporary QA services closed and standard local app restored",
+    "Original Oxford completed analysis restored after correcting local API database paths; analyst brief and five scene sources verified"
+  ],
+  "verification_environment": "Existing retained weather tenant through a temporary loopback API, organization dependency override and read-only SQLite connection",
+  "hosted_auth_acceptance": false,
+  "new_provider_fetches": false,
+  "operational_tenant_populated": false,
+  "oxford_restoration": {
+    "cause": "API initially restarted against default test database",
+    "resolution": "Reconnect original retained Oxford database and object root; save paths in ignored local .env",
+    "assessment_id": "c10d373d-444d-5d04-9f3b-25c36a8f0d45",
+    "evidence_snapshots_retained": 1,
+    "module_runs_retained": 2,
+    "assessment_regenerated": false
+  }
+}

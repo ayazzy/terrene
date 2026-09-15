@@ -24,6 +24,9 @@ async function proxy(req: Request) {
       status: r.status,
       headers: {
         'Content-Type': r.headers.get('Content-Type') || 'application/json',
+        ...(r.headers.has('Cache-Control')
+          ? { 'Cache-Control': r.headers.get('Cache-Control')! }
+          : {}),
       },
     });
   } catch {

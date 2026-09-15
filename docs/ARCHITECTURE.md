@@ -395,5 +395,17 @@ token bound to query and organization hash; marker ownership is rechecked and th
 token grants no authorization. Filtered pages can be empty and still have a next
 cursor. This is a live scan, not a snapshot, total-count endpoint or national spatial
 index. Existing tables suffice; a scalable indexed metadata projection is future
-work if national retained volume justifies it. The frontend consumes this contract
-in a separate iteration. See [catalogue contract and limits](ACQUISITION-CATALOGUE.md).
+work if national retained volume justifies it. The Data sources browser now consumes
+this contract. See [catalogue contract and limits](ACQUISITION-CATALOGUE.md).
+
+The frontend `AcquisitionBrowser` mounts in Data sources independently of the
+assessment source library. Typed readers validate response version, query echo,
+geometry/time/count structure and exact capture references; detail URLs are built
+locally from acquisition/attempt IDs. GETs carry the existing session bearer token
+and `cache: no-store`; the same-origin proxy now preserves upstream Cache-Control.
+An external React store fences and aborts superseded search/detail reads, clears
+old detail on selection change and removes retained results on access failures.
+Search is explicit, pagination is user-driven and empty batches remain continuable.
+No source fetch, artifact download, model run or evidence mutation originates here.
+Filters and selection are local to the mounted browser; no new persisted state or
+route-state contract was introduced. See [capture browser](ACQUISITION-BROWSER.md).

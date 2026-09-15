@@ -157,6 +157,8 @@ type OperatingCommandBarProps = {
   onMobileMenu: () => void;
   mobileNavigationOpen: boolean;
   sourceStatus: string;
+  sourceLabel?: string;
+  contextLabel?: string;
   sourceAsOf: string;
   sourceState: 'loading' | 'available' | 'partial' | 'unavailable';
   refreshing: boolean;
@@ -172,6 +174,8 @@ export function OperatingCommandBar({
   onMobileMenu,
   mobileNavigationOpen,
   sourceStatus,
+  sourceLabel = 'Sources',
+  contextLabel = 'Oxfordshire',
   sourceAsOf,
   sourceState,
   refreshing,
@@ -203,7 +207,7 @@ export function OperatingCommandBar({
       <div className={styles.viewIdentity}>
         <span>Infrastructure operating picture</span>
         <small className={styles.mobileContext}>
-          Oxfordshire · {sourceAsOf.replace('As of ', '')}
+          {contextLabel} · {sourceAsOf.replace('As of ', '')}
         </small>
         <strong>{viewLabel}</strong>
       </div>
@@ -261,11 +265,11 @@ export function OperatingCommandBar({
         <div
           className={styles.contextItem}
           data-state={sourceState}
-          aria-label={`Source availability: ${sourceStatus}. ${sourceAsOf}`}
+          aria-label={`${sourceLabel} availability: ${sourceStatus}. ${sourceAsOf}`}
         >
           <Layers3 aria-hidden="true" />
           <span>
-            <small>Sources</small>
+            <small>{sourceLabel}</small>
             <strong>{sourceStatus}</strong>
           </span>
         </div>

@@ -17,6 +17,7 @@ import ScreeningContextPanel from './screening-context-panel';
 import MapFeatureInspector from './map-feature-inspector';
 import SiteEditorPanel from './site-editor-panel';
 import SiteModelCatalogue from './site-model-catalogue';
+import AcquisitionBrowser from './acquisition-browser';
 import { useSiteReasoningRuns } from './use-site-reasoning-runs';
 import SiteAssessmentTimeline from './site-assessment-timeline';
 import AssessmentPreflight, {
@@ -933,6 +934,8 @@ export default function Home() {
           onMobileMenu={() => setMobileNavigation((value) => !value)}
           mobileNavigationOpen={mobileNavigation}
           sourceStatus={sourceStatus}
+          sourceLabel={view === 'data' ? 'Assessment sources' : undefined}
+          contextLabel={view === 'data' ? 'Assessment registry' : undefined}
           sourceAsOf={sourceAsOf}
           sourceState={sourceState}
           refreshing={refreshing}
@@ -1842,59 +1845,71 @@ export default function Home() {
                 <p className="eyebrow">REFERENCE LIBRARY</p>
                 <h1>Data sources</h1>
                 <p>
-                  Imported once per version. Evidence retained with every
-                  assessment.
+                  Explore retained geographic evidence and the source versions
+                  used by assessments.
                 </p>
               </div>
             </div>
             <div className="workspace-content">
-              <div className="alert">
-                The Oxfordshire pilot has source-specific coverage. Flood data
-                covers the smaller Oxford corridor. Outside a source’s imported
-                extent, its result stays unknown.
-              </div>
-              {datasets.map((d) => (
-                <article className="dataset" key={d.id}>
-                  <div>
-                    <EvidenceBadge
-                      state={d.state === 'available' ? 'available' : 'partial'}
-                    >
-                      {d.state}
-                    </EvidenceBadge>
-                    <h2>{d.metadata.name}</h2>
-                    <p>{d.metadata.limitations}</p>
-                    <p>
-                      Imported extent (west, south, east, north):{' '}
-                      {d.metadata.bbox?.join(', ')}°
-                    </p>
-                    {d.metadata.zone_counts && (
+              <AcquisitionBrowser />
+              <details style={{ marginTop: 32 }}>
+                <summary style={{ cursor: 'pointer', marginBottom: 16 }}>
+                  Assessment source library
+                  {!loading && !readErrors.datasets && (
+                    <>
+                      {' '}· {datasets.length} retained{' '}
+                      {datasets.length === 1 ? 'version' : 'versions'}
+                    </>
+                  )}
+                </summary>
+                <div className="alert">
+                  The Oxfordshire pilot has source-specific coverage. Flood data
+                  covers the smaller Oxford corridor. Outside a source’s imported
+                  extent, its result stays unknown.
+                </div>
+                {datasets.map((d) => (
+                  <article className="dataset" key={d.id}>
+                    <div>
+                      <EvidenceBadge
+                        state={d.state === 'available' ? 'available' : 'partial'}
+                      >
+                        {d.state}
+                      </EvidenceBadge>
+                      <h2>{d.metadata.name}</h2>
+                      <p>{d.metadata.limitations}</p>
                       <p>
-                        Source features: {d.metadata.zone_counts.FZ2} in Zone 2
-                        · {d.metadata.zone_counts.FZ3} in Zone 3. Screening
-                        measures their combined union.
+                        Imported extent (west, south, east, north):{' '}
+                        {d.metadata.bbox?.join(', ')}°
                       </p>
-                    )}
-                    {d.metadata.error && (
-                      <p className="warning-text">{d.metadata.error}</p>
-                    )}
-                    <a href={d.metadata.url} target="_blank" rel="noreferrer">
-                      Authoritative source ↗
-                    </a>
-                  </div>
-                  <div className="dataset-meta">
-                    <b>{d.metadata.count ?? '—'} features</b>
-                    <small>
-                      Retrieved{' '}
-                      {new Date(d.retrieved).toLocaleDateString('en-GB')}
-                    </small>
-                    <small>
-                      {d.metadata.synthetic
-                        ? 'SYNTHETIC FIXTURE'
-                        : 'Real source data'}
-                    </small>
-                  </div>
-                </article>
-              ))}
+                      {d.metadata.zone_counts && (
+                        <p>
+                          Source features: {d.metadata.zone_counts.FZ2} in Zone 2
+                          · {d.metadata.zone_counts.FZ3} in Zone 3. Screening
+                          measures their combined union.
+                        </p>
+                      )}
+                      {d.metadata.error && (
+                        <p className="warning-text">{d.metadata.error}</p>
+                      )}
+                      <a href={d.metadata.url} target="_blank" rel="noreferrer">
+                        Authoritative source ↗
+                      </a>
+                    </div>
+                    <div className="dataset-meta">
+                      <b>{d.metadata.count ?? '—'} features</b>
+                      <small>
+                        Retrieved{' '}
+                        {new Date(d.retrieved).toLocaleDateString('en-GB')}
+                      </small>
+                      <small>
+                        {d.metadata.synthetic
+                          ? 'SYNTHETIC FIXTURE'
+                          : 'Real source data'}
+                      </small>
+                    </div>
+                  </article>
+                ))}
+              </details>
             </div>
           </>
         )}
