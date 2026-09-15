@@ -4,6 +4,16 @@
 
 This is an operational map of what exists on 15 September 2026. Inspect the relevant code, tests and linked implementation reports before changing it.
 
+## Sprint status — closed for research pause
+
+On 15 September the founder closed the evidence/terrain sprint and paused new
+engineering until their return, expected 20 September. Market research will inform
+the next priority; the satellite preview remains provisional. No automatic restart
+is scheduled. The completed implementation is at `8353700`; the original Oxford
+database and retained files have a verified local, Git-ignored backup outside the
+temporary runtime directory. Read [sprint closeout and restart notes](SPRINT-CLOSE-2026-09-15.md)
+before resuming. This pause does not establish customer validation.
+
 ## Product architecture
 
 - React 19 and TypeScript frontend built through the Vinext/Vite Sites scaffold, with MapLibre for geographic views.

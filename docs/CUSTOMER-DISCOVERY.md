@@ -16,6 +16,15 @@ does not select the next architectural investment. This is an internal product
 direction, not an interview result, paid pilot or evidence of demand. See the
 [architecture](ARCHITECTURE.md) and [decision record](DECISIONS.md).
 
+## Research pause — 15 September 2026
+
+The founder closed the current evidence/terrain engineering sprint and plans to
+use the approximately five-day pause for market research before choosing the next
+focus. Compare buyers, decisions, current workflows, urgency, existing spend and
+the smallest useful paid deliverable. This is a research plan, not completed
+interviews, willingness-to-pay evidence or a selected market. Record findings here
+when available. See [sprint closeout](SPRINT-CLOSE-2026-09-15.md).
+
 ## Closed technical experiment — no customer validation
 
 Sprint 003 used Beacon Fen Energy Park (Planning Inspectorate reference EN010151) as a real-project case study. The experiment was intended to ask whether a development, investment or diligence practitioner benefits from a source-separated account of what is officially established about consent, what a promoter reports about construction and operation timing, and what remains unresolved about grid delivery.
