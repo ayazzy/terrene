@@ -18,6 +18,9 @@ def verify(org, acquisition_id):
     summary = read_acquisition(org, acquisition_id)
     if summary['state'] != 'succeeded':
         raise AcquisitionError('successful_capture_required')
+    if summary['request']['adapter_version'] == 'nasa_power_daily_point_v1':
+        from scripts.verify_weather_acquisition import verify_weather
+        return verify_weather(org, summary)
     if summary['request']['adapter_version'] == 'sentinel2_c1_native_window_v1':
         from scripts.verify_satellite_acquisition import verify_satellite
         return verify_satellite(org, summary)

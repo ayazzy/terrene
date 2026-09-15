@@ -146,4 +146,7 @@ def parse_request(value):
     if isinstance(value, dict) and value.get('contract_version') == 'geographic_satellite_request_v1':
         from backend.acquisition_satellite import SatelliteRequest
         return SatelliteRequest.model_validate(value)
+    if isinstance(value, dict) and value.get('contract_version') == 'geographic_weather_request_v1':
+        from backend.acquisition_weather import WeatherRequest
+        return WeatherRequest.model_validate(value)
     return AcquisitionRequest.model_validate(value)

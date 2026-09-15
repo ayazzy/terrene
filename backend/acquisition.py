@@ -161,12 +161,15 @@ def acquire(org: str, request: AcquisitionRequest | dict, *, client=None) -> dic
         if request.contract_version == 'geographic_satellite_request_v1':
             from backend.acquisition_satellite import fetch_satellite
             result = fetch_satellite(request, client=client, artifacts=artifacts, diagnostics=diagnostics)
+        elif request.contract_version == 'geographic_weather_request_v1':
+            from backend.acquisition_weather import fetch_weather
+            result = fetch_weather(request, client=client, artifacts=artifacts, diagnostics=diagnostics)
         else:
             validate_capabilities(request)
         if request.adapter_version in RASTER_ADAPTERS:
             from backend.acquisition_rasters import fetch_raster
             result = fetch_raster(request, client=client, artifacts=artifacts, diagnostics=diagnostics)
-        elif request.contract_version != 'geographic_satellite_request_v1':
+        elif request.contract_version not in ('geographic_satellite_request_v1', 'geographic_weather_request_v1'):
             result = fetch_sssi(request, client=client, artifacts=artifacts, diagnostics=diagnostics)
     except AcquisitionError as exc:
         state, error_code = 'failed', exc.code
@@ -187,6 +190,9 @@ def acquire(org: str, request: AcquisitionRequest | dict, *, client=None) -> dic
                        'artifact_hash_semantics': 'Canonical assembled JSON; response hashes are decoded HTTP bytes.'},
         'artifacts': {},
     }
+    if request.contract_version == 'geographic_weather_request_v1':
+        manifest['processing'].update(area_method='Not applicable: explicit WGS84 point query.',
+            artifact_hash_semantics='Provider responses hash original decoded HTTP bytes; normalized metadata and daily series use canonical JSON.')
     if request.adapter_version in RASTER_ADAPTERS or request.contract_version == 'geographic_satellite_request_v1':
         import rasterio
         manifest['processing'].update(
@@ -282,9 +288,12 @@ def read_acquisition(org: str, acquisition_id: str, *, attempt_id: str | None = 
             if request.contract_version == 'geographic_satellite_request_v1':
                 from backend.acquisition_satellite import validate_retained
                 required = validate_retained(request, manifest, references, lambda ref: _load(org, ref))
+            if request.contract_version == 'geographic_weather_request_v1':
+                from backend.acquisition_weather import validate_retained
+                required = validate_retained(request, manifest, references, lambda ref: _load(org, ref))
             if set(references) != required or manifest['result'] is None or attempt['error_code'] is not None:
                 raise AcquisitionError('integrity_failure')
-            if request.contract_version != 'geographic_satellite_request_v1':
+            if request.contract_version not in ('geographic_satellite_request_v1', 'geographic_weather_request_v1'):
                 load_coverage(request.coverage_profile_sha256,
                               expected_version=ADAPTER_COVERAGE[request.adapter_version])
     elif attempt and attempt['state'] == 'succeeded':
@@ -321,7 +330,7 @@ def main(argv=None):
     commands = parser.add_subparsers(dest='command', required=True)
     for name in ('sources', 'prepare-coverage'):
         command = commands.add_parser(name)
-        command.add_argument('--adapter-version', choices=list(ADAPTER_COVERAGE) + (['sentinel2_c1_native_window_v1'] if name == 'sources' else []), default='sssi_arcgis_v1')
+        command.add_argument('--adapter-version', choices=list(ADAPTER_COVERAGE) + (['sentinel2_c1_native_window_v1', 'nasa_power_daily_point_v1'] if name == 'sources' else []), default='sssi_arcgis_v1')
     search = commands.add_parser('discover-satellite')
     search.add_argument('--area', required=True, type=Path)
     search.add_argument('--start', required=True)

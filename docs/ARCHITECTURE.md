@@ -323,6 +323,23 @@ classification is not promoted to observed land-cover truth. No imagery map,
 mosaic, cloud mask, index, comparison or model binding is implied. See
 [dated satellite acquisition](SENTINEL2-GEOGRAPHIC-ACQUISITION.md).
 
+`geographic_weather_request_v1` adds an explicit WGS84 **point** and inclusive
+daily UTC date interval on the same persistence foundation. It does not contain
+an area or administrative coverage profile: the NASA POWER/MERRA-2 point response
+is coarse modelled source-grid context, not spatial coverage of surrounding land.
+The `nasa_power_daily_point_v1` adapter retains six fixed meteorological variables
+in native units, identifies reanalysis and source API version separately from an
+unknown immutable dataset release, and refuses recent or mixed-model responses.
+
+Weather captures retain two original bounded JSON response byte artifacts plus
+source metadata, `weather_daily_series_v1` and a per-variable availability summary.
+The normalized responses must agree, excluding runtime timing statistics only.
+Successful integrity reads replay both responses; exact retries do not fetch.
+Absent dates, provider nulls and fill values remain separate from genuine zero.
+No station observation, native cell ID, polygon average, forecast, scientific
+confidence or model binding is inferred. See
+[historical weather acquisition](HISTORICAL-WEATHER-ACQUISITION.md).
+
 Migration 9 adds organization-scoped requests and append-only terminal attempts.
 Operational claims use optimistic concurrency, expiring leases and fenced
 publication. Immutable manifests retain exact request/source identities,

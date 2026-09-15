@@ -26,6 +26,8 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 
 - Discover dated Sentinel-2 Collection 1 scenes and independently retain one explicitly pinned observation: native blue/green/red/near-infrared windows, scene classification, calibration and replayable source ranges. Live Oxford and Edinburgh captures pass; Cardiff/Belfast catalogue discovery is checked separately. See [dated satellite acquisition](SENTINEL2-GEOGRAPHIC-ACQUISITION.md).
 
+- Acquire NASA POWER/MERRA-2 daily weather for an explicit point and historical date interval, preserving six variables, native units, UTC periods, source metadata and explicit missingness. Live captures and single-day checks pass in Oxford, Edinburgh, Cardiff and Belfast. This is coarse reanalysis, not station or parcel weather. See [historical weather acquisition](HISTORICAL-WEATHER-ACQUISITION.md).
+
 - Create sites from a drawn or uploaded Polygon/MultiPolygon in a contextual editor over the persistent operating map; validate, version and preserve boundary history.
 - Submit deterministic assessments with pinned dataset/model configuration, deduplication, worker leases/retries/fencing and immutable saved results.
 - Inspect portfolio sites in map-first or list mode; open the Site Analysis Workspace across Overview, Evidence, Models and History. Screening Context is the default Overview and the wetland assessment is a secondary Terrene Reasoning module.
@@ -47,6 +49,8 @@ Implementation reports: [snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENC
 ## Real-data sources
 
 Connected sources include:
+
+- NASA POWER/MERRA-2 daily meteorology: point-query reanalysis temperature, precipitation, wind and humidity; independent capture only, with no station, forecast or parcel-average claim.
 
 - Copernicus Sentinel-2 Collection 1 L2A via Element 84 Earth Search: independent dated spectral/SCL captures only, with native grids and explicit local cloud/nodata semantics; not bound into legacy assessments or map scenes.
 
@@ -230,6 +234,7 @@ produced no new browser warnings or errors.
 - Most legacy acquisition is bounded to the Oxford pilot; flood coverage is narrower. Independent SSSI acquisition supports bounded areas wholly inside the selected publisher's pinned England or Scotland footprint. England BFE v2 resolves the verified Broads tidal exclusion; historical BFC v1 retains its original limits. No profile establishes complete marine or legal designation coverage. Wales, Northern Ireland, cross-border composition and customer-facing acquisition remain incomplete. Source-specific mapped absence never proves real-world absence.
 - Independent LIDAR currently serves EA terrain and last-return surface elevation in England only, capped at 4 million cells per requested bounding window and 4,096 pixels per axis. These are historical composite rasters, not point clouds, current surveys or national bulk ingestion. Pairing checks grid compatibility and joint availability but does not establish survey-date equivalence or scientific suitability. No independent raster map layer or raster-to-model binding is implemented.
 - Independent satellite capture requires one compatible Sentinel-2 C1 scene to cover the entire request. Discovery is one bounded catalogue page; captures are capped at 1 million cells per band and 64 MB of HTTP responses. Original fetched ranges and native windows are retained, but complete publisher file checksums are not verified. SCL is provider classification, and non-nodata spectral cells can include clouds/shadows. No mosaic, imagery map layer, cloud mask, temporal change model or satellite-to-model binding exists.
+- Independent weather uses coarse MERRA-2 source grids (nominally 0.5° latitude × 0.625° longitude), queried at explicit points. It supports at most 366 daily UTC periods per capture and refuses periods less than 120 days old or mixed-model responses. It does not supply station observations, parcel-scale weather, current forecasts or climate projections; higher-resolution sources remain unconnected.
 - The wetland model is unvalidated and cannot yet rank the retained real locations defensibly.
 - Hosted Supabase/Render/R2 credentials and end-to-end tenant acceptance have not been configured or verified; the reserved Sites frontend is not a deployed product.
 - Team review status is not yet an immutable historical Decision record.
@@ -241,31 +246,30 @@ produced no new browser warnings or errors.
 
 ## Latest meaningful implementation
 
-`copernicus.sentinel2_c1_l2a_earthsearch` / `sentinel2_c1_native_window_v1`
-adds dated imagery through `geographic_satellite_request_v1`. Explicit scene ID
-and metadata-hash pins preserve selection identity without changing historical
-geographic requests. Native 10 m blue/green/red/near-infrared DN and 20 m scene
-classification windows retain calibration, nodata and observation-time semantics.
-Bounded, ETag-pinned HTTP ranges are retained separately from lossless derived
-window GeoTIFFs, allowing offline source-range replay. No new dependency, database
-migration, Site, assessment, snapshot or model binding is introduced.
+`nasa.power_merra2_daily` / `nasa_power_daily_point_v1` adds bounded historical
+weather through `geographic_weather_request_v1`. It explicitly identifies
+modelled MERRA-2 reanalysis for a WGS84 query point and daily UTC interval,
+with mean/minimum/maximum temperature, corrected precipitation rate, wind speed
+and relative humidity in native units. Two original provider responses, metadata,
+normalized daily series and per-variable missingness are retained. Successful
+reads replay both original responses. No geographic/satellite request defaults,
+source identities, database schema or model bindings change.
 
-Live Oxford (19 June 2025) and Edinburgh (2 June 2024) observations each pass
-15 fresh pixel comparisons across all five assets and full offline replay. They
-contain 7,681 and 6,882 non-nodata spectral cells per band, respectively. Cardiff
-and Belfast catalogue discovery also returns compatible scenes; pixel acquisition
-there remains unverified. Fresh-process reads and provider-free retries pass.
-Ten previous vector/DTM/DSM captures and both LIDAR pairing results remain
-unchanged. All 211 affected tests pass on both SQLite and PostgreSQL/PostGIS.
-See [satellite implementation and acceptance record](SENTINEL2-GEOGRAPHIC-ACQUISITION.md).
+February 2024 captures for Oxford, Edinburgh, Cardiff and Belfast each retain
+29 days across all six variables. All 72 fresh one-day value comparisons pass;
+fresh-process readback and provider-free retries reproduce exactly. Twelve prior
+vector, LIDAR and satellite captures remain unchanged. The 37 new weather tests
+and all 221 affected acquisition tests pass on SQLite and PostgreSQL/PostGIS.
+See [historical weather implementation and acceptance record](HISTORICAL-WEATHER-ACQUISITION.md).
 
 ## Current recommended engineering question
 
 The founder has deferred Wales and Northern Ireland designation adapters to
-prioritize additional data families. Independent terrain, surface elevation and
-dated satellite imagery are implemented. The next bounded source candidate is
-historical weather, with explicit variable units, time periods, spatial resolution
-and observed-versus-modelled provenance. Customer-facing acquisition, raster/map
-assembly and satellite temporal analysis remain separate work. Keep UK-wide
-capability as the broader objective and each source's coverage limits explicit.
-The initial commercial market remains undecided and unvalidated.
+prioritize additional data families. Independent terrain, surface elevation,
+dated satellite imagery and historical weather now exist through operator services.
+The next bounded task is an authenticated, read-only acquisition catalogue
+searchable by location and date, establishing how the platform discovers retained
+evidence. Map presentation should consume that contract separately. Higher-resolution
+weather, temporal analysis and validated climate/impact modelling remain separate
+work. Keep UK-wide capability as the broader objective and source-specific gaps
+explicit. The initial commercial market remains undecided and unvalidated.

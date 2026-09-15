@@ -1,0 +1,1450 @@
+{
+  "verification_version": "historical_weather_acceptance_v1",
+  "recorded_at": "2026-09-15T11:31:30.417680+00:00",
+  "tests": {
+    "new_weather_tests": 37,
+    "sqlite_affected_passed": 221,
+    "postgresql_postgis_affected_passed": 221
+  },
+  "captures": {
+    "oxford": {
+      "request": {
+        "contract_version": "geographic_weather_request_v1",
+        "source_id": "nasa.power_merra2_daily",
+        "adapter_version": "nasa_power_daily_point_v1",
+        "point": {
+          "type": "Point",
+          "coordinates": [
+            -1.255,
+            51.745
+          ]
+        },
+        "start_date": "2024-02-01",
+        "end_date": "2024-02-29",
+        "time_standard": "UTC",
+        "idempotency_key": "oxford-feb2024-v1"
+      },
+      "acquisition_id": "ca9327c9-775c-4dc4-ada8-8f4776ca75d5",
+      "manifest_sha256": "7b3fdd0fbcb5a36cf34144498dc6020c704b888a19b9283ed40c112fc5f80b20",
+      "capture_started": "2026-09-15T11:27:20.776443+00:00",
+      "capture_completed": "2026-09-15T11:27:22.408530+00:00",
+      "source_model": "MERRA-2",
+      "source_api_version": "v2.9.7",
+      "availability": {
+        "PRECTOTCORR": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_bias_corrected_precipitation_rate",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "mm/day"
+        },
+        "RH2M": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_mean_relative_humidity_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "%"
+        },
+        "T2M": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_mean_air_temperature_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "C"
+        },
+        "T2M_MAX": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_maximum_air_temperature_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "C"
+        },
+        "T2M_MIN": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_minimum_air_temperature_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "C"
+        },
+        "WS10M": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_mean_wind_speed_10m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "m/s"
+        }
+      },
+      "artifact_checksums": {
+        "provider_response_after": {
+          "sha256": "3ba9b3ce934e6f57598d47c667696e19f596ffc0c66caa36651a5a2b2d4a3ac5",
+          "bytes": 3689,
+          "media_type": "application/octet-stream"
+        },
+        "provider_response_before": {
+          "sha256": "e81adcb6b44332195262e08f7af5dc592aadb7d6533bb90273134f9128623833",
+          "bytes": 3689,
+          "media_type": "application/octet-stream"
+        },
+        "result": {
+          "sha256": "149ffeca2287a25ad0183d273420591b743c6b128a4883596f5125dbd51e504c",
+          "bytes": 2260
+        },
+        "series": {
+          "sha256": "86d42da5b639038f2bf903c5b9a60dc051450c97d5414f4e50c46bd4961e440d",
+          "bytes": 9968
+        },
+        "source_metadata": {
+          "sha256": "359f3979bec305cec5331f1b3170d71e3f9472624b54f45423e3a7466d30f22c",
+          "bytes": 712
+        }
+      },
+      "verification": {
+        "verification_version": "weather_daily_verification_v1",
+        "verified_at": "2026-09-15T11:29:02.108011+00:00",
+        "acquisition_id": "ca9327c9-775c-4dc4-ada8-8f4776ca75d5",
+        "manifest_sha256": "7b3fdd0fbcb5a36cf34144498dc6020c704b888a19b9283ed40c112fc5f80b20",
+        "offline_response_replay_match": true,
+        "live_sample_match": true,
+        "samples": [
+          {
+            "variable": "T2M",
+            "unit": "C",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 3.97,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MIN",
+            "unit": "C",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": -0.18,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MAX",
+            "unit": "C",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 7.71,
+            "independent_match": true
+          },
+          {
+            "variable": "PRECTOTCORR",
+            "unit": "mm/day",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 0.04,
+            "independent_match": true
+          },
+          {
+            "variable": "WS10M",
+            "unit": "m/s",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 3.34,
+            "independent_match": true
+          },
+          {
+            "variable": "RH2M",
+            "unit": "%",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 93.8,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M",
+            "unit": "C",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 11.12,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MIN",
+            "unit": "C",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 9.47,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MAX",
+            "unit": "C",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 14.18,
+            "independent_match": true
+          },
+          {
+            "variable": "PRECTOTCORR",
+            "unit": "mm/day",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 3.02,
+            "independent_match": true
+          },
+          {
+            "variable": "WS10M",
+            "unit": "m/s",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 5.46,
+            "independent_match": true
+          },
+          {
+            "variable": "RH2M",
+            "unit": "%",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 95.23,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M",
+            "unit": "C",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 8.16,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MIN",
+            "unit": "C",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 3.76,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MAX",
+            "unit": "C",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 10.23,
+            "independent_match": true
+          },
+          {
+            "variable": "PRECTOTCORR",
+            "unit": "mm/day",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 4.52,
+            "independent_match": true
+          },
+          {
+            "variable": "WS10M",
+            "unit": "m/s",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 5.06,
+            "independent_match": true
+          },
+          {
+            "variable": "RH2M",
+            "unit": "%",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 92.32,
+            "independent_match": true
+          }
+        ],
+        "independent_responses": [
+          {
+            "endpoint": "https://power.larc.nasa.gov/api/temporal/daily/point",
+            "parameters": {
+              "parameters": "T2M,T2M_MIN,T2M_MAX,PRECTOTCORR,WS10M,RH2M",
+              "community": "AG",
+              "longitude": -1.255,
+              "latitude": 51.745,
+              "start": "20240201",
+              "end": "20240201",
+              "format": "JSON",
+              "time-standard": "UTC"
+            },
+            "decoded_response_sha256": "5aaf1cd9e1e324cf06b85bb969deb20e066c49c7b9fc24247e8d24e846da9a89",
+            "decoded_bytes": 960
+          },
+          {
+            "endpoint": "https://power.larc.nasa.gov/api/temporal/daily/point",
+            "parameters": {
+              "parameters": "T2M,T2M_MIN,T2M_MAX,PRECTOTCORR,WS10M,RH2M",
+              "community": "AG",
+              "longitude": -1.255,
+              "latitude": 51.745,
+              "start": "20240215",
+              "end": "20240215",
+              "format": "JSON",
+              "time-standard": "UTC"
+            },
+            "decoded_response_sha256": "7dbda5f68b3b78f55258b823ee752ff7004a6a9926d8ec51ce36a9b9f3b582bb",
+            "decoded_bytes": 962
+          },
+          {
+            "endpoint": "https://power.larc.nasa.gov/api/temporal/daily/point",
+            "parameters": {
+              "parameters": "T2M,T2M_MIN,T2M_MAX,PRECTOTCORR,WS10M,RH2M",
+              "community": "AG",
+              "longitude": -1.255,
+              "latitude": 51.745,
+              "start": "20240229",
+              "end": "20240229",
+              "format": "JSON",
+              "time-standard": "UTC"
+            },
+            "decoded_response_sha256": "c0e70059fc85f27216b182cc185ced4465b6aa91cf41c685c7b659f4e584954e",
+            "decoded_bytes": 961
+          }
+        ],
+        "method": "Replays original responses and compares new one-day requests at first/middle/last dates across every variable.",
+        "limits": "Same-provider consistency check; not independent station or scientific validation."
+      },
+      "fresh_process_summary_unchanged": true,
+      "retry_without_network": true,
+      "fresh_process_offline_replay_match": true
+    },
+    "edinburgh": {
+      "request": {
+        "contract_version": "geographic_weather_request_v1",
+        "source_id": "nasa.power_merra2_daily",
+        "adapter_version": "nasa_power_daily_point_v1",
+        "point": {
+          "type": "Point",
+          "coordinates": [
+            -3.195,
+            55.945
+          ]
+        },
+        "start_date": "2024-02-01",
+        "end_date": "2024-02-29",
+        "time_standard": "UTC",
+        "idempotency_key": "edinburgh-feb2024-v1"
+      },
+      "acquisition_id": "13b0d888-2481-45e4-93b8-2607e59255fb",
+      "manifest_sha256": "9d8bcd4f128d73cd0761afdbb65e62b3efd9c89f752330c97ec2549c7dc774d9",
+      "capture_started": "2026-09-15T11:29:02.115096+00:00",
+      "capture_completed": "2026-09-15T11:29:04.186324+00:00",
+      "source_model": "MERRA-2",
+      "source_api_version": "v2.9.7",
+      "availability": {
+        "PRECTOTCORR": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_bias_corrected_precipitation_rate",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "mm/day"
+        },
+        "RH2M": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_mean_relative_humidity_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "%"
+        },
+        "T2M": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_mean_air_temperature_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "C"
+        },
+        "T2M_MAX": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_maximum_air_temperature_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "C"
+        },
+        "T2M_MIN": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_minimum_air_temperature_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "C"
+        },
+        "WS10M": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_mean_wind_speed_10m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "m/s"
+        }
+      },
+      "artifact_checksums": {
+        "provider_response_after": {
+          "sha256": "701b4968158239917886bd6515e3c8817f9a90f0080301120eabde607034d59a",
+          "bytes": 3660,
+          "media_type": "application/octet-stream"
+        },
+        "provider_response_before": {
+          "sha256": "b1920ff5ef0c4446177cfa04218186e67e9bad1b6d28e934ec14ff4d4b4f2275",
+          "bytes": 3662,
+          "media_type": "application/octet-stream"
+        },
+        "result": {
+          "sha256": "786e949accf6dea794351734bce46008fb6201845790398ab7b2a6d8e99d6f45",
+          "bytes": 2260
+        },
+        "series": {
+          "sha256": "57faa6820db3a9e69b4881b060e13c6ab758d943e714e76fe17c138a5c7b07ac",
+          "bytes": 9941
+        },
+        "source_metadata": {
+          "sha256": "0f05480be3430605414a2e5c38ad18d5419f40cf2a63072191ebf8b2470ffeb6",
+          "bytes": 712
+        }
+      },
+      "verification": {
+        "verification_version": "weather_daily_verification_v1",
+        "verified_at": "2026-09-15T11:29:06.846245+00:00",
+        "acquisition_id": "13b0d888-2481-45e4-93b8-2607e59255fb",
+        "manifest_sha256": "9d8bcd4f128d73cd0761afdbb65e62b3efd9c89f752330c97ec2549c7dc774d9",
+        "offline_response_replay_match": true,
+        "live_sample_match": true,
+        "samples": [
+          {
+            "variable": "T2M",
+            "unit": "C",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 5.23,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MIN",
+            "unit": "C",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 3.52,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MAX",
+            "unit": "C",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 8.18,
+            "independent_match": true
+          },
+          {
+            "variable": "PRECTOTCORR",
+            "unit": "mm/day",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 2.63,
+            "independent_match": true
+          },
+          {
+            "variable": "WS10M",
+            "unit": "m/s",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 9.15,
+            "independent_match": true
+          },
+          {
+            "variable": "RH2M",
+            "unit": "%",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 91.91,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M",
+            "unit": "C",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 8.32,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MIN",
+            "unit": "C",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 6.35,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MAX",
+            "unit": "C",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 10.29,
+            "independent_match": true
+          },
+          {
+            "variable": "PRECTOTCORR",
+            "unit": "mm/day",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 7.31,
+            "independent_match": true
+          },
+          {
+            "variable": "WS10M",
+            "unit": "m/s",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 4.28,
+            "independent_match": true
+          },
+          {
+            "variable": "RH2M",
+            "unit": "%",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 96.85,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M",
+            "unit": "C",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 5.47,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MIN",
+            "unit": "C",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 2.1,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MAX",
+            "unit": "C",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 7.63,
+            "independent_match": true
+          },
+          {
+            "variable": "PRECTOTCORR",
+            "unit": "mm/day",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 0.58,
+            "independent_match": true
+          },
+          {
+            "variable": "WS10M",
+            "unit": "m/s",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 8.92,
+            "independent_match": true
+          },
+          {
+            "variable": "RH2M",
+            "unit": "%",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 88.08,
+            "independent_match": true
+          }
+        ],
+        "independent_responses": [
+          {
+            "endpoint": "https://power.larc.nasa.gov/api/temporal/daily/point",
+            "parameters": {
+              "parameters": "T2M,T2M_MIN,T2M_MAX,PRECTOTCORR,WS10M,RH2M",
+              "community": "AG",
+              "longitude": -3.195,
+              "latitude": 55.945,
+              "start": "20240201",
+              "end": "20240201",
+              "format": "JSON",
+              "time-standard": "UTC"
+            },
+            "decoded_response_sha256": "794c9c26307fa81edb7787878d15b9df4535c69015689a3bb6034856fae99f62",
+            "decoded_bytes": 960
+          },
+          {
+            "endpoint": "https://power.larc.nasa.gov/api/temporal/daily/point",
+            "parameters": {
+              "parameters": "T2M,T2M_MIN,T2M_MAX,PRECTOTCORR,WS10M,RH2M",
+              "community": "AG",
+              "longitude": -3.195,
+              "latitude": 55.945,
+              "start": "20240215",
+              "end": "20240215",
+              "format": "JSON",
+              "time-standard": "UTC"
+            },
+            "decoded_response_sha256": "7dfdd3cf6e49531f9b982b324d53c7fcf67e0e5e62ee3e05ec80dbe524f2f8ac",
+            "decoded_bytes": 961
+          },
+          {
+            "endpoint": "https://power.larc.nasa.gov/api/temporal/daily/point",
+            "parameters": {
+              "parameters": "T2M,T2M_MIN,T2M_MAX,PRECTOTCORR,WS10M,RH2M",
+              "community": "AG",
+              "longitude": -3.195,
+              "latitude": 55.945,
+              "start": "20240229",
+              "end": "20240229",
+              "format": "JSON",
+              "time-standard": "UTC"
+            },
+            "decoded_response_sha256": "3dd2edb45c06c776d90d18984bef1bc90600ab0410a503e26004b02475c3757d",
+            "decoded_bytes": 959
+          }
+        ],
+        "method": "Replays original responses and compares new one-day requests at first/middle/last dates across every variable.",
+        "limits": "Same-provider consistency check; not independent station or scientific validation."
+      },
+      "fresh_process_summary_unchanged": true,
+      "retry_without_network": true,
+      "fresh_process_offline_replay_match": true
+    },
+    "cardiff": {
+      "request": {
+        "contract_version": "geographic_weather_request_v1",
+        "source_id": "nasa.power_merra2_daily",
+        "adapter_version": "nasa_power_daily_point_v1",
+        "point": {
+          "type": "Point",
+          "coordinates": [
+            -3.185,
+            51.475
+          ]
+        },
+        "start_date": "2024-02-01",
+        "end_date": "2024-02-29",
+        "time_standard": "UTC",
+        "idempotency_key": "cardiff-feb2024-v1"
+      },
+      "acquisition_id": "3a95f98b-a59d-40c5-879e-e032be7a94e5",
+      "manifest_sha256": "6832c93120fcb5c30063b552bf658b03c2a8d1a8aa02d9e9c709692cc5ef1c2c",
+      "capture_started": "2026-09-15T11:29:06.847666+00:00",
+      "capture_completed": "2026-09-15T11:29:09.102023+00:00",
+      "source_model": "MERRA-2",
+      "source_api_version": "v2.9.7",
+      "availability": {
+        "PRECTOTCORR": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_bias_corrected_precipitation_rate",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "mm/day"
+        },
+        "RH2M": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_mean_relative_humidity_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "%"
+        },
+        "T2M": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_mean_air_temperature_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "C"
+        },
+        "T2M_MAX": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_maximum_air_temperature_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "C"
+        },
+        "T2M_MIN": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_minimum_air_temperature_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "C"
+        },
+        "WS10M": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_mean_wind_speed_10m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "m/s"
+        }
+      },
+      "artifact_checksums": {
+        "provider_response_after": {
+          "sha256": "75d2213e6427d9c33761ae541cf498324e0d4f0a83f8bfcbdce2960d2499396a",
+          "bytes": 3681,
+          "media_type": "application/octet-stream"
+        },
+        "provider_response_before": {
+          "sha256": "403bfccb763f731b586472ad71350d2c6679bfc74bf4b209bea97230c88d79a2",
+          "bytes": 3681,
+          "media_type": "application/octet-stream"
+        },
+        "result": {
+          "sha256": "05314b2e6a0198e0b9b9090e0c3bdfcad1d7335db6439535568c87501b5932cf",
+          "bytes": 2259
+        },
+        "series": {
+          "sha256": "ef55e3dd923b47045fc2e9f2cf3d9cbc3bce6b24e2fc43336b4be8a5631f27c4",
+          "bytes": 9961
+        },
+        "source_metadata": {
+          "sha256": "bcc82f7e4516af934de2a7921e082bf30fe3c983ec142a5ed29337ae6dc8a37d",
+          "bytes": 711
+        }
+      },
+      "verification": {
+        "verification_version": "weather_daily_verification_v1",
+        "verified_at": "2026-09-15T11:29:11.893841+00:00",
+        "acquisition_id": "3a95f98b-a59d-40c5-879e-e032be7a94e5",
+        "manifest_sha256": "6832c93120fcb5c30063b552bf658b03c2a8d1a8aa02d9e9c709692cc5ef1c2c",
+        "offline_response_replay_match": true,
+        "live_sample_match": true,
+        "samples": [
+          {
+            "variable": "T2M",
+            "unit": "C",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 5.19,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MIN",
+            "unit": "C",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 2.19,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MAX",
+            "unit": "C",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 8.02,
+            "independent_match": true
+          },
+          {
+            "variable": "PRECTOTCORR",
+            "unit": "mm/day",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 0.03,
+            "independent_match": true
+          },
+          {
+            "variable": "WS10M",
+            "unit": "m/s",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 3.37,
+            "independent_match": true
+          },
+          {
+            "variable": "RH2M",
+            "unit": "%",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 90.75,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M",
+            "unit": "C",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 11.23,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MIN",
+            "unit": "C",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 9.59,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MAX",
+            "unit": "C",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 13.06,
+            "independent_match": true
+          },
+          {
+            "variable": "PRECTOTCORR",
+            "unit": "mm/day",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 9.37,
+            "independent_match": true
+          },
+          {
+            "variable": "WS10M",
+            "unit": "m/s",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 4.98,
+            "independent_match": true
+          },
+          {
+            "variable": "RH2M",
+            "unit": "%",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 96.46,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M",
+            "unit": "C",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 7.43,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MIN",
+            "unit": "C",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 3.72,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MAX",
+            "unit": "C",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 10.02,
+            "independent_match": true
+          },
+          {
+            "variable": "PRECTOTCORR",
+            "unit": "mm/day",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 4.55,
+            "independent_match": true
+          },
+          {
+            "variable": "WS10M",
+            "unit": "m/s",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 5.22,
+            "independent_match": true
+          },
+          {
+            "variable": "RH2M",
+            "unit": "%",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 91.82,
+            "independent_match": true
+          }
+        ],
+        "independent_responses": [
+          {
+            "endpoint": "https://power.larc.nasa.gov/api/temporal/daily/point",
+            "parameters": {
+              "parameters": "T2M,T2M_MIN,T2M_MAX,PRECTOTCORR,WS10M,RH2M",
+              "community": "AG",
+              "longitude": -3.185,
+              "latitude": 51.475,
+              "start": "20240201",
+              "end": "20240201",
+              "format": "JSON",
+              "time-standard": "UTC"
+            },
+            "decoded_response_sha256": "272bff46e5650618e7deed46d0c1cdea212036f4d7bd54d34bd34d425536bb94",
+            "decoded_bytes": 959
+          },
+          {
+            "endpoint": "https://power.larc.nasa.gov/api/temporal/daily/point",
+            "parameters": {
+              "parameters": "T2M,T2M_MIN,T2M_MAX,PRECTOTCORR,WS10M,RH2M",
+              "community": "AG",
+              "longitude": -3.185,
+              "latitude": 51.475,
+              "start": "20240215",
+              "end": "20240215",
+              "format": "JSON",
+              "time-standard": "UTC"
+            },
+            "decoded_response_sha256": "0ad2d7033f3fe53c78980fed370b2eedf953bd6b40b2ee6065d085259e865924",
+            "decoded_bytes": 961
+          },
+          {
+            "endpoint": "https://power.larc.nasa.gov/api/temporal/daily/point",
+            "parameters": {
+              "parameters": "T2M,T2M_MIN,T2M_MAX,PRECTOTCORR,WS10M,RH2M",
+              "community": "AG",
+              "longitude": -3.185,
+              "latitude": 51.475,
+              "start": "20240229",
+              "end": "20240229",
+              "format": "JSON",
+              "time-standard": "UTC"
+            },
+            "decoded_response_sha256": "624f8ac7d923386df9437d87938eea1eb8771af839c84cb2523c8f2e0c9df5aa",
+            "decoded_bytes": 960
+          }
+        ],
+        "method": "Replays original responses and compares new one-day requests at first/middle/last dates across every variable.",
+        "limits": "Same-provider consistency check; not independent station or scientific validation."
+      },
+      "fresh_process_summary_unchanged": true,
+      "retry_without_network": true,
+      "fresh_process_offline_replay_match": true
+    },
+    "belfast": {
+      "request": {
+        "contract_version": "geographic_weather_request_v1",
+        "source_id": "nasa.power_merra2_daily",
+        "adapter_version": "nasa_power_daily_point_v1",
+        "point": {
+          "type": "Point",
+          "coordinates": [
+            -5.935,
+            54.595
+          ]
+        },
+        "start_date": "2024-02-01",
+        "end_date": "2024-02-29",
+        "time_standard": "UTC",
+        "idempotency_key": "belfast-feb2024-v1"
+      },
+      "acquisition_id": "020c3206-212b-42f1-8f1e-4442a9dda242",
+      "manifest_sha256": "e2bd2e835276293b145e56db598d82bda86f72472f99bdacc443f687ef208da7",
+      "capture_started": "2026-09-15T11:29:11.898217+00:00",
+      "capture_completed": "2026-09-15T11:29:13.597460+00:00",
+      "source_model": "MERRA-2",
+      "source_api_version": "v2.9.7",
+      "availability": {
+        "PRECTOTCORR": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_bias_corrected_precipitation_rate",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "mm/day"
+        },
+        "RH2M": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_mean_relative_humidity_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "%"
+        },
+        "T2M": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_mean_air_temperature_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "C"
+        },
+        "T2M_MAX": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_maximum_air_temperature_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "C"
+        },
+        "T2M_MIN": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_minimum_air_temperature_2m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "C"
+        },
+        "WS10M": {
+          "availability": "complete",
+          "expected_days": 29,
+          "meaning": "daily_mean_wind_speed_10m",
+          "missing_days": 0,
+          "missingness_counts": {
+            "absent_date": 0,
+            "present": 29,
+            "provider_fill": 0,
+            "provider_null": 0
+          },
+          "present_days": 29,
+          "unit": "m/s"
+        }
+      },
+      "artifact_checksums": {
+        "provider_response_after": {
+          "sha256": "77e4457161d5d380cfdd228f0e7ea85fc1e9755e0705b72782f8cfdbe88f9227",
+          "bytes": 3676,
+          "media_type": "application/octet-stream"
+        },
+        "provider_response_before": {
+          "sha256": "80fd3bb9b0781b654e804c3f26e91ea7264fee69bbe800eae5da02f66f2a03f3",
+          "bytes": 3676,
+          "media_type": "application/octet-stream"
+        },
+        "result": {
+          "sha256": "07ea2be3986b1d69d4d7435dce72cd8601727f08ad5e2bdb4559e6c53389ff1c",
+          "bytes": 2259
+        },
+        "series": {
+          "sha256": "f938936d19f7428913a98fe7972a2cdf1aa8a44facafb4e7ab31a07be665d495",
+          "bytes": 9956
+        },
+        "source_metadata": {
+          "sha256": "1afad8f779e7fab703320e3f673a9a55b8ec2dd055512f0ebbad55a2365f425b",
+          "bytes": 711
+        }
+      },
+      "verification": {
+        "verification_version": "weather_daily_verification_v1",
+        "verified_at": "2026-09-15T11:29:16.029496+00:00",
+        "acquisition_id": "020c3206-212b-42f1-8f1e-4442a9dda242",
+        "manifest_sha256": "e2bd2e835276293b145e56db598d82bda86f72472f99bdacc443f687ef208da7",
+        "offline_response_replay_match": true,
+        "live_sample_match": true,
+        "samples": [
+          {
+            "variable": "T2M",
+            "unit": "C",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 6.18,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MIN",
+            "unit": "C",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 4.45,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MAX",
+            "unit": "C",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 8.41,
+            "independent_match": true
+          },
+          {
+            "variable": "PRECTOTCORR",
+            "unit": "mm/day",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 1.0,
+            "independent_match": true
+          },
+          {
+            "variable": "WS10M",
+            "unit": "m/s",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 7.58,
+            "independent_match": true
+          },
+          {
+            "variable": "RH2M",
+            "unit": "%",
+            "date": "2024-02-01",
+            "state": "present",
+            "value": 92.44,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M",
+            "unit": "C",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 9.91,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MIN",
+            "unit": "C",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 8.19,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MAX",
+            "unit": "C",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 11.22,
+            "independent_match": true
+          },
+          {
+            "variable": "PRECTOTCORR",
+            "unit": "mm/day",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 6.53,
+            "independent_match": true
+          },
+          {
+            "variable": "WS10M",
+            "unit": "m/s",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 4.74,
+            "independent_match": true
+          },
+          {
+            "variable": "RH2M",
+            "unit": "%",
+            "date": "2024-02-15",
+            "state": "present",
+            "value": 95.35,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M",
+            "unit": "C",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 5.89,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MIN",
+            "unit": "C",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 3.52,
+            "independent_match": true
+          },
+          {
+            "variable": "T2M_MAX",
+            "unit": "C",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 7.95,
+            "independent_match": true
+          },
+          {
+            "variable": "PRECTOTCORR",
+            "unit": "mm/day",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 0.76,
+            "independent_match": true
+          },
+          {
+            "variable": "WS10M",
+            "unit": "m/s",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 8.37,
+            "independent_match": true
+          },
+          {
+            "variable": "RH2M",
+            "unit": "%",
+            "date": "2024-02-29",
+            "state": "present",
+            "value": 88.78,
+            "independent_match": true
+          }
+        ],
+        "independent_responses": [
+          {
+            "endpoint": "https://power.larc.nasa.gov/api/temporal/daily/point",
+            "parameters": {
+              "parameters": "T2M,T2M_MIN,T2M_MAX,PRECTOTCORR,WS10M,RH2M",
+              "community": "AG",
+              "longitude": -5.935,
+              "latitude": 54.595,
+              "start": "20240201",
+              "end": "20240201",
+              "format": "JSON",
+              "time-standard": "UTC"
+            },
+            "decoded_response_sha256": "1c134936571dbf1f25d271e87dbc25926f4096de56efcf9d8d3786062c36c177",
+            "decoded_bytes": 958
+          },
+          {
+            "endpoint": "https://power.larc.nasa.gov/api/temporal/daily/point",
+            "parameters": {
+              "parameters": "T2M,T2M_MIN,T2M_MAX,PRECTOTCORR,WS10M,RH2M",
+              "community": "AG",
+              "longitude": -5.935,
+              "latitude": 54.595,
+              "start": "20240215",
+              "end": "20240215",
+              "format": "JSON",
+              "time-standard": "UTC"
+            },
+            "decoded_response_sha256": "e15019aa1da65536ecc9fb8c3f4e325a2f21b4d6a0dfb4c74137addf8542a853",
+            "decoded_bytes": 960
+          },
+          {
+            "endpoint": "https://power.larc.nasa.gov/api/temporal/daily/point",
+            "parameters": {
+              "parameters": "T2M,T2M_MIN,T2M_MAX,PRECTOTCORR,WS10M,RH2M",
+              "community": "AG",
+              "longitude": -5.935,
+              "latitude": 54.595,
+              "start": "20240229",
+              "end": "20240229",
+              "format": "JSON",
+              "time-standard": "UTC"
+            },
+            "decoded_response_sha256": "c59c8c0baad8ea049522e3e2e30554c3d0ed99bbe4ee325438de34b2c8f1a085",
+            "decoded_bytes": 958
+          }
+        ],
+        "method": "Replays original responses and compares new one-day requests at first/middle/last dates across every variable.",
+        "limits": "Same-provider consistency check; not independent station or scientific validation."
+      },
+      "fresh_process_summary_unchanged": true,
+      "retry_without_network": true,
+      "fresh_process_offline_replay_match": true
+    }
+  },
+  "table_counts_unchanged": true,
+  "table_counts": {
+    "geographic_acquisitions": 4,
+    "geographic_acquisition_attempts": 4,
+    "sites": 0,
+    "assessments": 0,
+    "datasets": 0,
+    "features": 0,
+    "land_evidence_snapshots": 0,
+    "module_runs": 0
+  },
+  "limitations": [
+    "Four representative point queries, not full territorial coverage certification.",
+    "MERRA-2 coarse-grid reanalysis, not station observations, parcel averages or forecasts.",
+    "Independent verification means fresh same-provider queries, not ground-truth scientific validation.",
+    "Full original responses and databases are retained outside Git."
+  ],
+  "prior_captures": [
+    {
+      "capture": "broads-v2-summary",
+      "manifest_sha256": "5d1062def9f4e92310466ad14e4c03d30d7c3c5928d867e541baeba10b8b208b",
+      "unchanged": true
+    },
+    {
+      "capture": "dsm-east-anglia-summary",
+      "manifest_sha256": "b1a438f8ae92397a322ea5459e54ea9a9687e8bb51a279bf59d20967b099dbf7",
+      "unchanged": true
+    },
+    {
+      "capture": "dsm-oxford-summary",
+      "manifest_sha256": "9173c339b886b8b96fda6e5bec4735a21f1ce3c2e057df3692ff0abf96d1f22f",
+      "unchanged": true
+    },
+    {
+      "capture": "lidar-east-anglia-summary",
+      "manifest_sha256": "881ccb3a2d9cafe75dd5cdc2803801ee244e6a220b6587d453435162de50d8cc",
+      "unchanged": true
+    },
+    {
+      "capture": "lidar-oxford-summary",
+      "manifest_sha256": "e987df4361d227065dbeffcdcc3608f6c81aaf390ab05c91e524e81b9fd97f27",
+      "unchanged": true
+    },
+    {
+      "capture": "norfolk-broads-summary",
+      "manifest_sha256": "16cf6e285142d842bf00809399e4bd864420bbac52bf2cb74a74ada4a709cc16",
+      "unchanged": true
+    },
+    {
+      "capture": "norfolk-summary",
+      "manifest_sha256": "ccc50b567464ebe9c7dde590c6ba2a8f80d96d7950c68fbb0057e6f56bfd37bc",
+      "unchanged": true
+    },
+    {
+      "capture": "oxford-summary",
+      "manifest_sha256": "dbb02b4e051d36e5e953375792ca42be37010b82278152f0c6388c39130bebab",
+      "unchanged": true
+    },
+    {
+      "capture": "scotland-edinburgh-summary",
+      "manifest_sha256": "20c3c2ab8bf68b7f46869a162ff05c83df77fc35dbba5bf1a580c66a53e2ae9f",
+      "unchanged": true
+    },
+    {
+      "capture": "scotland-unst-keen-of-hamar-summary",
+      "manifest_sha256": "6e09cb537a4d2b8710418544c2945034bbb633ad4bb9aaaacb7f55f19f260a21",
+      "unchanged": true
+    },
+    {
+      "capture": "S2C_T30UXC_20250619T110803_L2A",
+      "manifest_sha256": "baa59fb262942a53888103de0b4327dfb9aefb44d8aa45d972d3947e6642be00",
+      "unchanged": true
+    },
+    {
+      "capture": "S2B_T30VVH_20240602T112114_L2A",
+      "manifest_sha256": "b8b170fb74fa936640ae3be8a5b5ba7bcf09df23d9cbfc6ae742f206904ab062",
+      "unchanged": true
+    }
+  ]
+}

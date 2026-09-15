@@ -71,6 +71,9 @@ DESCRIPTOR = {
 
 
 def source_descriptor(adapter_version=ADAPTER_VERSION):
+    if adapter_version == 'nasa_power_daily_point_v1':
+        from backend.acquisition_weather import descriptor
+        return descriptor()
     if adapter_version == 'sentinel2_c1_native_window_v1':
         from backend.acquisition_satellite import descriptor
         return descriptor()

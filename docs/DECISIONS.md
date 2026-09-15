@@ -435,3 +435,30 @@ Map rendering, temporal analysis and historical weather remain separate tasks.
 No market-validation or predictive-model claim is made.
 
 **Reference:** [Dated satellite acquisition](SENTINEL2-GEOGRAPHIC-ACQUISITION.md).
+
+## 2026-09-15 — Represent historical weather as attributed point-query reanalysis
+
+**Decision:** Add NASA POWER/MERRA-2 daily meteorology as a public-access historical
+weather source with commercial-use acknowledgement. Establish explicit source,
+units, dates and missingness before any climate-impact interpretation. This first
+adapter provides coarse regional context; higher-resolution UK sources are separate
+work rather than an implied capability of the source grid.
+
+**Contract:** Use `geographic_weather_request_v1` with a caller-selected WGS84
+point and inclusive UTC dates. Do not borrow a polygon coverage profile or infer
+parcel-wide coverage from a point response. Preserve native daily temperature,
+precipitation-rate, wind and humidity units. Refuse recent periods and source
+headers that introduce another model. An API version is not a dataset release.
+
+**Retention:** Keep both original response byte artifacts and reproducible
+normalized daily series/availability. Missing keys, null and fill values retain
+their reasons; real zero stays present. Reads and retries preserve immutable
+capture identities and never silently refresh earlier evidence. Existing vector,
+LIDAR, satellite, assessment, snapshot and model identities are unchanged.
+
+**Next boundary:** An authenticated read-only acquisition catalogue can make
+these captures discoverable by location/time before frontend integration. No
+station, farm-scale climate model, current forecast, map layer or validated
+commercial workflow is claimed by weather acquisition alone.
+
+**Reference:** [Historical weather implementation](HISTORICAL-WEATHER-ACQUISITION.md).
