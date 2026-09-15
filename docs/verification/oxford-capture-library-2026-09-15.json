@@ -1,0 +1,513 @@
+{
+  "verification_version": "oxford_operational_capture_library_v1",
+  "verified_at": "2026-09-15T14:05:19.546292+00:00",
+  "organization": "local-development",
+  "area_definition": "1,000 m square centred at EPSG:27700 E450508 N206359, enclosing retained Oxford Station boundary; canonical request is WGS84 polygon. Weather queries the centre point.",
+  "captures": [
+    {
+      "label": "dtm",
+      "acquisition_id": "11051877-6624-4e58-9b71-4f252eaa7465",
+      "attempt_id": "9b0eeb7e-96e1-4499-afed-14bd063cfbdc",
+      "manifest_sha256": "778ee73070607e3a3d081663dd10541c46aa562be02b95be2cf605b84b41ef7a",
+      "request": {
+        "contract_version": "geographic_acquisition_request_v1",
+        "source_id": "environment_agency.lidar_dtm_1m",
+        "adapter_version": "ea_lidar_dtm_wcs_v1",
+        "coverage_profile_sha256": "52459561689f7a04f37c655db769199aab9a4ab7e7304158fd431de7f76f4cf3",
+        "area": {
+          "coordinates": [
+            [
+              [
+                -1.2770162624393273,
+                51.7492028873289
+              ],
+              [
+                -1.2768727423581523,
+                51.75819324378378
+              ],
+              [
+                -1.2623857674383965,
+                51.7581032622874
+              ],
+              [
+                -1.2625321631943764,
+                51.74911293468727
+              ],
+              [
+                -1.2770162624393273,
+                51.7492028873289
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "temporal": {
+          "mode": "current_publication",
+          "start": null,
+          "end": null
+        },
+        "idempotency_key": "oxford-library-dtm-20260915-v1"
+      },
+      "capture_started": "2026-09-15T14:01:26.814838+00:00",
+      "capture_completed": "2026-09-15T14:01:31.662144+00:00",
+      "artifact_count": 4,
+      "artifact_bytes": 4202411,
+      "counts": [
+        {
+          "series": "elevation",
+          "measure": "valid_cells",
+          "present": 1000000,
+          "expected": 1000000
+        }
+      ],
+      "evidence_time": {
+        "kind": "unknown",
+        "start": null,
+        "end_exclusive": null
+      },
+      "attempt_history": [
+        {
+          "id": "9b0eeb7e-96e1-4499-afed-14bd063cfbdc",
+          "number": 1,
+          "state": "succeeded",
+          "error_code": null,
+          "started": "2026-09-15T14:01:26.814838+00:00",
+          "completed": "2026-09-15T14:01:31.662144+00:00"
+        }
+      ],
+      "fresh_process_read_match": true,
+      "provider_free_retry_match": true,
+      "retained_artifacts_verified": true,
+      "live_sample_count": 3,
+      "live_samples_match": true,
+      "offline_replay_passed": true
+    },
+    {
+      "label": "dsm",
+      "acquisition_id": "09d9721f-f7af-4cbb-ae07-3b072adc2166",
+      "attempt_id": "657e9c2d-298c-49c3-b4de-618041d9cb1d",
+      "manifest_sha256": "efe3d23caeb72c9baf0eff57ff239fe82d617e86f6537a2101d8e4ac58e4a188",
+      "request": {
+        "contract_version": "geographic_acquisition_request_v1",
+        "source_id": "environment_agency.lidar_dsm_last_return_1m",
+        "adapter_version": "ea_lidar_dsm_wcs_v1",
+        "coverage_profile_sha256": "52459561689f7a04f37c655db769199aab9a4ab7e7304158fd431de7f76f4cf3",
+        "area": {
+          "coordinates": [
+            [
+              [
+                -1.2770162624393273,
+                51.7492028873289
+              ],
+              [
+                -1.2768727423581523,
+                51.75819324378378
+              ],
+              [
+                -1.2623857674383965,
+                51.7581032622874
+              ],
+              [
+                -1.2625321631943764,
+                51.74911293468727
+              ],
+              [
+                -1.2770162624393273,
+                51.7492028873289
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "temporal": {
+          "mode": "current_publication",
+          "start": null,
+          "end": null
+        },
+        "idempotency_key": "oxford-library-dsm-20260915-v1"
+      },
+      "capture_started": "2026-09-15T14:02:50.665393+00:00",
+      "capture_completed": "2026-09-15T14:03:08.037305+00:00",
+      "artifact_count": 4,
+      "artifact_bytes": 4202441,
+      "counts": [
+        {
+          "series": "elevation",
+          "measure": "valid_cells",
+          "present": 1000000,
+          "expected": 1000000
+        }
+      ],
+      "evidence_time": {
+        "kind": "unknown",
+        "start": null,
+        "end_exclusive": null
+      },
+      "attempt_history": [
+        {
+          "id": "e6217ba2-8193-4513-84fa-3643f7ed30d2",
+          "number": 1,
+          "state": "failed",
+          "error_code": "network_failure",
+          "started": "2026-09-15T14:01:33.221947+00:00",
+          "completed": "2026-09-15T14:02:11.088650+00:00"
+        },
+        {
+          "id": "657e9c2d-298c-49c3-b4de-618041d9cb1d",
+          "number": 2,
+          "state": "succeeded",
+          "error_code": null,
+          "started": "2026-09-15T14:02:50.665393+00:00",
+          "completed": "2026-09-15T14:03:08.037305+00:00"
+        }
+      ],
+      "fresh_process_read_match": true,
+      "provider_free_retry_match": true,
+      "retained_artifacts_verified": true,
+      "live_sample_count": 3,
+      "live_samples_match": true,
+      "offline_replay_passed": true
+    },
+    {
+      "label": "satellite",
+      "acquisition_id": "31d40f70-eb99-4319-8284-a130b127405c",
+      "attempt_id": "77fd8c06-a652-4dd2-8ed3-406f3dc67435",
+      "manifest_sha256": "40db09cff632ad27a653ef7e53031811b15f30aa082c4600c99b0e368ff4dd36",
+      "request": {
+        "contract_version": "geographic_satellite_request_v1",
+        "source_id": "copernicus.sentinel2_c1_l2a_earthsearch",
+        "adapter_version": "sentinel2_c1_native_window_v1",
+        "area": {
+          "coordinates": [
+            [
+              [
+                -1.2770162624393273,
+                51.7492028873289
+              ],
+              [
+                -1.2768727423581523,
+                51.75819324378378
+              ],
+              [
+                -1.2623857674383965,
+                51.7581032622874
+              ],
+              [
+                -1.2625321631943764,
+                51.74911293468727
+              ],
+              [
+                -1.2770162624393273,
+                51.7492028873289
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "temporal": {
+          "mode": "interval",
+          "start": "2025-06-01T00:00:00Z",
+          "end": "2025-06-30T23:59:59Z"
+        },
+        "scene_id": "S2C_T30UXC_20250619T110803_L2A",
+        "scene_metadata_sha256": "4c751a1d8dd9b30fa63c1167c890f6bfdc6a41c5773f7aa950c33ffb62750665",
+        "idempotency_key": "oxford-library-satellite-jun2025-20260915-v1"
+      },
+      "capture_started": "2026-09-15T13:59:56.617470+00:00",
+      "capture_completed": "2026-09-15T14:00:20.133789+00:00",
+      "artifact_count": 99,
+      "artifact_bytes": 6083937,
+      "counts": [
+        {
+          "series": "blue",
+          "measure": "valid_cells",
+          "present": 10003,
+          "expected": 10003
+        },
+        {
+          "series": "green",
+          "measure": "valid_cells",
+          "present": 10003,
+          "expected": 10003
+        },
+        {
+          "series": "red",
+          "measure": "valid_cells",
+          "present": 10003,
+          "expected": 10003
+        },
+        {
+          "series": "nir",
+          "measure": "valid_cells",
+          "present": 10003,
+          "expected": 10003
+        },
+        {
+          "series": "scl",
+          "measure": "valid_cells",
+          "present": 2500,
+          "expected": 2500
+        }
+      ],
+      "evidence_time": {
+        "kind": "instant",
+        "start": "2025-06-19T11:17:06.796000+00:00",
+        "end_exclusive": null
+      },
+      "attempt_history": [
+        {
+          "id": "77fd8c06-a652-4dd2-8ed3-406f3dc67435",
+          "number": 1,
+          "state": "succeeded",
+          "error_code": null,
+          "started": "2026-09-15T13:59:56.617470+00:00",
+          "completed": "2026-09-15T14:00:20.133789+00:00"
+        }
+      ],
+      "fresh_process_read_match": true,
+      "provider_free_retry_match": true,
+      "retained_artifacts_verified": true,
+      "live_sample_count": 15,
+      "live_samples_match": true,
+      "offline_replay_passed": true
+    },
+    {
+      "label": "weather",
+      "acquisition_id": "12ffb968-ee3b-43f1-9d86-9800e711a907",
+      "attempt_id": "8ce21b75-6004-47f7-94d5-c7d8f1d0c659",
+      "manifest_sha256": "530d31b4ee5bb1e6db071d8f0d8001de30490675106a15d6b47abe7b3868aef8",
+      "request": {
+        "contract_version": "geographic_weather_request_v1",
+        "source_id": "nasa.power_merra2_daily",
+        "adapter_version": "nasa_power_daily_point_v1",
+        "point": {
+          "type": "Point",
+          "coordinates": [
+            -1.2697017338575478,
+            51.7536533069068
+          ]
+        },
+        "start_date": "2025-01-01",
+        "end_date": "2025-12-31",
+        "time_standard": "UTC",
+        "idempotency_key": "oxford-library-weather-2025-20260915-v1"
+      },
+      "capture_started": "2026-09-15T13:59:14.660736+00:00",
+      "capture_completed": "2026-09-15T13:59:17.134453+00:00",
+      "artifact_count": 5,
+      "artifact_bytes": 193956,
+      "counts": [
+        {
+          "series": "T2M",
+          "measure": "present_days",
+          "present": 365,
+          "expected": 365
+        },
+        {
+          "series": "T2M_MIN",
+          "measure": "present_days",
+          "present": 365,
+          "expected": 365
+        },
+        {
+          "series": "T2M_MAX",
+          "measure": "present_days",
+          "present": 365,
+          "expected": 365
+        },
+        {
+          "series": "PRECTOTCORR",
+          "measure": "present_days",
+          "present": 365,
+          "expected": 365
+        },
+        {
+          "series": "WS10M",
+          "measure": "present_days",
+          "present": 365,
+          "expected": 365
+        },
+        {
+          "series": "RH2M",
+          "measure": "present_days",
+          "present": 365,
+          "expected": 365
+        }
+      ],
+      "evidence_time": {
+        "kind": "interval",
+        "start": "2025-01-01T00:00:00+00:00",
+        "end_exclusive": "2026-01-01T00:00:00+00:00"
+      },
+      "attempt_history": [
+        {
+          "id": "8ce21b75-6004-47f7-94d5-c7d8f1d0c659",
+          "number": 1,
+          "state": "succeeded",
+          "error_code": null,
+          "started": "2026-09-15T13:59:14.660736+00:00",
+          "completed": "2026-09-15T13:59:17.134453+00:00"
+        }
+      ],
+      "fresh_process_read_match": true,
+      "provider_free_retry_match": true,
+      "retained_artifacts_verified": true,
+      "live_sample_count": 18,
+      "live_samples_match": true,
+      "offline_replay_passed": true
+    }
+  ],
+  "satellite_selection": {
+    "candidate_count": 19,
+    "catalogue_page_complete": false,
+    "selection_rule": "Lowest scene-wide cloud cover among this returned page; not proof of best scene or local cloud-free ground.",
+    "scene_cloud_cover_percent": 0.247
+  },
+  "lidar_pair": {
+    "grid_compatible": true,
+    "paired_coverage": {
+      "area_cell_count": 1000000,
+      "paired_valid_cell_count": 1000000,
+      "missing_pair_cell_count": 0,
+      "paired_valid_cell_fraction": 1.0,
+      "coverage_state": "complete",
+      "dtm_only_valid_cell_count": 0,
+      "dsm_only_valid_cell_count": 0
+    },
+    "temporal_compatibility": "unverified_local_survey_dates",
+    "same_survey_confirmed": null,
+    "compatibility_fingerprint": "033c131cfc575ba2d2afe3d08a4a2c396d3aaec4c7734db5c531b95db6315d6f"
+  },
+  "catalogue_checks": [
+    {
+      "query": "all",
+      "matches": 4,
+      "passed": true
+    },
+    {
+      "query": "oxford",
+      "matches": 4,
+      "passed": true
+    },
+    {
+      "query": "evidence_2025",
+      "matches": 2,
+      "passed": true
+    },
+    {
+      "query": "capture_day",
+      "matches": 4,
+      "passed": true
+    },
+    {
+      "query": "live_API_catalogue_and_four_details",
+      "passed": true
+    },
+    {
+      "query": "live_same_origin_proxy_catalogue_and_four_details",
+      "passed": true
+    }
+  ],
+  "other_organization_empty": true,
+  "historical_tables": {
+    "assessments": {
+      "count": 1,
+      "unchanged": true
+    },
+    "datasets": {
+      "count": 0,
+      "unchanged": true
+    },
+    "design_alternatives": {
+      "count": 0,
+      "unchanged": true
+    },
+    "design_revisions": {
+      "count": 0,
+      "unchanged": true
+    },
+    "features": {
+      "count": 0,
+      "unchanged": true
+    },
+    "infrastructure_projects": {
+      "count": 0,
+      "unchanged": true
+    },
+    "land_evidence_snapshot_links": {
+      "count": 286,
+      "unchanged": true
+    },
+    "land_evidence_snapshot_members": {
+      "count": 195,
+      "unchanged": true
+    },
+    "land_evidence_snapshot_origins": {
+      "count": 1,
+      "unchanged": true
+    },
+    "land_evidence_snapshots": {
+      "count": 1,
+      "unchanged": true
+    },
+    "module_runs": {
+      "count": 2,
+      "unchanged": true
+    },
+    "project_evidence_bundle_members": {
+      "count": 0,
+      "unchanged": true
+    },
+    "project_evidence_bundles": {
+      "count": 0,
+      "unchanged": true
+    },
+    "project_evidence_claims": {
+      "count": 0,
+      "unchanged": true
+    },
+    "project_evidence_sources": {
+      "count": 0,
+      "unchanged": true
+    },
+    "project_intelligence_runs": {
+      "count": 0,
+      "unchanged": true
+    },
+    "project_subjects": {
+      "count": 0,
+      "unchanged": true
+    },
+    "sites": {
+      "count": 3,
+      "unchanged": true
+    }
+  },
+  "existing_object_files_unchanged": 12,
+  "acquisition_rows": 4,
+  "attempt_rows": 5,
+  "limitations": [
+    "Bounded Oxford captures only; not national coverage.",
+    "Composite LiDAR local survey dates remain unknown; no height model executed.",
+    "Satellite non-nodata is not clear-ground usability; full publisher file checksums not verified.",
+    "Weather is coarse historical reanalysis, not station data, farm forecasts or climate projections.",
+    "Local development storage only; no hosted deployment or new assessment binding."
+  ],
+  "browser_qa": {
+    "active_development_workspace": true,
+    "oxford_filter_matches": 4,
+    "opened_verified_details": [
+      "weather",
+      "satellite",
+      "dsm",
+      "dtm"
+    ],
+    "weather_days_per_variable": 365,
+    "satellite_native_cells_per_spectral_band": 10003,
+    "satellite_scl_cells": 2500,
+    "dtm_valid_cells": 1000000,
+    "dsm_valid_cells": 1000000,
+    "existing_oxford_brief_and_five_scene_sources_visible": true,
+    "no_ui_code_changes": true
+  }
+}

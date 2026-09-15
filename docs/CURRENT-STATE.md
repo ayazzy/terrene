@@ -16,6 +16,8 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 
 ## Implemented capabilities
 
+- The active local development organization now has four fresh Oxford captures: 1 m terrain and surface elevation over a 1 km square enclosing Oxford Station, one 19 June 2025 Sentinel-2 observation, and six daily weather variables for all of 2025 at the centre point. All are discoverable and file-verifiable in Data sources. See [Oxford capture library](OXFORD-CAPTURE-LIBRARY.md).
+
 - Browse independent retained captures in Data sources, with source, location and evidence/capture-date filters, explicit continuation through empty batches, exact file-verified detail, per-variable availability and source caveats. The assessment source library stays separately accessible. See [capture browser](ACQUISITION-BROWSER.md).
 
 - Discover successful independent captures through an authenticated, organization-scoped catalogue filtered by source, requested location and evidence/capture dates. Open one exact capture through a separate read-only detail contract that verifies retained artifacts. Catalogue browsing verifies manifests only and explicitly reports that artifact bytes are unchecked. See [acquisition catalogue](ACQUISITION-CATALOGUE.md).
@@ -138,7 +140,7 @@ Versioned Design Studies remain API-only. The frontend has no Alternative editor
 
 ## Verification baseline
 
-Retained capture browser: all **136 frontend tests** pass, including 15 new contract/read/state tests. TypeScript, focused lint/formatting and the production build pass; `app/page.tsx` retains its 19 existing lint diagnostics and the build retains its large-chunk advisory. Desktop QA and a 390 CSS-pixel iframe of the actual app verified search, selection, exact detail, long references, focus restoration and failure/retry without horizontal overflow. Real Oxford/Cardiff weather captures were opened through an isolated read-only verification tenant; the frontend parser accepted all 15 retained captures across six sources. The API is restored to the original external Oxford database, and its completed analysis, five scene sources and mapped infrastructure are verified in the browser. The ignored local `.env` now pins its database/object paths for `scripts/dev.sh`. This organization has no independent captures yet. See [browser acceptance](ACQUISITION-BROWSER.md).
+Retained capture browser: all **136 frontend tests** pass, including 15 new contract/read/state tests. TypeScript, focused lint/formatting and the production build pass; `app/page.tsx` retains its 19 existing lint diagnostics and the build retains its large-chunk advisory. Desktop QA and a 390 CSS-pixel iframe of the actual app verified search, selection, exact detail, long references, focus restoration and failure/retry without horizontal overflow. Real Oxford/Cardiff weather captures were opened through an isolated read-only verification tenant; the frontend parser accepted all 15 retained captures across six sources. The API is restored to the original external Oxford database, and its completed analysis, five scene sources and mapped infrastructure are verified in the browser. The ignored local `.env` now pins its database/object paths for `scripts/dev.sh`. This organization now contains the four fresh captures documented in [Oxford capture library](OXFORD-CAPTURE-LIBRARY.md). See [browser acceptance](ACQUISITION-BROWSER.md).
 
 Acquisition catalogue: 41 new contract/authentication/integrity tests and all **273 affected tests** pass on SQLite and PostgreSQL/PostGIS. Read-only API verification finds 15 retained successful real captures across vector, DTM/DSM, satellite and weather; all 16 original summaries replay unchanged, including the failed acquisition. Retained database and object files remain byte-identical. Production JWT validation is tested with locally signed tokens and a stubbed JWKS lookup; hosted acceptance and frontend integration remain unverified. See [catalogue acceptance](ACQUISITION-CATALOGUE.md).
 
@@ -238,7 +240,7 @@ produced no new browser warnings or errors.
 
 ## Known limitations
 
-- Acquisition discovery has a read-only browser in Data sources. Each backend response scans at most 50 retained successful request manifests and returns at most 20 matches (the browser requests 10); filtered pages can be empty with continuation. This is a live scan, not a national spatial index or transactional snapshot. Browser filters/selection are session-local, with no dedicated deep links, map overlays, acquisition controls or raw-artifact downloads. The normal development organization has no independent captures; verification datasets remain isolated.
+- Acquisition discovery has a read-only browser in Data sources. Each backend response scans at most 50 retained successful request manifests and returns at most 20 matches (the browser requests 10); filtered pages can be empty with continuation. This is a live scan, not a national spatial index or transactional snapshot. Browser filters/selection are session-local, with no dedicated deep links, map overlays, acquisition controls or raw-artifact downloads. The active development organization has four bounded Oxford captures; earlier verification datasets remain isolated.
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
 - Most legacy acquisition is bounded to the Oxford pilot; flood coverage is narrower. Independent SSSI acquisition supports bounded areas wholly inside the selected publisher's pinned England or Scotland footprint. England BFE v2 resolves the verified Broads tidal exclusion; historical BFC v1 retains its original limits. No profile establishes complete marine or legal designation coverage. Wales, Northern Ireland, cross-border composition and customer-facing acquisition remain incomplete. Source-specific mapped absence never proves real-world absence.
@@ -256,31 +258,33 @@ produced no new browser warnings or errors.
 
 ## Latest meaningful implementation
 
-Data sources now contains a read-only retained capture browser consuming
-`acquisition_catalogue_v1` and `acquisition_detail_v1`. Source, bounding-box location
-and inclusive UTC dates apply on explicit search. Empty continuation batches,
-unknown evidence dates, point-versus-area semantics and full original availability
-counts remain visible. Exact detail verifies retained files before exposing its
-availability and immutable references. Aborts and request fencing prevent late
-search/detail responses from replacing a newer selection; access failures clear
-previously displayed captures. The same-origin proxy preserves backend cache policy.
+The active `local-development` organization now contains four fresh independent
+Oxford captures acquired through the existing operator service. The terrain and
+surface requests share a 1 km square enclosing the saved Oxford Station boundary:
+each has 1,000,000 valid native 1 m cells, with complete joint availability and
+compatible grids. A 19 June 2025 Sentinel-2 observation contains 10,003 non-nodata
+cells per spectral band and 2,500 SCL cells. Weather contains all 365 days of 2025
+for each of six variables at the square's centre point.
 
-The existing assessment registry is separately disclosed and labelled in application
-chrome. No capture, source adapter, data schema, assessment or model binding changes.
-All 136 frontend tests pass; desktop and 390-pixel browser checks include real
-weather and failed-read recovery. See [capture browser acceptance](ACQUISITION-BROWSER.md).
+All four captures pass retained-byte replay, fresh-process reads, provider-free
+retries and exact file-verified API/proxy reads. All 39 fresh same-provider sample
+comparisons match. One DSM network failure remains in history before its successful
+retry. Four acquisition rows and five attempts exist; all 18 pre-existing tables
+outside acquisitions and all 12 existing object files remain unchanged, including
+the Oxford assessment, Evidence Snapshot and two ModuleRuns. Browser QA opened all
+four captures and verified the Oxford filter. No application code, schema, model
+or historical assessment binding changed. See [acceptance](OXFORD-CAPTURE-LIBRARY.md).
 
 ## Current recommended engineering question
 
 The founder has deferred Wales and Northern Ireland designation adapters to
-prioritize additional data families. Independent terrain, surface elevation,
-dated satellite imagery and historical weather now exist through operator services.
-The browser now makes retained acquisitions discoverable. The next bounded task
-should acquire an explicit area/date/source selection under the active development
-organization, using the existing operator services and fresh immutable requests.
-This turns the empty operational library into inspectable evidence without relabelling
-or moving historical verification captures between tenants. Raster display and
-acquisition controls remain separate iterations. Higher-resolution
-weather, temporal analysis and validated climate/impact modelling remain separate
-work. Keep UK-wide capability as the broader objective and source-specific gaps
-explicit. The initial commercial market remains undecided and unvalidated.
+prioritize additional data families. Terrain, surface elevation, dated satellite
+imagery and historical weather now have real captures in the active workspace.
+The next bounded task should establish an authenticated display contract for one
+retained terrain capture, carrying exact capture identity, bounds, CRS, units,
+nodata and rendering provenance. That contract can support a later map-layer UI
+without changing the retained source raster or binding it into historical models.
+Satellite rendering, acquisition controls, higher-resolution weather, temporal
+analysis and validated climate/impact modelling remain separate iterations. Keep
+UK-wide capability as the broader objective and source-specific gaps explicit.
+The initial commercial market remains undecided and unvalidated.
