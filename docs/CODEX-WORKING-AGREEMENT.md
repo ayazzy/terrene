@@ -18,7 +18,7 @@ In scope: [one bounded change]
 Out of scope: [nearby work that must not be started]
 Acceptance: [focused tests/checks and any required browser or real-data QA]
 Stop point: [for example: "commit the verified change and stop"]
-Model: [Luna / Terra / Sol / Spark when available, with a one-line reason]
+Selected model: [Luna / Terra / Sol / Spark when available, with a one-line reason]
 ```
 
 If the outcome does not improve Terrene's ability to represent reality, reason
@@ -33,6 +33,11 @@ Availability and allowances can change, so this is a task-routing policy rather
 than a guarantee. Do not downgrade a task merely to conserve allowance: rework,
 missed evidence semantics and incorrect architecture cost more than a capable
 first pass.
+
+Select the model in Codex **before** creating the task. A prompt can document
+the intended choice, but it does not change the model of an active task. Finish
+the bounded deliverable and create a fresh task at its handoff when a different
+model is warranted.
 
 | Work | Default choice | Escalate only when |
 | --- | --- | --- |
@@ -84,5 +89,5 @@ Outcome: [one bounded result].
 Relevant context: [files and IDs].
 Acceptance: [checks].
 Stop point: commit and stop.
-Use [model] because [reason]; use standard speed and do not spend credits.
+Selected model: [model] because [reason]. Use standard speed and do not spend credits.
 ```
