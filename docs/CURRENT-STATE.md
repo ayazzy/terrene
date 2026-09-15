@@ -16,7 +16,7 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 
 ## Implemented capabilities
 
-- Select one retained EA DTM capture in the operating map’s Layers panel, search the current view or all retained terrain, show/hide/remove it and intentionally fit its extent. The verified preview includes an elevation legend, attribution, exact provenance and explicit missingness separately from the saved assessment. Desktop Oxford QA passed; narrow-screen browser acceptance remains pending after an automatic browser-access denial. See [terrain map layer](TERRAIN-MAP-LAYER.md) and [terrain preview contract](TERRAIN-PREVIEW-CONTRACT.md).
+- Select one retained EA DTM capture in the operating map’s Layers panel, search the current view or all retained terrain, show/hide/remove it and intentionally fit its extent. The verified preview includes an elevation legend, attribution, exact provenance and explicit missingness separately from the saved assessment. Desktop and narrow-screen Oxford QA passed. See [terrain map layer](TERRAIN-MAP-LAYER.md) and [terrain preview contract](TERRAIN-PREVIEW-CONTRACT.md).
 
 - The active local development organization now has four fresh Oxford captures: 1 m terrain and surface elevation over a 1 km square enclosing Oxford Station, one 19 June 2025 Sentinel-2 observation, and six daily weather variables for all of 2025 at the centre point. All are discoverable and file-verifiable in Data sources. See [Oxford capture library](OXFORD-CAPTURE-LIBRARY.md).
 
@@ -248,7 +248,7 @@ produced no new browser warnings or errors.
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
 - Most legacy acquisition is bounded to the Oxford pilot; flood coverage is narrower. Independent SSSI acquisition supports bounded areas wholly inside the selected publisher's pinned England or Scotland footprint. England BFE v2 resolves the verified Broads tidal exclusion; historical BFC v1 retains its original limits. No profile establishes complete marine or legal designation coverage. Wales, Northern Ireland, cross-border composition and customer-facing acquisition remain incomplete. Source-specific mapped absence never proves real-world absence.
-- Independent LIDAR currently serves EA terrain and last-return surface elevation in England only, capped at 4 million cells per requested bounding window and 4,096 pixels per axis. These are historical composite rasters, not point clouds, current surveys or national bulk ingestion. Pairing checks grid compatibility and joint availability but does not establish survey-date equivalence or scientific suitability. The authenticated display-only DTM preview is selectable in the operating map; no DSM display or raster-to-model binding is implemented. Terrain selection is session-local, one capture at a time, with no elevation query, hillshade, terrain mesh or analytical resampling. Narrow-screen browser acceptance is pending.
+- Independent LIDAR currently serves EA terrain and last-return surface elevation in England only, capped at 4 million cells per requested bounding window and 4,096 pixels per axis. These are historical composite rasters, not point clouds, current surveys or national bulk ingestion. Pairing checks grid compatibility and joint availability but does not establish survey-date equivalence or scientific suitability. The authenticated display-only DTM preview is selectable in the operating map; no DSM display or raster-to-model binding is implemented. Terrain selection is session-local, one capture at a time, with no elevation query, hillshade, terrain mesh or analytical resampling.
 - Independent satellite capture requires one compatible Sentinel-2 C1 scene to cover the entire request. Discovery is one bounded catalogue page; captures are capped at 1 million cells per band and 64 MB of HTTP responses. Original fetched ranges and native windows are retained, but complete publisher file checksums are not verified. SCL is provider classification, and non-nodata spectral cells can include clouds/shadows. No mosaic, imagery map layer, cloud mask, temporal change model or satellite-to-model binding exists.
 - Independent weather uses coarse MERRA-2 source grids (nominally 0.5° latitude × 0.625° longitude), queried at explicit points. It supports at most 366 daily UTC periods per capture and refuses periods less than 120 days old or mixed-model responses. It does not supply station observations, parcel-scale weather, current forecasts or climate projections; higher-resolution sources remain unconnected.
 - The wetland model is unvalidated and cannot yet rank the retained real locations defensibly.
@@ -276,13 +276,14 @@ Site/building/railway evidence, with 54.30–76.36 m ODN, Environment Agency
 attribution, unknown survey dates and one million valid native cells. Selection,
 fit, legend and hiding were exercised. The saved analysis remained completed.
 All 149 frontend tests, TypeScript, focused lint and the production build passed.
-Narrow-screen browser QA remains pending: automatic approval review blocked
-further localhost browser access. See [terrain map layer](TERRAIN-MAP-LAYER.md).
+Narrow-screen acceptance passed at 390 × 844 and 320 × 740 after explicit browser
+access approval. Layers now temporarily uses the available map area on small
+screens and restores the preserved dossier when closed. Capture metadata stacks
+vertically; document, panel and source references showed no horizontal overflow. See [terrain map layer](TERRAIN-MAP-LAYER.md).
 
 ## Current recommended engineering question
 
-Finish narrow-screen browser acceptance of the terrain layer when browser access
-is explicitly approved. The next separate implementation should establish an
+The next separate implementation should establish an
 exact-capture Sentinel-2 true-colour preview contract: pinned observation, retained
 RGB bands/calibration, explicit cloud/nodata semantics, bounded geographic placement
 and source attribution. Consume it in the map in a subsequent UI iteration.

@@ -957,6 +957,11 @@
     --topbar-height: 6.5rem;
   }
 
+  /* Let the scrollable Layers surface use the map while preserving dossier state. */
+  .shell :global(.spatial-main:has(.layer-control) > .entity-dossier) {
+    visibility: hidden;
+  }
+
   .shell :global(.spatial-main > .entity-dossier) {
     top: 42%;
     right: 0;
@@ -1021,6 +1026,10 @@
         .operating-spatial-map
     ) {
     bottom: 58%;
+  }
+
+  .shell :global(.spatial-main:has(.layer-control) .operating-spatial-map) {
+    bottom: 0;
   }
 
   .shell > .rail,

@@ -10,9 +10,9 @@ its image, remove it or intentionally fit its extent. The elevation legend and
 source/capture disclosure explain what the image represents. This improves
 Terrene's ability to represent retained physical evidence geographically.
 
-Implementation and desktop acceptance are complete. Narrow-screen browser
-acceptance remains pending because automatic approval review blocked further
-browser access. This report does not claim full responsive acceptance.
+Implementation, desktop and narrow-screen acceptance are complete. After explicit
+browser-access approval, the final responsive checks passed at 390 × 844 and
+320 × 740.
 
 ## Implementation / architecture
 
@@ -45,6 +45,9 @@ Show/hide and style reload do not move the camera. Only Fit terrain extent does.
 Attribution is HTML-escaped before assigning the source's public attribution
 field; it appears in the existing MapLibre attribution control.
 
+On small screens, opening Layers temporarily hides the preserved dossier and
+lets the map occupy the available height. The panel sits above the wrapped map
+toolbar; closing it restores the same dossier. Capture metadata stacks vertically.
 No dependencies, backend routes, persistence or model changes were introduced.
 
 ## Source
@@ -76,6 +79,8 @@ Original licensing and attribution are supplied by the verified capture.
 - `app/terrain-map-source.ts`: image/layer lifecycle, placement and attribution.
 - `app/terrain-map-layer.tsx`: hook, controls, source disclosure and elevation legend.
 - `app/terrain-map-layer.module.css`: panel layout, wrapping and focus states.
+- `app/infrastructure-map.module.css`, `app/operating-shell.module.css`: usable
+  mobile Layers height and stacking while preserving dossier state.
 - `app/map.tsx`: existing map integration and terrain-specific error isolation.
 - `tests/terrain-map-layer.test.mjs`: contract, state and map lifecycle regressions.
 - `docs/CURRENT-STATE.md`, `docs/ARCHITECTURE.md`, this report: implemented state.
@@ -123,12 +128,33 @@ Station Site and its completed assessment. The following were exercised:
 6. The Oxford dossier remained on its completed saved assessment, displaying
    its existing 92.9% built-up context and 279.3 m railway intersection.
 
-Automated tests cover removal, retries and style restoration; these were not
-additionally exercised in the live browser. Narrow-screen browser QA and a final
-browser-console check remain pending. Browser access was first rejected because
-approval review reported a usage limit. After the user asked to continue, a
-replacement QA tab was rejected as a workaround requiring specific browser-access
-approval. No alternate browser automation or indirect browser access was used.
+Automated tests cover retries and style restoration; these were not additionally
+exercised in the live browser. Browser access was temporarily rejected after a
+usage-limit interruption. The user explicitly approved resuming localhost browser
+access, and the following acceptance checks then completed:
+
+- At 390 × 844, the original panel had only 124 px of usable height beneath the
+  open dossier, and the wrapped toolbar covered part of it. The inherited button
+  layout also squeezed capture metadata into columns.
+- The responsive fix gives Layers 714 px of scrollable height, places it above
+  the toolbar and temporarily hides the preserved dossier. Capture metadata now
+  stacks vertically. No entity or assessment selection changes.
+- Search this view and Browse all terrain returned the real Oxford capture.
+  Selection rendered the verified image with the same 511 × 512 preview,
+  one-million-cell availability and 54.30–76.36 m ODN legend.
+- Source references expanded without horizontal overflow: document 390/390 px,
+  panel 350/350 px and each reference 322/322 px client/scroll width.
+- Hide/show and removal worked. Fit terrain extent closed Layers and restored
+  the same Oxford dossier. The normal Close action also restored it.
+- At 320 × 740, selection rendered successfully; the document measured 320/320 px
+  and panel 294/294 px client/scroll width, with 610 px of scrollable panel height.
+- Browser console inspection returned no warnings or errors. Restoring the normal
+  1280 × 720 viewport restored the desktop dossier beside Layers. The temporary
+  QA tab was closed and the viewport override reset.
+
+All 149 frontend tests and the production build passed again after the CSS-only
+fix. TypeScript and focused TypeScript lint results above apply to the unchanged
+TypeScript implementation; they were not redundantly rerun for CSS changes.
 
 ## Historical / compatibility impact
 
@@ -145,18 +171,28 @@ not deep-linked or restored after reload. There is no hillshade, 3D terrain mesh
 elevation query, opacity control, national tile service or analytical raster use.
 The catalogue remains a bounded live scan of retained captures, not a national
 spatial index. DSM, satellite and weather are not rendered by this layer.
-Narrow-screen browser acceptance remains outstanding.
+Physical-device touch and assistive-technology testing were not performed.
 
 ## Git
 
 Branch: `feat/terrain-map-layer`, based on the required preview-contract commit
 `f28453e`. Implementation commit subject: `feat: display retained terrain on the operating map`.
-The commit hash is available from the branch log. No merge or deployment is included.
+Implementation commit: `f28d20a`. The responsive follow-up is committed with
+subject `fix: keep terrain controls usable on narrow screens`. No merge or
+deployment is included.
 
 ## Recommended next task
 
-Complete narrow-screen browser acceptance once explicit browser access is approved.
-Then, as a separate implementation iteration, establish an exact-capture Sentinel-2
+As a separate implementation iteration, establish an exact-capture Sentinel-2
 true-colour preview contract with calibrated retained RGB bands, pinned observation,
 bounded placement, attribution and explicit cloud/nodata semantics. Its map UI
 should follow only after that contract is verified.
+
+## Root cause
+
+The pre-existing mobile map height shrank around the open dossier, while Layers
+retained a desktop-style top offset and a maximum-height deduction. A toolbar
+wrapping onto two rows overlapped that panel. The new capture buttons also
+inherited the application's flex layout. The follow-up changes only presentation:
+mobile panel height/stacking, temporary dossier visibility and vertical capture
+metadata. No historical or scientific state is modified.

@@ -749,6 +749,12 @@
 }
 
 @media (max-width: 47.5rem) {
+  .operatingMap :global(.layer-control) {
+    top: 0.75rem;
+    z-index: 23;
+    max-height: calc(100% - 1.5rem);
+  }
+
   .operatingMap :global(.map-toolbar) {
     max-width: calc(100% - 4.25rem);
     flex-wrap: wrap;
