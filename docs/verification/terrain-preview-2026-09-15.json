@@ -1,0 +1,211 @@
+{
+  "contract_version": "terrain_preview_v1",
+  "capture": {
+    "acquisition_id": "11051877-6624-4e58-9b71-4f252eaa7465",
+    "attempt_id": "9b0eeb7e-96e1-4499-afed-14bd063cfbdc",
+    "manifest_sha256": "778ee73070607e3a3d081663dd10541c46aa562be02b95be2cf605b84b41ef7a",
+    "native_raster_sha256": "a0ae7a6ceb749e1293dc64290b5ee5069689b229792955bf9d18f8ad8874e0ec",
+    "source_id": "environment_agency.lidar_dtm_1m",
+    "adapter_version": "ea_lidar_dtm_wcs_v1",
+    "capture_started": "2026-09-15T14:01:26.814838+00:00",
+    "capture_completed": "2026-09-15T14:01:31.662144+00:00",
+    "observation_time": null,
+    "attribution": "\u00a9 Environment Agency copyright and/or database right 2022. All rights reserved.",
+    "licence": "Open Government Licence"
+  },
+  "requested_geometry": {
+    "coordinates": [
+      [
+        [
+          -1.2770162624393273,
+          51.7492028873289
+        ],
+        [
+          -1.2768727423581523,
+          51.75819324378378
+        ],
+        [
+          -1.2623857674383965,
+          51.7581032622874
+        ],
+        [
+          -1.2625321631943764,
+          51.74911293468727
+        ],
+        [
+          -1.2770162624393273,
+          51.7492028873289
+        ]
+      ]
+    ],
+    "type": "Polygon"
+  },
+  "native": {
+    "crs": "EPSG:27700",
+    "resolution_m": 1,
+    "vertical_unit": "metre",
+    "vertical_datum": "Ordnance Datum Newlyn",
+    "bounds": [
+      450005.0,
+      205855.0,
+      451012.0,
+      206862.0
+    ],
+    "transform": [
+      1.0,
+      0.0,
+      450005.0,
+      0.0,
+      -1.0,
+      206862.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "width": 1007,
+    "height": 1007,
+    "nodata_value": -3.4028234663852886e+38,
+    "area_cell_count": 1000000,
+    "valid_cell_count": 1000000,
+    "missing_cell_count": 0,
+    "coverage_state": "complete"
+  },
+  "grid": {
+    "crs": "EPSG:3857",
+    "width": 511,
+    "height": 512,
+    "bounds": [
+      -142161.70105551335,
+      6754882.331499401,
+      -140521.13680568695,
+      6756526.125206412
+    ],
+    "transform": [
+      3.2104975534762863,
+      0.0,
+      -142161.70105551335,
+      0.0,
+      -3.2105345840060155,
+      6756526.125206412,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "pixel_size_projected_metres": [
+      3.2104975534762863,
+      3.2105345840060155
+    ],
+    "coordinates_wgs84": [
+      [
+        -1.2770602887459794,
+        51.75822048209074
+      ],
+      [
+        -1.262322849343988,
+        51.75822048209074
+      ],
+      [
+        -1.262322849343988,
+        51.74907940096225
+      ],
+      [
+        -1.2770602887459794,
+        51.74907940096225
+      ]
+    ],
+    "coordinate_order": "top_left_top_right_bottom_right_bottom_left",
+    "visible_pixel_count": 252941,
+    "transparent_pixel_count": 8691,
+    "state": "visible_samples"
+  },
+  "legend": {
+    "kind": "linear_grayscale",
+    "minimum_elevation_m": 54.29999923706055,
+    "maximum_elevation_m": 76.3550033569336,
+    "low_rgb": [
+      32,
+      32,
+      32
+    ],
+    "high_rgb": [
+      240,
+      240,
+      240
+    ],
+    "constant_rgb": [
+      128,
+      128,
+      128
+    ],
+    "range_basis": "all_valid_native_cells_inside_request",
+    "missing_alpha": 0,
+    "valid_alpha": 255
+  },
+  "rendering": {
+    "version": "ea_dtm_grayscale_web_mercator_v1",
+    "resampling": "nearest",
+    "max_edge_pixels": 512,
+    "runtime_versions": {
+      "rasterio": "1.5.1",
+      "gdal": "3.12.4",
+      "pyproj": "3.8.0",
+      "proj": "9.8.1",
+      "shapely": "2.1.2",
+      "numpy": "2.5.3",
+      "zlib": "1.2.12"
+    },
+    "polygon_mask": "native_and_display_pixel_centres_holes_excluded",
+    "geometry_projection": "acquisition_native_polygon_densified_25m_to_display",
+    "display_only": true
+  },
+  "preview_fingerprint": "5fb15efaa1d35792c29dc4ac07a37b99b5d37b31ff0bf5e6ebe2dc427b737147",
+  "limitations": [
+    "Display-only nearest-neighbour reprojection; native raster remains unchanged and authoritative.",
+    "Transparent pixels include nodata, polygon holes and outside-request areas; never zero elevation.",
+    "Reduced display resolution can omit small valid or missing features; native availability counts remain separate.",
+    "Grayscale range is local to all valid native request cells; independently stretched previews are not directly comparable.",
+    "Historical composite with unknown local survey dates; no current-survey, height, slope, flood or climate interpretation.",
+    "Projected display pixel size is not native ground resolution; grayscale pixels are not elevation measurements."
+  ],
+  "image": {
+    "media_type": "image/png",
+    "encoding": "base64",
+    "sha256": "575baa2d1c9794c2efb546930a05f7c86e02544bc04f824b95c510dee0ecb48e",
+    "bytes": 109893
+  },
+  "verification_version": "terrain_preview_real_capture_v1",
+  "verified_at": "2026-09-15T14:21:49.249298+00:00",
+  "fresh_process_match": true,
+  "independent_inverse_native_sample_count": 235,
+  "independent_inverse_native_valid_samples": 180,
+  "independent_inverse_native_samples_match": true,
+  "sampling_limit": "17 by 17 evenly spaced display centres; native cell-edge distances below 0.05 pixels excluded. Same retained raster, not an independent survey or complete pixel certification.",
+  "local_api_checks": [
+    {
+      "port": 8000,
+      "status": 200,
+      "exact_preview_match": true,
+      "cache_control": "no-store"
+    },
+    {
+      "port": 3000,
+      "status": 200,
+      "exact_preview_match": true,
+      "cache_control": "no-store"
+    }
+  ],
+  "unchanged_database_tables": 20,
+  "unchanged_object_files": 78,
+  "all_four_prior_capture_manifests_unchanged": true,
+  "original_oxford_assessment_still_completed": true,
+  "measured_local_render_seconds": 1.718,
+  "source_network_requests": 0,
+  "automated_verification": {
+    "sqlite_affected_tests_passed": 285,
+    "postgresql_postgis_affected_tests_passed": 285,
+    "new_preview_tests": 23,
+    "python_compilation": "passed",
+    "frontend_changed": false,
+    "hosted_acceptance": false
+  }
+}

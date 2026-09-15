@@ -538,6 +538,7 @@ from backend.acquisition_catalogue import (
     list_acquisitions, read_acquisition_detail,
 )
 from backend.acquisition_contracts import AcquisitionError
+from backend.terrain_preview import TerrainPreview, read_terrain_preview
 
 
 def acquisition_read(operation):
@@ -548,6 +549,8 @@ def acquisition_read(operation):
             raise HTTPException(404, 'Capture not found', headers={'Cache-Control':'no-store'})
         if error.code == 'invalid_catalogue_cursor':
             raise HTTPException(422, 'Invalid catalogue cursor', headers={'Cache-Control':'no-store'})
+        if error.code == 'terrain_preview_unsupported_source':
+            raise HTTPException(422, 'Terrain preview requires an EA DTM capture', headers={'Cache-Control':'no-store'})
         raise HTTPException(500, 'Retained acquisition could not be verified', headers={'Cache-Control':'no-store'})
     except Exception:
         raise HTTPException(500, 'Retained acquisition could not be verified', headers={'Cache-Control':'no-store'})
@@ -564,3 +567,9 @@ def acquisition_catalogue(response: Response, query: Annotated[CatalogueQuery, Q
 def acquisition_detail(id: str, attempt_id: str, response: Response, org=Depends(organization)):
     response.headers['Cache-Control'] = 'no-store'
     return acquisition_read(lambda: read_acquisition_detail(org, id, attempt_id=attempt_id))
+
+
+@app.get('/api/acquisitions/{id}/terrain-preview', response_model=TerrainPreview)
+def terrain_preview(id: str, attempt_id: str, response: Response, org=Depends(organization)):
+    response.headers['Cache-Control'] = 'no-store'
+    return acquisition_read(lambda: read_terrain_preview(org, id, attempt_id=attempt_id))

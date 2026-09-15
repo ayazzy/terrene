@@ -16,6 +16,8 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 
 ## Implemented capabilities
 
+- Read one exact retained EA DTM capture as an authenticated terrain preview: a bounded PNG with Web Mercator placement, native provenance/availability, metre/ODN units, missing-data transparency and a versioned display legend. The map UI does not consume it yet. See [terrain preview contract](TERRAIN-PREVIEW-CONTRACT.md).
+
 - The active local development organization now has four fresh Oxford captures: 1 m terrain and surface elevation over a 1 km square enclosing Oxford Station, one 19 June 2025 Sentinel-2 observation, and six daily weather variables for all of 2025 at the centre point. All are discoverable and file-verifiable in Data sources. See [Oxford capture library](OXFORD-CAPTURE-LIBRARY.md).
 
 - Browse independent retained captures in Data sources, with source, location and evidence/capture-date filters, explicit continuation through empty batches, exact file-verified detail, per-variable availability and source caveats. The assessment source library stays separately accessible. See [capture browser](ACQUISITION-BROWSER.md).
@@ -140,6 +142,8 @@ Versioned Design Studies remain API-only. The frontend has no Alternative editor
 
 ## Verification baseline
 
+Terrain preview: **285 affected tests pass on SQLite and 285 on PostgreSQL/PostGIS**, including 23 new rendering/integrity/access tests. The real Oxford preview passes 235 inverse-coordinate native pixel checks, exact API/proxy/fresh-process readback and preservation of all 20 database tables and 78 stored object files. Python compilation and diff checks pass. No frontend changes or hosted acceptance are claimed. See [terrain preview acceptance](TERRAIN-PREVIEW-CONTRACT.md).
+
 Retained capture browser: all **136 frontend tests** pass, including 15 new contract/read/state tests. TypeScript, focused lint/formatting and the production build pass; `app/page.tsx` retains its 19 existing lint diagnostics and the build retains its large-chunk advisory. Desktop QA and a 390 CSS-pixel iframe of the actual app verified search, selection, exact detail, long references, focus restoration and failure/retry without horizontal overflow. Real Oxford/Cardiff weather captures were opened through an isolated read-only verification tenant; the frontend parser accepted all 15 retained captures across six sources. The API is restored to the original external Oxford database, and its completed analysis, five scene sources and mapped infrastructure are verified in the browser. The ignored local `.env` now pins its database/object paths for `scripts/dev.sh`. This organization now contains the four fresh captures documented in [Oxford capture library](OXFORD-CAPTURE-LIBRARY.md). See [browser acceptance](ACQUISITION-BROWSER.md).
 
 Acquisition catalogue: 41 new contract/authentication/integrity tests and all **273 affected tests** pass on SQLite and PostgreSQL/PostGIS. Read-only API verification finds 15 retained successful real captures across vector, DTM/DSM, satellite and weather; all 16 original summaries replay unchanged, including the failed acquisition. Retained database and object files remain byte-identical. Production JWT validation is tested with locally signed tokens and a stubbed JWKS lookup; hosted acceptance and frontend integration remain unverified. See [catalogue acceptance](ACQUISITION-CATALOGUE.md).
@@ -244,7 +248,7 @@ produced no new browser warnings or errors.
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
 - Most legacy acquisition is bounded to the Oxford pilot; flood coverage is narrower. Independent SSSI acquisition supports bounded areas wholly inside the selected publisher's pinned England or Scotland footprint. England BFE v2 resolves the verified Broads tidal exclusion; historical BFC v1 retains its original limits. No profile establishes complete marine or legal designation coverage. Wales, Northern Ireland, cross-border composition and customer-facing acquisition remain incomplete. Source-specific mapped absence never proves real-world absence.
-- Independent LIDAR currently serves EA terrain and last-return surface elevation in England only, capped at 4 million cells per requested bounding window and 4,096 pixels per axis. These are historical composite rasters, not point clouds, current surveys or national bulk ingestion. Pairing checks grid compatibility and joint availability but does not establish survey-date equivalence or scientific suitability. No independent raster map layer or raster-to-model binding is implemented.
+- Independent LIDAR currently serves EA terrain and last-return surface elevation in England only, capped at 4 million cells per requested bounding window and 4,096 pixels per axis. These are historical composite rasters, not point clouds, current surveys or national bulk ingestion. Pairing checks grid compatibility and joint availability but does not establish survey-date equivalence or scientific suitability. An authenticated display-only DTM preview contract exists; no independent raster map-layer UI or raster-to-model binding is implemented.
 - Independent satellite capture requires one compatible Sentinel-2 C1 scene to cover the entire request. Discovery is one bounded catalogue page; captures are capped at 1 million cells per band and 64 MB of HTTP responses. Original fetched ranges and native windows are retained, but complete publisher file checksums are not verified. SCL is provider classification, and non-nodata spectral cells can include clouds/shadows. No mosaic, imagery map layer, cloud mask, temporal change model or satellite-to-model binding exists.
 - Independent weather uses coarse MERRA-2 source grids (nominally 0.5° latitude × 0.625° longitude), queried at explicit points. It supports at most 366 daily UTC periods per capture and refuses periods less than 120 days old or mixed-model responses. It does not supply station observations, parcel-scale weather, current forecasts or climate projections; higher-resolution sources remain unconnected.
 - The wetland model is unvalidated and cannot yet rank the retained real locations defensibly.
@@ -258,33 +262,31 @@ produced no new browser warnings or errors.
 
 ## Latest meaningful implementation
 
-The active `local-development` organization now contains four fresh independent
-Oxford captures acquired through the existing operator service. The terrain and
-surface requests share a 1 km square enclosing the saved Oxford Station boundary:
-each has 1,000,000 valid native 1 m cells, with complete joint availability and
-compatible grids. A 19 June 2025 Sentinel-2 observation contains 10,003 non-nodata
-cells per spectral band and 2,500 SCL cells. Weather contains all 365 days of 2025
-for each of six variables at the square's centre point.
+`terrain_preview_v1` now provides a read-only, authenticated display contract for
+one explicitly selected successful EA DTM capture and attempt. It verifies retained
+bytes and native availability before producing a grayscale Web Mercator image with
+at most 512 pixels per edge. The response includes image/hash, WGS84 placement,
+source attribution, original grid and counts, metre/ODN units, transparent nodata
+and a local legend. Renderer version and output fingerprint distinguish this
+presentation derivative from authoritative native evidence.
 
-All four captures pass retained-byte replay, fresh-process reads, provider-free
-retries and exact file-verified API/proxy reads. All 39 fresh same-provider sample
-comparisons match. One DSM network failure remains in history before its successful
-retry. Four acquisition rows and five attempts exist; all 18 pre-existing tables
-outside acquisitions and all 12 existing object files remain unchanged, including
-the Oxford assessment, Evidence Snapshot and two ModuleRuns. Browser QA opened all
-four captures and verified the Oxford filter. No application code, schema, model
-or historical assessment binding changed. See [acceptance](OXFORD-CAPTURE-LIBRARY.md).
+The real Oxford capture renders at 511 × 512 with 252,941 visible pixels; its native
+one-million-cell availability remains unchanged. All 285 affected tests pass on
+SQLite and PostgreSQL/PostGIS, and 235 independent inverse-coordinate pixel checks
+match retained data. Original tables, objects, all four acquisition manifests and
+the completed Oxford assessment are preserved. No provider requests, persistence,
+models or frontend changes were added. See [terrain preview](TERRAIN-PREVIEW-CONTRACT.md).
 
 ## Current recommended engineering question
 
 The founder has deferred Wales and Northern Ireland designation adapters to
 prioritize additional data families. Terrain, surface elevation, dated satellite
-imagery and historical weather now have real captures in the active workspace.
-The next bounded task should establish an authenticated display contract for one
-retained terrain capture, carrying exact capture identity, bounds, CRS, units,
-nodata and rendering provenance. That contract can support a later map-layer UI
-without changing the retained source raster or binding it into historical models.
-Satellite rendering, acquisition controls, higher-resolution weather, temporal
-analysis and validated climate/impact modelling remain separate iterations. Keep
-UK-wide capability as the broader objective and source-specific gaps explicit.
-The initial commercial market remains undecided and unvalidated.
+imagery and historical weather have real captures in the active workspace, and the
+terrain display contract is verified. The next bounded task should consume that
+contract in the operating map: explicit retained-capture selection, image placement,
+legend, attribution and truthful source/date/missing-data state. Keep the native
+capture and historical assessment bindings unchanged. Satellite rendering,
+acquisition controls, higher-resolution weather, temporal analysis and validated
+climate/impact models remain separate iterations. Keep UK-wide capability as the
+broader objective and source-specific gaps explicit. The initial commercial market
+remains undecided and unvalidated.

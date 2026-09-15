@@ -409,3 +409,23 @@ Search is explicit, pagination is user-driven and empty batches remain continuab
 No source fetch, artifact download, model run or evidence mutation originates here.
 Filters and selection are local to the mounted browser; no new persisted state or
 route-state contract was introduced. See [capture browser](ACQUISITION-BROWSER.md).
+
+
+## Retained terrain display contract (implemented)
+
+`GET /api/acquisitions/{id}/terrain-preview?attempt_id={exact_attempt}` returns
+`terrain_preview_v1` under existing organization authorization. It verifies a
+successful EA DTM capture, its original bytes and native coverage before producing
+a bounded, display-only EPSG:3857 grayscale PNG. The inline base64 image travels
+with its SHA-256, WGS84 corner placement, exact capture/attempt/manifest identity,
+native grid/availability, metre/ODN units, nodata semantics, source attribution and
+local legend. No private storage path is exposed. Unsupported sources fail explicitly.
+
+The renderer masks the original request and holes, uses nearest-neighbour display
+resampling with a maximum 512-pixel edge, preserves transparency and distinguishes
+native cell counts from visible display samples. Native rasters remain unchanged.
+`ea_dtm_grayscale_web_mercator_v1` and a fingerprint covering returned metadata,
+image hash and runtime versions identify the derivative. No model, persistence,
+provider request or shared cache is involved. Reads use `Cache-Control: no-store`.
+The contract is ready for a later map-layer UI task; it is not yet mounted in the
+operating map. See [terrain preview](TERRAIN-PREVIEW-CONTRACT.md).
