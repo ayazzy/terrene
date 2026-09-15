@@ -1,0 +1,543 @@
+{
+  "date": "2026-09-15",
+  "method": "Local authenticated route dependency override against pre-existing retained provider captures. No new provider fetch or hosted deployment.",
+  "datasets": [
+    {
+      "retained_dataset": "terrene-geographic-verification",
+      "successful_captures": 9,
+      "original_summaries_unchanged": 10,
+      "database_and_objects_byte_unchanged": true,
+      "captures": [
+        {
+          "acquisition_id": "69d33ada-637c-435d-b96c-c182014933bc",
+          "attempt_id": "619b4cc8-ad29-42bb-8091-4c8a5ca2e1e1",
+          "source_id": "environment_agency.lidar_dsm_last_return_1m",
+          "manifest_sha256": "b1a438f8ae92397a322ea5459e54ea9a9687e8bb51a279bf59d20967b099dbf7",
+          "family": "raster",
+          "evidence_time": {
+            "kind": "unknown",
+            "start": null,
+            "end_exclusive": null
+          },
+          "counts": [
+            {
+              "series": "elevation",
+              "measure": "valid_cells",
+              "present": 25600,
+              "expected": 25600
+            }
+          ],
+          "exact_detail_verified": true,
+          "location_filter_verified": true,
+          "date_semantics_verified": true
+        },
+        {
+          "acquisition_id": "47408663-77ef-4afb-920a-bd5fc0a7cf21",
+          "attempt_id": "85ea33e7-1fcc-40cb-86ef-a4a424b04378",
+          "source_id": "environment_agency.lidar_dsm_last_return_1m",
+          "manifest_sha256": "9173c339b886b8b96fda6e5bec4735a21f1ce3c2e057df3692ff0abf96d1f22f",
+          "family": "raster",
+          "evidence_time": {
+            "kind": "unknown",
+            "start": null,
+            "end_exclusive": null
+          },
+          "counts": [
+            {
+              "series": "elevation",
+              "measure": "valid_cells",
+              "present": 25600,
+              "expected": 25600
+            }
+          ],
+          "exact_detail_verified": true,
+          "location_filter_verified": true,
+          "date_semantics_verified": true
+        },
+        {
+          "acquisition_id": "367ec0d6-d880-4a79-8a4a-825229f9a1c7",
+          "attempt_id": "dca0361e-4eb1-4ed0-a690-e5624c47e765",
+          "source_id": "environment_agency.lidar_dtm_1m",
+          "manifest_sha256": "881ccb3a2d9cafe75dd5cdc2803801ee244e6a220b6587d453435162de50d8cc",
+          "family": "raster",
+          "evidence_time": {
+            "kind": "unknown",
+            "start": null,
+            "end_exclusive": null
+          },
+          "counts": [
+            {
+              "series": "elevation",
+              "measure": "valid_cells",
+              "present": 25600,
+              "expected": 25600
+            }
+          ],
+          "exact_detail_verified": true,
+          "location_filter_verified": true,
+          "date_semantics_verified": true
+        },
+        {
+          "acquisition_id": "324434c4-a1b0-4e2b-ab58-4614697d1438",
+          "attempt_id": "d3e6d497-18cc-442b-be93-ca33473f785e",
+          "source_id": "environment_agency.lidar_dtm_1m",
+          "manifest_sha256": "e987df4361d227065dbeffcdcc3608f6c81aaf390ab05c91e524e81b9fd97f27",
+          "family": "raster",
+          "evidence_time": {
+            "kind": "unknown",
+            "start": null,
+            "end_exclusive": null
+          },
+          "counts": [
+            {
+              "series": "elevation",
+              "measure": "valid_cells",
+              "present": 25600,
+              "expected": 25600
+            }
+          ],
+          "exact_detail_verified": true,
+          "location_filter_verified": true,
+          "date_semantics_verified": true
+        },
+        {
+          "acquisition_id": "6f63e1aa-55d3-4e0d-8412-621c0ad4e316",
+          "attempt_id": "e95bc772-a49c-455e-9d4d-35783784accf",
+          "source_id": "naturescot.sssi",
+          "manifest_sha256": "6e09cb537a4d2b8710418544c2945034bbb633ad4bb9aaaacb7f55f19f260a21",
+          "family": "vector",
+          "evidence_time": {
+            "kind": "unknown",
+            "start": null,
+            "end_exclusive": null
+          },
+          "counts": [
+            {
+              "series": "mapped_features",
+              "measure": "selected_features",
+              "present": 2,
+              "expected": null
+            }
+          ],
+          "exact_detail_verified": true,
+          "location_filter_verified": true,
+          "date_semantics_verified": true
+        },
+        {
+          "acquisition_id": "200f1dbf-a3af-4a34-9bee-affaf8fb6b74",
+          "attempt_id": "6e3213ef-5b6f-49ce-804a-a1de701bd8ad",
+          "source_id": "naturescot.sssi",
+          "manifest_sha256": "20c3c2ab8bf68b7f46869a162ff05c83df77fc35dbba5bf1a580c66a53e2ae9f",
+          "family": "vector",
+          "evidence_time": {
+            "kind": "unknown",
+            "start": null,
+            "end_exclusive": null
+          },
+          "counts": [
+            {
+              "series": "mapped_features",
+              "measure": "selected_features",
+              "present": 4,
+              "expected": null
+            }
+          ],
+          "exact_detail_verified": true,
+          "location_filter_verified": true,
+          "date_semantics_verified": true
+        },
+        {
+          "acquisition_id": "d43d57ee-f4c8-4bce-ab25-c37307404c47",
+          "attempt_id": "c3425563-f9e6-40ef-95d3-0f089ee80967",
+          "source_id": "natural_england.sssi",
+          "manifest_sha256": "5d1062def9f4e92310466ad14e4c03d30d7c3c5928d867e541baeba10b8b208b",
+          "family": "vector",
+          "evidence_time": {
+            "kind": "unknown",
+            "start": null,
+            "end_exclusive": null
+          },
+          "counts": [
+            {
+              "series": "mapped_features",
+              "measure": "selected_features",
+              "present": 2,
+              "expected": null
+            }
+          ],
+          "exact_detail_verified": true,
+          "location_filter_verified": true,
+          "date_semantics_verified": true
+        },
+        {
+          "acquisition_id": "e3221ce9-9b1c-4598-90d6-e7983c694ff4",
+          "attempt_id": "abe70afb-22b8-4a9b-acd2-b05433b259f7",
+          "source_id": "natural_england.sssi",
+          "manifest_sha256": "ccc50b567464ebe9c7dde590c6ba2a8f80d96d7950c68fbb0057e6f56bfd37bc",
+          "family": "vector",
+          "evidence_time": {
+            "kind": "unknown",
+            "start": null,
+            "end_exclusive": null
+          },
+          "counts": [
+            {
+              "series": "mapped_features",
+              "measure": "selected_features",
+              "present": 1,
+              "expected": null
+            }
+          ],
+          "exact_detail_verified": true,
+          "location_filter_verified": true,
+          "date_semantics_verified": true
+        },
+        {
+          "acquisition_id": "479183bb-923c-4f8d-b7db-75b424d016b8",
+          "attempt_id": "969f8e8e-d2fb-4840-8d8a-7f55686bf7f4",
+          "source_id": "natural_england.sssi",
+          "manifest_sha256": "dbb02b4e051d36e5e953375792ca42be37010b82278152f0c6388c39130bebab",
+          "family": "vector",
+          "evidence_time": {
+            "kind": "unknown",
+            "start": null,
+            "end_exclusive": null
+          },
+          "counts": [
+            {
+              "series": "mapped_features",
+              "measure": "selected_features",
+              "present": 5,
+              "expected": null
+            }
+          ],
+          "exact_detail_verified": true,
+          "location_filter_verified": true,
+          "date_semantics_verified": true
+        }
+      ]
+    },
+    {
+      "retained_dataset": "terrene-satellite-verification",
+      "successful_captures": 2,
+      "original_summaries_unchanged": 2,
+      "database_and_objects_byte_unchanged": true,
+      "captures": [
+        {
+          "acquisition_id": "4f31b4de-8925-4e02-a9cb-bdfb36e34660",
+          "attempt_id": "0cca2da2-2c2d-4e53-9bf0-789259b0bc83",
+          "source_id": "copernicus.sentinel2_c1_l2a_earthsearch",
+          "manifest_sha256": "b8b170fb74fa936640ae3be8a5b5ba7bcf09df23d9cbfc6ae742f206904ab062",
+          "family": "satellite",
+          "evidence_time": {
+            "kind": "instant",
+            "start": "2024-06-02T11:25:43.130000+00:00",
+            "end_exclusive": null
+          },
+          "counts": [
+            {
+              "series": "blue",
+              "measure": "valid_cells",
+              "present": 6882,
+              "expected": 6882
+            },
+            {
+              "series": "green",
+              "measure": "valid_cells",
+              "present": 6882,
+              "expected": 6882
+            },
+            {
+              "series": "red",
+              "measure": "valid_cells",
+              "present": 6882,
+              "expected": 6882
+            },
+            {
+              "series": "nir",
+              "measure": "valid_cells",
+              "present": 6882,
+              "expected": 6882
+            },
+            {
+              "series": "scl",
+              "measure": "valid_cells",
+              "present": 1786,
+              "expected": 1786
+            }
+          ],
+          "exact_detail_verified": true,
+          "location_filter_verified": true,
+          "date_semantics_verified": true
+        },
+        {
+          "acquisition_id": "92609ac8-defb-4cd9-b009-3439377faaf3",
+          "attempt_id": "0136b054-20af-46bb-b33e-56f9ee1d74dd",
+          "source_id": "copernicus.sentinel2_c1_l2a_earthsearch",
+          "manifest_sha256": "baa59fb262942a53888103de0b4327dfb9aefb44d8aa45d972d3947e6642be00",
+          "family": "satellite",
+          "evidence_time": {
+            "kind": "instant",
+            "start": "2025-06-19T11:17:06.796000+00:00",
+            "end_exclusive": null
+          },
+          "counts": [
+            {
+              "series": "blue",
+              "measure": "valid_cells",
+              "present": 7681,
+              "expected": 7681
+            },
+            {
+              "series": "green",
+              "measure": "valid_cells",
+              "present": 7681,
+              "expected": 7681
+            },
+            {
+              "series": "red",
+              "measure": "valid_cells",
+              "present": 7681,
+              "expected": 7681
+            },
+            {
+              "series": "nir",
+              "measure": "valid_cells",
+              "present": 7681,
+              "expected": 7681
+            },
+            {
+              "series": "scl",
+              "measure": "valid_cells",
+              "present": 1918,
+              "expected": 1918
+            }
+          ],
+          "exact_detail_verified": true,
+          "location_filter_verified": true,
+          "date_semantics_verified": true
+        }
+      ]
+    },
+    {
+      "retained_dataset": "terrene-weather-verification",
+      "successful_captures": 4,
+      "original_summaries_unchanged": 4,
+      "database_and_objects_byte_unchanged": true,
+      "captures": [
+        {
+          "acquisition_id": "020c3206-212b-42f1-8f1e-4442a9dda242",
+          "attempt_id": "d36f964c-ea16-4b8e-af1d-ca46736d1d97",
+          "source_id": "nasa.power_merra2_daily",
+          "manifest_sha256": "e2bd2e835276293b145e56db598d82bda86f72472f99bdacc443f687ef208da7",
+          "family": "weather_timeseries",
+          "evidence_time": {
+            "kind": "interval",
+            "start": "2024-02-01T00:00:00+00:00",
+            "end_exclusive": "2024-03-01T00:00:00+00:00"
+          },
+          "counts": [
+            {
+              "series": "T2M",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "T2M_MIN",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "T2M_MAX",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "PRECTOTCORR",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "WS10M",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "RH2M",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            }
+          ],
+          "exact_detail_verified": true,
+          "location_filter_verified": true,
+          "date_semantics_verified": true
+        },
+        {
+          "acquisition_id": "3a95f98b-a59d-40c5-879e-e032be7a94e5",
+          "attempt_id": "94984c18-5c24-45a3-8071-b4ed72b4ab16",
+          "source_id": "nasa.power_merra2_daily",
+          "manifest_sha256": "6832c93120fcb5c30063b552bf658b03c2a8d1a8aa02d9e9c709692cc5ef1c2c",
+          "family": "weather_timeseries",
+          "evidence_time": {
+            "kind": "interval",
+            "start": "2024-02-01T00:00:00+00:00",
+            "end_exclusive": "2024-03-01T00:00:00+00:00"
+          },
+          "counts": [
+            {
+              "series": "T2M",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "T2M_MIN",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "T2M_MAX",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "PRECTOTCORR",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "WS10M",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "RH2M",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            }
+          ],
+          "exact_detail_verified": true,
+          "location_filter_verified": true,
+          "date_semantics_verified": true
+        },
+        {
+          "acquisition_id": "13b0d888-2481-45e4-93b8-2607e59255fb",
+          "attempt_id": "7f80ae82-7aca-4107-a203-350c4c4d33b9",
+          "source_id": "nasa.power_merra2_daily",
+          "manifest_sha256": "9d8bcd4f128d73cd0761afdbb65e62b3efd9c89f752330c97ec2549c7dc774d9",
+          "family": "weather_timeseries",
+          "evidence_time": {
+            "kind": "interval",
+            "start": "2024-02-01T00:00:00+00:00",
+            "end_exclusive": "2024-03-01T00:00:00+00:00"
+          },
+          "counts": [
+            {
+              "series": "T2M",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "T2M_MIN",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "T2M_MAX",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "PRECTOTCORR",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "WS10M",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "RH2M",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            }
+          ],
+          "exact_detail_verified": true,
+          "location_filter_verified": true,
+          "date_semantics_verified": true
+        },
+        {
+          "acquisition_id": "ca9327c9-775c-4dc4-ada8-8f4776ca75d5",
+          "attempt_id": "9a55f435-ab76-4375-bd2a-f45373a6fc20",
+          "source_id": "nasa.power_merra2_daily",
+          "manifest_sha256": "7b3fdd0fbcb5a36cf34144498dc6020c704b888a19b9283ed40c112fc5f80b20",
+          "family": "weather_timeseries",
+          "evidence_time": {
+            "kind": "interval",
+            "start": "2024-02-01T00:00:00+00:00",
+            "end_exclusive": "2024-03-01T00:00:00+00:00"
+          },
+          "counts": [
+            {
+              "series": "T2M",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "T2M_MIN",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "T2M_MAX",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "PRECTOTCORR",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "WS10M",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            },
+            {
+              "series": "RH2M",
+              "measure": "present_days",
+              "present": 29,
+              "expected": 29
+            }
+          ],
+          "exact_detail_verified": true,
+          "location_filter_verified": true,
+          "date_semantics_verified": true
+        }
+      ]
+    }
+  ]
+}

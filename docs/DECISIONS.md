@@ -462,3 +462,33 @@ station, farm-scale climate model, current forecast, map layer or validated
 commercial workflow is claimed by weather acquisition alone.
 
 **Reference:** [Historical weather implementation](HISTORICAL-WEATHER-ACQUISITION.md).
+
+
+## 2026-09-15 — Discover exact retained captures with explicit time and integrity scope
+
+**Decision:** Introduce authenticated, read-only catalogue/detail contracts over
+existing independent acquisition history before frontend presentation. Scope every
+read to the authenticated organization and pin successful acquisition, attempt,
+request, geometry and manifest identities. Keep acquisition initiation, artifacts
+as downloads and model bindings outside these routes.
+
+**Semantics:** Search the requested point or area, retaining full original capture
+counts. Weather points never become grid or parcel coverage. Satellite observation
+instants and weather daily intervals are evidence time; unknown vector/LIDAR dates
+remain unknown. Capture time is an explicit alternate filter, never an evidence-date
+fallback. Availability is distinct from accuracy, cloud-free coverage and predictive
+confidence, and these caveats travel with each entry.
+
+**Integrity and scale:** Catalogue browsing verifies manifest hashes and terminal
+envelopes while explicitly leaving artifact verification unperformed. Exact detail
+reads use existing artifact checks. This avoids transferring every retained raster
+just to browse metadata without claiming stronger integrity than was performed.
+A bounded live keyset scan can return an empty filtered page with continuation.
+Unsigned cursors are positions, not credentials; SQL ownership checks remain the
+security boundary. National indexing can be added without rewriting source history.
+
+**Compatibility:** No persisted capture, source identity, schema, snapshot, model
+or legacy assessment changes. Existing development authentication bypass remains
+explicit; local signed-token tests are not hosted deployment acceptance.
+
+**Reference:** [Acquisition catalogue and acceptance](ACQUISITION-CATALOGUE.md).

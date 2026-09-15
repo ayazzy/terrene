@@ -277,7 +277,7 @@ typed original XML/GeoTIFF byte artifacts, stored under organization-scoped
 content hashes. Historical JSON artifact keys and encodings are unchanged.
 Successful raster reads verify required artifact kinds and the matching saved
 coverage summary; trusted internal artifact reads return exact checked bytes.
-No public raw-data URL or authenticated acquisition API is introduced.
+No public raw-data URL or API for starting acquisitions is introduced.
 
 Raster acquisition retains the native EPSG:27700 1 m bounding window and reports
 centre-in-polygon complete/partial/no-valid-cell availability, respecting holes.
@@ -350,8 +350,9 @@ catalogue or automatically become Land Evidence Snapshots. A refresh creates new
 capture history; it cannot silently replace evidence used by historical models.
 
 See [the operator contract and verified limits](GEOGRAPHIC-EVIDENCE-ACQUISITION.md).
-This is reusable evidence infrastructure, not an authenticated customer API,
-a new analytical model or evidence of product–market fit.
+This is reusable evidence infrastructure. The read-only authenticated discovery
+contract below exposes retained captures; acquisition remains an operator service.
+It is not a new analytical model or evidence of product–market fit.
 
 ## Architectural constraints
 
@@ -363,3 +364,36 @@ a new analytical model or evidence of product–market fit.
 - Do not optimize the current architecture around 3D visualization.
 
 Detailed implementation references: [Land Intelligence Foundation](LAND-INTELLIGENCE-FOUNDATION.md), [Evidence Snapshot persistence](LAND-EVIDENCE-SNAPSHOT-PERSISTENCE.md), [wetland binding and ModuleRuns](WETLAND-SNAPSHOT-MODULE-RUN.md), [snapshot-bound Site reasoning](SITE-REASONING-INPUT-CONTRACT.md), [Priority Habitats](PRIORITY-HABITATS-EVIDENCE.md), [OpenMap Local built world](OPENMAP-LOCAL-BUILT-WORLD.md), [EA LIDAR building heights](EA-LIDAR-BUILDING-HEIGHTS.md), [Screening Context v1](SCREENING-CONTEXT-V1.md), and [Project Evidence v1](PROJECT-EVIDENCE-V1.md).
+
+
+## Retained acquisition discovery (implemented)
+
+`GET /api/acquisitions` returns `acquisition_catalogue_v1` under the existing
+organization authentication dependency. A joined request/terminal-attempt read
+scopes ownership in SQL, then verifies each scanned immutable manifest hash,
+request hash, envelope, source and geometry identity. It projects typed, whitelisted
+metadata rather than returning internal provider dictionaries. The scan loads no
+artifact bytes and reports `artifact_verification: not_performed` explicitly.
+
+`GET /api/acquisitions/{id}?attempt_id={exact_attempt}` returns
+`acquisition_detail_v1` after the existing full retained-artifact read checks.
+Only successful exact captures are exposed. Artifact roles, lengths and SHA-256
+values are public to the owning organization; storage keys and raw download URLs
+are absent. Reads never refresh a source, create evidence, or bind models.
+Successful and handled operational-error responses use `Cache-Control: no-store`.
+
+Source, WGS84 bounding-box and inclusive calendar-date filters apply to at most
+50 successful manifests per call, returning at most 20 matches. Location means
+intersection with the original request geometry, including polygon holes and
+weather points; it does not establish provider or valid-pixel coverage. Counts
+remain those of the complete retained request. Evidence time is a satellite
+instant, a weather daily request interval, or unknown for vector/composite LIDAR.
+Unknown dates fail evidence-date filters. Capture-date filtering is explicit.
+
+Descending request-created/ID keyset pagination uses a bounded unsigned position
+token bound to query and organization hash; marker ownership is rechecked and the
+token grants no authorization. Filtered pages can be empty and still have a next
+cursor. This is a live scan, not a snapshot, total-count endpoint or national spatial
+index. Existing tables suffice; a scalable indexed metadata projection is future
+work if national retained volume justifies it. The frontend consumes this contract
+in a separate iteration. See [catalogue contract and limits](ACQUISITION-CATALOGUE.md).

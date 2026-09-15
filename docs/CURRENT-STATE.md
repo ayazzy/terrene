@@ -16,6 +16,8 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 
 ## Implemented capabilities
 
+- Discover successful independent captures through an authenticated, organization-scoped catalogue filtered by source, requested location and evidence/capture dates. Open one exact capture through a separate read-only detail contract that verifies retained artifacts. Catalogue browsing verifies manifests only and explicitly reports that artifact bytes are unchecked. See [acquisition catalogue](ACQUISITION-CATALOGUE.md).
+
 - Acquire the current Natural England SSSI publication independently for an explicit supported area through a typed service/operator CLI. Shared geometry accepts all four UK nations; this first source offers explicitly versioned England coverage: historical BFC/high-water v1 and BFE/extent-of-realm v2. Organization-scoped immutable attempts, safe integrity reads, retries and live Oxford/western Norfolk verification are implemented. See [geographic acquisition](GEOGRAPHIC-EVIDENCE-ACQUISITION.md).
 
 - Acquire NatureScot's current Scottish SSSI publication through the same independent service, with a separately pinned Scottish footprint, publisher identity/terms checks and native component/designation identities. Source adapters and national coverage profiles cannot be interchanged. See [NatureScot acquisition](NATURESCOT-SSSI-ACQUISITION.md).
@@ -134,6 +136,8 @@ Versioned Design Studies remain API-only. The frontend has no Alternative editor
 
 ## Verification baseline
 
+Acquisition catalogue: 41 new contract/authentication/integrity tests and all **273 affected tests** pass on SQLite and PostgreSQL/PostGIS. Read-only API verification finds 15 retained successful real captures across vector, DTM/DSM, satellite and weather; all 16 original summaries replay unchanged, including the failed acquisition. Retained database and object files remain byte-identical. Production JWT validation is tested with locally signed tokens and a stubbed JWKS lookup; hosted acceptance and frontend integration remain unverified. See [catalogue acceptance](ACQUISITION-CATALOGUE.md).
+
 Housekeeping verification on 10 September 2026:
 
 - Python/SQLite suite: **160 passed**, 13 dependency warnings.
@@ -230,6 +234,8 @@ produced no new browser warnings or errors.
 
 ## Known limitations
 
+- Acquisition discovery is a backend read-only contract. Each response scans at most 50 retained successful request manifests and returns at most 20 matches; filtered pages can be empty with a continuation cursor. This is a live scan, not a national spatial index or a transactional snapshot. The frontend does not yet consume it; no endpoint for starting acquisitions or downloading raw artifacts is added.
+
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
 - Most legacy acquisition is bounded to the Oxford pilot; flood coverage is narrower. Independent SSSI acquisition supports bounded areas wholly inside the selected publisher's pinned England or Scotland footprint. England BFE v2 resolves the verified Broads tidal exclusion; historical BFC v1 retains its original limits. No profile establishes complete marine or legal designation coverage. Wales, Northern Ireland, cross-border composition and customer-facing acquisition remain incomplete. Source-specific mapped absence never proves real-world absence.
 - Independent LIDAR currently serves EA terrain and last-return surface elevation in England only, capped at 4 million cells per requested bounding window and 4,096 pixels per axis. These are historical composite rasters, not point clouds, current surveys or national bulk ingestion. Pairing checks grid compatibility and joint availability but does not establish survey-date equivalence or scientific suitability. No independent raster map layer or raster-to-model binding is implemented.
@@ -246,30 +252,30 @@ produced no new browser warnings or errors.
 
 ## Latest meaningful implementation
 
-`nasa.power_merra2_daily` / `nasa_power_daily_point_v1` adds bounded historical
-weather through `geographic_weather_request_v1`. It explicitly identifies
-modelled MERRA-2 reanalysis for a WGS84 query point and daily UTC interval,
-with mean/minimum/maximum temperature, corrected precipitation rate, wind speed
-and relative humidity in native units. Two original provider responses, metadata,
-normalized daily series and per-variable missingness are retained. Successful
-reads replay both original responses. No geographic/satellite request defaults,
-source identities, database schema or model bindings change.
+`acquisition_catalogue_v1` and `acquisition_detail_v1` expose retained successful
+independent evidence through authenticated GET routes. Results pin request,
+geometry, acquisition, terminal attempt and manifest identities. Location filters
+intersect the requested area or weather point; counts are never clipped to the
+search window. Evidence dates distinguish satellite observation time, requested
+weather daily intervals and unknown vector/LIDAR survey dates. Explicit capture-date
+filtering never changes those evidence semantics.
 
-February 2024 captures for Oxford, Edinburgh, Cardiff and Belfast each retain
-29 days across all six variables. All 72 fresh one-day value comparisons pass;
-fresh-process readback and provider-free retries reproduce exactly. Twelve prior
-vector, LIDAR and satellite captures remain unchanged. The 37 new weather tests
-and all 221 affected acquisition tests pass on SQLite and PostgreSQL/PostGIS.
-See [historical weather implementation and acceptance record](HISTORICAL-WEATHER-ACQUISITION.md).
+Browsing verifies manifests and their database envelopes without fetching artifact
+bytes. Opening an exact capture runs existing retained-artifact integrity checks.
+The routes omit private object keys, provider payloads and raw download URLs, and
+perform no provider acquisition, evidence write, migration or model binding.
+All 273 affected tests pass on SQLite and PostgreSQL/PostGIS, with 15 real retained
+captures checked. See [catalogue implementation and acceptance](ACQUISITION-CATALOGUE.md).
 
 ## Current recommended engineering question
 
 The founder has deferred Wales and Northern Ireland designation adapters to
 prioritize additional data families. Independent terrain, surface elevation,
 dated satellite imagery and historical weather now exist through operator services.
-The next bounded task is an authenticated, read-only acquisition catalogue
-searchable by location and date, establishing how the platform discovers retained
-evidence. Map presentation should consume that contract separately. Higher-resolution
+The next bounded task is a read-only frontend acquisition browser consuming the
+verified catalogue/detail contracts, preserving point-versus-area and evidence-date
+semantics. It should show retained captures and their exact details before any
+separate raster-rendering or acquisition-control task. Higher-resolution
 weather, temporal analysis and validated climate/impact modelling remain separate
 work. Keep UK-wide capability as the broader objective and source-specific gaps
 explicit. The initial commercial market remains undecided and unvalidated.

@@ -1,6 +1,7 @@
 import os,json,html,hashlib
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, HTTPException, Header, Response
+from fastapi import FastAPI, Depends, HTTPException, Header, Response, Query
+from typing import Annotated
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field, ValidationError
@@ -529,3 +530,37 @@ def read_design_revisions(id: str, org=Depends(organization)):
 @app.get('/api/design-revisions/{id}', response_model=RevisionRecord)
 def read_design_revision(id: str, org=Depends(organization)):
     return proposal_operation(lambda: get_revision(id, org=org))
+
+
+# Independent retained evidence discovery; no acquisition or artifact-download API.
+from backend.acquisition_catalogue import (
+    CatalogueQuery, AcquisitionCatalogue, AcquisitionDetail,
+    list_acquisitions, read_acquisition_detail,
+)
+from backend.acquisition_contracts import AcquisitionError
+
+
+def acquisition_read(operation):
+    try:
+        return operation()
+    except AcquisitionError as error:
+        if error.code == 'not_found':
+            raise HTTPException(404, 'Capture not found', headers={'Cache-Control':'no-store'})
+        if error.code == 'invalid_catalogue_cursor':
+            raise HTTPException(422, 'Invalid catalogue cursor', headers={'Cache-Control':'no-store'})
+        raise HTTPException(500, 'Retained acquisition could not be verified', headers={'Cache-Control':'no-store'})
+    except Exception:
+        raise HTTPException(500, 'Retained acquisition could not be verified', headers={'Cache-Control':'no-store'})
+
+
+@app.get('/api/acquisitions', response_model=AcquisitionCatalogue)
+def acquisition_catalogue(response: Response, query: Annotated[CatalogueQuery, Query()],
+                          org=Depends(organization)):
+    response.headers['Cache-Control'] = 'no-store'
+    return acquisition_read(lambda: list_acquisitions(org, query))
+
+
+@app.get('/api/acquisitions/{id}', response_model=AcquisitionDetail)
+def acquisition_detail(id: str, attempt_id: str, response: Response, org=Depends(organization)):
+    response.headers['Cache-Control'] = 'no-store'
+    return acquisition_read(lambda: read_acquisition_detail(org, id, attempt_id=attempt_id))
