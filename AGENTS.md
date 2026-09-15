@@ -19,6 +19,29 @@ These instructions apply to the entire repository.
 - Avoid new dependencies unless materially justified.
 - Task prompts should contain task-specific context and requirements, not repeat standing repository rules already defined here.
 
+## Allowance-aware working protocol
+
+Terrene is developed within a limited Codex allowance. Preserve it by making each
+task a small, verifiable deliverable rather than by weakening evidence or safety
+checks. Before implementation, the task request must state: the outcome, relevant
+files or contract, acceptance checks, model tier when it matters, and an explicit
+stop point (normally "commit and stop"). See
+[`docs/CODEX-WORKING-AGREEMENT.md`](docs/CODEX-WORKING-AGREEMENT.md) for the
+copyable task card and model-selection guide.
+
+- Use the lightest available model that can safely complete the task. Routine
+  discovery, narrow edits and focused tests belong on a high-volume/lightweight
+  model; reserve stronger reasoning for scientific semantics, architecture,
+  non-obvious failures and final review.
+- Begin with the linked current-state and task files. Do not perform a broad
+  repository audit, reread historical reports, or repeat successful checks unless
+  the change, a failure or a new risk requires it.
+- Report only outcome, files changed, checks actually run, unresolved limits and
+  commit. Link existing reports rather than reproducing their contents.
+- Do not spend paid credits, enable fast mode, create parallel agents or add
+  integrations merely to accelerate a routine Terrene task unless the founder
+  explicitly asks for that trade-off.
+
 ## Branches and commits
 
 - Never implement feature, fix, data, refactor or chore work directly on `main`.
