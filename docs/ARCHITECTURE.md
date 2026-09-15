@@ -427,5 +427,15 @@ native cell counts from visible display samples. Native rasters remain unchanged
 `ea_dtm_grayscale_web_mercator_v1` and a fingerprint covering returned metadata,
 image hash and runtime versions identify the derivative. No model, persistence,
 provider request or shared cache is involved. Reads use `Cache-Control: no-store`.
-The contract is ready for a later map-layer UI task; it is not yet mounted in the
-operating map. See [terrain preview](TERRAIN-PREVIEW-CONTRACT.md).
+The operating map consumes this contract through one explicitly selected retained
+capture in the existing Layers surface. Session-local catalogue/preview state is
+separate from the saved assessment and URL artifact selection. Authenticated
+no-store readers check exact capture identity, placement, native/legend semantics,
+PNG dimensions and SHA-256 before mounting a fingerprint-keyed MapLibre image
+source below Terrene geometry. Separate request versions, aborts and timeouts
+fence stale searches, previews and image events. Hiding/removing cleans up the
+owned source; style replacement restores it without automatic camera changes.
+Attribution, unknown survey dates and native versus display availability remain
+visible. No capture, snapshot, assessment or model is written by this UI.
+See [terrain preview](TERRAIN-PREVIEW-CONTRACT.md) and
+[map layer](TERRAIN-MAP-LAYER.md).

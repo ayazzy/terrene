@@ -59,6 +59,12 @@ import {
 } from './infrastructure-entities';
 import { portfolioBounds } from './portfolio-geometry';
 import infrastructureStyles from './infrastructure-map.module.css';
+import {
+  useTerrainMapLayer,
+  TerrainLayerControls,
+  TerrainLegend,
+} from './terrain-map-layer';
+import { terrainSourcePrefix } from './terrain-map-source';
 
 type EntitySelection = { kind: 'site' | 'project_subject'; id: string } | null;
 
@@ -687,6 +693,7 @@ export default function SiteMap({
   useEffect(() => {
     drawSessionRef.current = drawSession;
   }, [drawSession]);
+  const terrain = useTerrainMapLayer(projection);
   const ready = !!projection;
   const layerPanelOpen = layersOpen ?? localLayersOpen;
   const setLayerPanelOpen = (open: boolean) => {
@@ -871,6 +878,7 @@ export default function SiteMap({
     m.on('resize', repaint);
     m.on('error', (event) => {
       const sourceId = (event as { sourceId?: string }).sourceId;
+      if (sourceId?.startsWith(terrainSourcePrefix)) return;
       if (
         sourceId &&
         Object.values(SOURCE_IDS).includes(
@@ -1574,7 +1582,12 @@ export default function SiteMap({
                     feature.properties.layer_id === layer &&
                     builtLayerVisible(layer),
                 ),
-              ).length}
+              ).length +
+              Number(
+                terrain.state.shown &&
+                  terrain.state.preview?.grid.state === 'visible_samples' &&
+                  terrain.render === 'visible',
+              )}
           </span>
         </button>
         <button
@@ -1722,6 +1735,14 @@ export default function SiteMap({
               ? 'Evidence-only background · basemap unavailable'
               : `${BASEMAP.label}${basemapState === 'degraded' ? ' · degraded' : ''}`}
           </label>
+          <TerrainLayerControls
+            terrain={terrain}
+            map={projection}
+            onFit={(geometry) => {
+              setLayerPanelOpen(false);
+              fit(geometry);
+            }}
+          />
           <div className="layer-group">
             <h3>Infrastructure entities</h3>
             <div className="layer-row">
@@ -1907,8 +1928,8 @@ export default function SiteMap({
             )}
           </div>
           <p className="layer-footnote">
-            Terrain, watercourse and land-cover measurements are inspectable in
-            analysis. No displayable layers are retained for those inputs.
+            Independent terrain is selected above. Historical watercourse and
+            land-cover measurements remain inspectable in analysis.
           </p>
         </section>
       )}
@@ -1931,6 +1952,12 @@ export default function SiteMap({
             </button>
           </header>
           <div className={infrastructureStyles.legendBody}>
+            {terrain.state.shown &&
+              terrain.state.preview &&
+              terrain.state.preview.grid.state === 'visible_samples' &&
+              terrain.render === 'visible' && (
+                <TerrainLegend preview={terrain.state.preview} />
+              )}
             <section>
               <h3>Geography</h3>
               <div className={infrastructureStyles.legendRow}>

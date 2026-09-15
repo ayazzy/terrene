@@ -1,0 +1,118 @@
+.controls {
+  border-top: 1px solid var(--border-default);
+  padding-top: 12px;
+  margin-top: 12px;
+  font-size: var(--font-size-sm);
+}
+.controls h3 {
+  margin: 0 0 8px;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+.controls output {
+  display: block;
+  margin: 8px 0;
+  line-height: 1.5;
+}
+.controls small,
+.legend small {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+}
+.controls button {
+  padding: 7px 9px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  background: var(--surface-overlay);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+.controls button:hover {
+  background: var(--surface-selected);
+}
+.controls button:focus-visible,
+.controls input:focus-visible,
+.controls summary:focus-visible {
+  outline: 2px solid var(--text-accent, #45d6e8);
+  outline-offset: 3px;
+}
+.controls button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0;
+}
+.actions label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.captures {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+  max-height: 210px;
+  overflow: auto;
+}
+.captures li {
+  margin-bottom: 6px;
+}
+.captures button {
+  width: 100%;
+  text-align: left;
+}
+.captures button[aria-pressed='true'] {
+  border-color: #45d6e8;
+  background: var(--surface-selected);
+}
+.selection {
+  border-top: 1px solid var(--border-default);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+.selection dl {
+  margin: 8px 0;
+}
+.selection dd {
+  overflow-wrap: anywhere;
+  margin: 2px 0 8px;
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+}
+.selection summary {
+  cursor: pointer;
+  margin-top: 12px;
+}
+.legend {
+  padding: 12px 0;
+  font-size: var(--font-size-sm);
+}
+.legend strong {
+  display: block;
+  font-size: var(--font-size-sm);
+}
+.legend p {
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+}
+.ramp {
+  height: 12px;
+  margin: 8px 0 4px;
+  background: linear-gradient(90deg, rgb(32, 32, 32), rgb(240, 240, 240));
+  border: 1px solid var(--border-default);
+}
+.range {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}

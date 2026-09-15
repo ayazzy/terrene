@@ -16,7 +16,7 @@ See [Architecture](ARCHITECTURE.md), [Nature Intelligence](NATURE-INTELLIGENCE.m
 
 ## Implemented capabilities
 
-- Read one exact retained EA DTM capture as an authenticated terrain preview: a bounded PNG with Web Mercator placement, native provenance/availability, metre/ODN units, missing-data transparency and a versioned display legend. The map UI does not consume it yet. See [terrain preview contract](TERRAIN-PREVIEW-CONTRACT.md).
+- Select one retained EA DTM capture in the operating map’s Layers panel, search the current view or all retained terrain, show/hide/remove it and intentionally fit its extent. The verified preview includes an elevation legend, attribution, exact provenance and explicit missingness separately from the saved assessment. Desktop Oxford QA passed; narrow-screen browser acceptance remains pending after an automatic browser-access denial. See [terrain map layer](TERRAIN-MAP-LAYER.md) and [terrain preview contract](TERRAIN-PREVIEW-CONTRACT.md).
 
 - The active local development organization now has four fresh Oxford captures: 1 m terrain and surface elevation over a 1 km square enclosing Oxford Station, one 19 June 2025 Sentinel-2 observation, and six daily weather variables for all of 2025 at the centre point. All are discoverable and file-verifiable in Data sources. See [Oxford capture library](OXFORD-CAPTURE-LIBRARY.md).
 
@@ -244,11 +244,11 @@ produced no new browser warnings or errors.
 
 ## Known limitations
 
-- Acquisition discovery has a read-only browser in Data sources. Each backend response scans at most 50 retained successful request manifests and returns at most 20 matches (the browser requests 10); filtered pages can be empty with continuation. This is a live scan, not a national spatial index or transactional snapshot. Browser filters/selection are session-local, with no dedicated deep links, map overlays, acquisition controls or raw-artifact downloads. The active development organization has four bounded Oxford captures; earlier verification datasets remain isolated.
+- Acquisition discovery has a read-only browser in Data sources. Each backend response scans at most 50 retained successful request manifests and returns at most 20 matches (the browser requests 10); filtered pages can be empty with continuation. This is a live scan, not a national spatial index or transactional snapshot. Browser filters/selection are session-local, with no dedicated deep links, acquisition controls or raw-artifact downloads. A separate Layers control displays one retained EA DTM capture; other independent sources have no map overlay. The active development organization has four bounded Oxford captures; earlier verification datasets remain isolated.
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
 - Most legacy acquisition is bounded to the Oxford pilot; flood coverage is narrower. Independent SSSI acquisition supports bounded areas wholly inside the selected publisher's pinned England or Scotland footprint. England BFE v2 resolves the verified Broads tidal exclusion; historical BFC v1 retains its original limits. No profile establishes complete marine or legal designation coverage. Wales, Northern Ireland, cross-border composition and customer-facing acquisition remain incomplete. Source-specific mapped absence never proves real-world absence.
-- Independent LIDAR currently serves EA terrain and last-return surface elevation in England only, capped at 4 million cells per requested bounding window and 4,096 pixels per axis. These are historical composite rasters, not point clouds, current surveys or national bulk ingestion. Pairing checks grid compatibility and joint availability but does not establish survey-date equivalence or scientific suitability. An authenticated display-only DTM preview contract exists; no independent raster map-layer UI or raster-to-model binding is implemented.
+- Independent LIDAR currently serves EA terrain and last-return surface elevation in England only, capped at 4 million cells per requested bounding window and 4,096 pixels per axis. These are historical composite rasters, not point clouds, current surveys or national bulk ingestion. Pairing checks grid compatibility and joint availability but does not establish survey-date equivalence or scientific suitability. The authenticated display-only DTM preview is selectable in the operating map; no DSM display or raster-to-model binding is implemented. Terrain selection is session-local, one capture at a time, with no elevation query, hillshade, terrain mesh or analytical resampling. Narrow-screen browser acceptance is pending.
 - Independent satellite capture requires one compatible Sentinel-2 C1 scene to cover the entire request. Discovery is one bounded catalogue page; captures are capped at 1 million cells per band and 64 MB of HTTP responses. Original fetched ranges and native windows are retained, but complete publisher file checksums are not verified. SCL is provider classification, and non-nodata spectral cells can include clouds/shadows. No mosaic, imagery map layer, cloud mask, temporal change model or satellite-to-model binding exists.
 - Independent weather uses coarse MERRA-2 source grids (nominally 0.5° latitude × 0.625° longitude), queried at explicit points. It supports at most 366 daily UTC periods per capture and refuses periods less than 120 days old or mixed-model responses. It does not supply station observations, parcel-scale weather, current forecasts or climate projections; higher-resolution sources remain unconnected.
 - The wetland model is unvalidated and cannot yet rank the retained real locations defensibly.
@@ -262,31 +262,33 @@ produced no new browser warnings or errors.
 
 ## Latest meaningful implementation
 
-`terrain_preview_v1` now provides a read-only, authenticated display contract for
-one explicitly selected successful EA DTM capture and attempt. It verifies retained
-bytes and native availability before producing a grayscale Web Mercator image with
-at most 512 pixels per edge. The response includes image/hash, WGS84 placement,
-source attribution, original grid and counts, metre/ODN units, transparent nodata
-and a local legend. Renderer version and output fingerprint distinguish this
-presentation derivative from authoritative native evidence.
+The operating map now consumes `terrain_preview_v1` through explicit retained EA
+DTM capture selection in its existing Layers panel. A separate image source sits
+beneath Terrene geometry, uses the contract’s grayscale and transparency, and
+keeps native resolution/availability distinct from the bounded preview. Capture
+identity, placement, units, PNG dimensions and image hash are checked before
+rendering. Search, preview and render failures remain recoverable; late requests
+cannot restore a removed or superseded image. Style replacement restores the
+selected image without changing the camera.
 
-The real Oxford capture renders at 511 × 512 with 252,941 visible pixels; its native
-one-million-cell availability remains unchanged. All 285 affected tests pass on
-SQLite and PostgreSQL/PostGIS, and 235 independent inverse-coordinate pixel checks
-match retained data. Original tables, objects, all four acquisition manifests and
-the completed Oxford assessment are preserved. No provider requests, persistence,
-models or frontend changes were added. See [terrain preview](TERRAIN-PREVIEW-CONTRACT.md).
+Desktop Oxford QA displayed the retained 511 × 512 preview beneath the original
+Site/building/railway evidence, with 54.30–76.36 m ODN, Environment Agency
+attribution, unknown survey dates and one million valid native cells. Selection,
+fit, legend and hiding were exercised. The saved analysis remained completed.
+All 149 frontend tests, TypeScript, focused lint and the production build passed.
+Narrow-screen browser QA remains pending: automatic approval review blocked
+further localhost browser access. See [terrain map layer](TERRAIN-MAP-LAYER.md).
 
 ## Current recommended engineering question
 
+Finish narrow-screen browser acceptance of the terrain layer when browser access
+is explicitly approved. The next separate implementation should establish an
+exact-capture Sentinel-2 true-colour preview contract: pinned observation, retained
+RGB bands/calibration, explicit cloud/nodata semantics, bounded geographic placement
+and source attribution. Consume it in the map in a subsequent UI iteration.
+
 The founder has deferred Wales and Northern Ireland designation adapters to
-prioritize additional data families. Terrain, surface elevation, dated satellite
-imagery and historical weather have real captures in the active workspace, and the
-terrain display contract is verified. The next bounded task should consume that
-contract in the operating map: explicit retained-capture selection, image placement,
-legend, attribution and truthful source/date/missing-data state. Keep the native
-capture and historical assessment bindings unchanged. Satellite rendering,
-acquisition controls, higher-resolution weather, temporal analysis and validated
-climate/impact models remain separate iterations. Keep UK-wide capability as the
-broader objective and source-specific gaps explicit. The initial commercial market
-remains undecided and unvalidated.
+prioritize additional data families. Keep UK-wide capability as the broader
+objective and source-specific gaps explicit. Acquisition controls, higher-resolution
+weather, temporal analysis and validated climate/impact models remain separate
+iterations. The initial commercial market remains undecided and unvalidated.
