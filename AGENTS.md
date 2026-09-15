@@ -29,10 +29,12 @@ stop point (normally "commit and stop"). See
 [`docs/CODEX-WORKING-AGREEMENT.md`](docs/CODEX-WORKING-AGREEMENT.md) for the
 copyable task card and model-selection guide.
 
-- Use the lightest available model that can safely complete the task. Routine
-  discovery, narrow edits and focused tests belong on a high-volume/lightweight
-  model; reserve stronger reasoning for scientific semantics, architecture,
-  non-obvious failures and final review.
+- Choose for confidence and failure cost, not nominal task size. Terra is the
+  normal implementation default; use a high-volume/lightweight model only for
+  reconnaissance, extraction or genuinely mechanical work with a clear contract.
+  Escalate when the task is ambiguous, non-obvious, evidence-sensitive or likely
+  to create rework; reserve Sol for scientific semantics, architecture and other
+  high-consequence reasoning.
 - Begin with the linked current-state and task files. Do not perform a broad
   repository audit, reread historical reports, or repeat successful checks unless
   the change, a failure or a new risk requires it.

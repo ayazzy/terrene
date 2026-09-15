@@ -28,13 +28,16 @@ task on it.
 
 ## Model and speed policy
 
-Choose the smallest capable model, not the fastest-looking one. Availability and
-allowances can change, so this is a task-routing policy rather than a guarantee.
+Choose for confidence and failure cost, not nominal task size or speed.
+Availability and allowances can change, so this is a task-routing policy rather
+than a guarantee. Do not downgrade a task merely to conserve allowance: rework,
+missed evidence semantics and incorrect architecture cost more than a capable
+first pass.
 
 | Work | Default choice | Escalate only when |
 | --- | --- | --- |
-| Narrow UI adjustment, isolated test, small routine code edit | Spark, if separately available; otherwise Luna | The failure is non-obvious or touches an evidence/authorization boundary |
-| File discovery, mechanical implementation, focused test work, concise documentation | Luna | The task requires competing design trade-offs or deep domain judgment |
+| File discovery, extraction, classification, concise documentation, mechanical test execution | Luna | Any ambiguity, design decision or interpretation is required |
+| Tiny mechanical UI/code/test edit with an explicit contract | Spark, if separately available; otherwise Terra | The result is not immediately verified or the change has broader state/data impact |
 | Ordinary production feature, code review, debugging with a known bounded surface | Terra | The result would establish scientific meaning, durable architecture or a safety-critical rule |
 | Evidence semantics, environmental/scientific interpretation, architecture, hard debugging, final high-risk review | Sol | Do not escalate further by default |
 
@@ -42,6 +45,11 @@ Use standard speed. Do not use paid credits unless the founder explicitly asks.
 Avoid image generation, broad web research, optional plugins and parallel agents
 for a routine coding task. They may be useful for a named objective, but they are
 not free acceleration.
+
+When uncertain, start implementation on Terra. A Luna or Spark result may support
+Terra work, but should not become the sole basis for an evidence-sensitive or
+ambiguous product decision. The requested acceptance checks—not the model tier—
+remain the quality gate.
 
 ## Efficient execution sequence
 
