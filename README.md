@@ -27,7 +27,7 @@ Stack: TypeScript · React 19 · Vite · MapLibre · Tailwind · Python · FastA
 
 ## What I built
 
-Solo project: product direction, data and reasoning model, architecture and implementation. I ran it as a series of scoped engineering sprints with AI coding agents (Codex/Claude Code) doing much of the typing, under a written working agreement ([`docs/CODEX-WORKING-AGREEMENT.md`](docs/CODEX-WORKING-AGREEMENT.md)), sprint specs and certification reports. The source selection, evidence and missingness model, verification approach and decision log ([`docs/DECISIONS.md`](docs/DECISIONS.md)) are mine.
+Solo project: product direction, data and reasoning model, architecture and implementation. I ran it as a series of scoped engineering sprints with AI coding agents (Codex and Claude Code) doing much of the typing, under a written working agreement ([`docs/CODEX-WORKING-AGREEMENT.md`](docs/CODEX-WORKING-AGREEMENT.md)), sprint specs and certification reports. The source selection, evidence and missingness model, verification approach and decision log ([`docs/DECISIONS.md`](docs/DECISIONS.md)) are mine.
 
 **Status:** engineering is paused (September 2026) after the evidence/terrain sprint. The hosted stack has not been deployed end to end, and it runs locally.
 
