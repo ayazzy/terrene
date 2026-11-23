@@ -8,7 +8,7 @@ Closed early on 13 September 2026 after Tasks 1 and 2. One bounded official cons
 
 The technical experiment achieved its bounded proof: Terrene can retain an exact real-project source assertion, bind it immutably and produce a truthful partial intelligence result without inventing construction or grid facts.
 
-The sprint stopped before practitioner walkthroughs or interviews. This is a product-priority decision, not positive or negative customer evidence. The untested workflow assumptions in `CUSTOMER-DISCOVERY.md` remain unvalidated.
+The sprint stopped before practitioner walkthroughs or interviews. This is a product-priority decision, not positive or negative customer evidence. The untested workflow assumptions remain unvalidated.
 
 The next priority is [Sprint 004 — Infrastructure Operating Picture](SPRINT-004-INFRASTRUCTURE-OPERATING-PICTURE.md). It will make the spatial operating picture the continuous primary interaction surface while preserving the source, evidence, reasoning and history semantics proved here.
 

@@ -2,7 +2,7 @@
 
 Terrene is building a computational model of land and human interventions. The current England-first application implements evidence-backed land representation, deterministic wetland reasoning and an evidence-aware site-screening workflow. Real missing inputs remain unknown; no BNG units are inferred.
 
-Start with the [North Star](docs/TERRENE-NORTH-STAR.md), [Current State](docs/CURRENT-STATE.md), [Architecture](docs/ARCHITECTURE.md), [Decision Log](docs/DECISIONS.md) and [Customer Discovery](docs/CUSTOMER-DISCOVERY.md). Repository implementation is authoritative where documentation has drifted; detailed historical implementation reports remain the record of their versions.
+Start with the [North Star](docs/TERRENE-NORTH-STAR.md), [Current State](docs/CURRENT-STATE.md), [Architecture](docs/ARCHITECTURE.md) and [Decision Log](docs/DECISIONS.md). Repository implementation is authoritative where documentation has drifted; detailed historical implementation reports remain the record of their versions.
 
 For bounded, allowance-aware Codex work, use the [Codex working agreement](docs/CODEX-WORKING-AGREEMENT.md) and its copyable task card.
 

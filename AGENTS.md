@@ -7,7 +7,7 @@ These instructions apply to the entire repository.
 - Read this file and `docs/CURRENT-STATE.md` at the start of every task. `CURRENT-STATE.md` is the default orientation document.
 - Inspect the implementation before assuming documentation is current. Code is authoritative when implementation and documentation disagree.
 - After orientation, inspect only the code, tests and documentation materially relevant to the bounded objective. Do not perform a broad repository audit by default.
-- Load other durable documents, historical reports or broad repository areas only when the task genuinely requires them. The durable documentation hierarchy is: `TERRENE-NORTH-STAR.md` for strategy; `ARCHITECTURE.md` for durable architecture; `DECISIONS.md` for append-only decisions; `CUSTOMER-DISCOVERY.md` for hypotheses and evidence; `CURRENT-STATE.md` for implemented state. Historical reports remain valid records of their implementation versions.
+- Load other durable documents, historical reports or broad repository areas only when the task genuinely requires them. The durable documentation hierarchy is: `TERRENE-NORTH-STAR.md` for strategy; `ARCHITECTURE.md` for durable architecture; `DECISIONS.md` for append-only decisions; `CURRENT-STATE.md` for implemented state. Historical reports remain valid records of their implementation versions.
 
 ## Task discipline
 

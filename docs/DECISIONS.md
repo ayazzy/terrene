@@ -64,7 +64,7 @@ This is a lightweight append-only log of durable product and architecture decisi
 
 **Rationale:** Durable commercial value must improve expensive decisions and workflows. Source data remains essential, attributable evidence but is not sufficient differentiation by itself.
 
-**References:** [North Star](TERRENE-NORTH-STAR.md), [Customer Discovery](CUSTOMER-DISCOVERY.md).
+**References:** [North Star](TERRENE-NORTH-STAR.md).
 
 ## 2026-09-10 — Terrene Applications operationalize land decisions
 
@@ -74,7 +74,7 @@ This is a lightweight append-only log of durable product and architecture decisi
 
 Terrene Earth continues to represent reality and evidence; Terrene Reasoning interprets it; Terrene Scenario tests interventions; and Terrene Applications operationalize useful workflows. Workflow state must not turn Terrene Earth into a CRM or become mixed with core environmental facts.
 
-**References:** [Customer Discovery](CUSTOMER-DISCOVERY.md), [North Star](TERRENE-NORTH-STAR.md).
+**References:** [North Star](TERRENE-NORTH-STAR.md).
 
 ## 2026-09-10 — Screening context publication requires an intentional action
 
@@ -92,7 +92,7 @@ Terrene Earth continues to represent reality and evidence; Terrene Reasoning int
 
 Infrastructure project intelligence remains an application hypothesis. Implementing its reusable evidence input does not constitute customer validation or a decision that this is Terrene's chosen market.
 
-**References:** [Project Evidence v1](PROJECT-EVIDENCE-V1.md), [Architecture](ARCHITECTURE.md), [Customer Discovery](CUSTOMER-DISCOVERY.md), [North Star](TERRENE-NORTH-STAR.md).
+**References:** [Project Evidence v1](PROJECT-EVIDENCE-V1.md), [Architecture](ARCHITECTURE.md), [North Star](TERRENE-NORTH-STAR.md).
 
 ## 2026-09-13 — Proposed designs are versioned state, not Earth evidence
 
@@ -267,7 +267,7 @@ enter the legacy source-only `latest()` selection and replace Oxford inputs.
 Future time requests must fail explicitly when the selected source cannot serve
 them. Source collection must not silently execute a model or fabricate a Site.
 
-**References:** [Architecture](ARCHITECTURE.md), [first acquisition iteration](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md), [Customer Discovery](CUSTOMER-DISCOVERY.md).
+**References:** [Architecture](ARCHITECTURE.md), [first acquisition iteration](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md).
 
 ## 2026-09-14 — UK-wide coverage is a near-term requirement
 

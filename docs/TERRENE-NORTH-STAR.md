@@ -52,4 +52,4 @@ Applications should share the same foundations rather than create isolated evide
 
 Terrene is a company, not an open-ended research project. Technical sophistication matters only where it improves real, expensive decisions. Customer discovery should determine which vertical application receives priority and which evidence, reasoning and scenario capabilities are commercially necessary.
 
-The present wedge hypothesis is early-stage site screening and diligence for land-intensive development, potentially beginning with UK utility-scale solar, battery energy storage or related infrastructure. This remains a hypothesis until supported by customer evidence; see [Customer Discovery](CUSTOMER-DISCOVERY.md).
+The present wedge hypothesis is early-stage site screening and diligence for land-intensive development, potentially beginning with UK utility-scale solar, battery energy storage or related infrastructure. This remains a hypothesis until supported by customer evidence.
