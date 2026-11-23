@@ -1,5 +1,40 @@
 # Terrene
 
+**A computational model of land for screening sites in England.** Draw or upload a parcel boundary, and Terrene pulls the public geospatial evidence for it (terrain, surface elevation, rivers, land cover, satellite imagery, protected sites, priority habitats, weather), runs deterministic reasoning over it and reports what the land is, what it could become and how sure it is. Every finding carries its evidence, lineage and missing inputs. When data is absent, Terrene says *insufficient data* instead of guessing.
+
+The first reasoning module is wetland-restoration potential. The platform underneath (evidence acquisition, versioned site models, reproducible assessment runs) is built to be general.
+
+## At a glance
+
+- **~25k lines of Python, ~21k lines of TypeScript, 60+ test files, 100+ commits, 50+ design/verification docs** in [`docs/`](docs/)
+- **Real data, verified on real places:** EA 1 m LiDAR terrain (DTM) and surface (DSM), Sentinel-2 Collection 1 scenes, OS Open Rivers and OpenMap Local, ESA WorldCover, Natural England and NatureScot SSSIs, priority habitats, NASA POWER weather. Live captures checked in Oxford, East Anglia, Edinburgh, Cardiff and Belfast. See [12 real parcel results](docs/REAL-VERIFICATION.md).
+- **Reproducible by design:** pinned dataset and model versions, content-addressed artifact storage, immutable assessment results, boundary version history, and a lease-based worker with retries and fencing
+- **Honest outputs:** physical potential, restoration need, feasibility, evidence completeness and model confidence are scored separately. No thresholds are weakened to force a result.
+
+## Architecture
+
+```
+React 19 + TypeScript + MapLibre  ──►  FastAPI API  ──►  PostGIS (SQLite/Shapely fallback for dev & tests)
+   (operating map, site workspace,        │                    ▲
+    evidence inspector, reports)          ▼                    │
+                                    Python worker ── acquisition adapters (EA LiDAR, Sentinel-2, OS, NE/NatureScot, NASA POWER)
+                                    (leases, retries)  │
+                                                       ▼
+                                          content-addressed object store (local / R2)
+```
+
+Stack: TypeScript · React 19 · Vite · MapLibre · Tailwind · Python · FastAPI · SQLAlchemy · PostGIS · Shapely · pyproj · rasterio · NumPy · pytest · Docker
+
+## What I built
+
+Solo project: product direction, data and reasoning model, architecture and implementation. I ran it as a series of scoped engineering sprints with AI coding agents (Codex/Claude Code) doing much of the typing, under a written working agreement ([`docs/CODEX-WORKING-AGREEMENT.md`](docs/CODEX-WORKING-AGREEMENT.md)), sprint specs and certification reports. The source selection, evidence and missingness model, verification approach and decision log ([`docs/DECISIONS.md`](docs/DECISIONS.md)) are mine.
+
+**Status:** engineering is paused (September 2026) after the evidence/terrain sprint. The hosted stack has not been deployed end to end, and it runs locally.
+
+---
+
+## Project documentation
+
 Terrene is building a computational model of land and human interventions. The current England-first application implements evidence-backed land representation, deterministic wetland reasoning and an evidence-aware site-screening workflow. Real missing inputs remain unknown; no BNG units are inferred.
 
 Start with the [North Star](docs/TERRENE-NORTH-STAR.md), [Current State](docs/CURRENT-STATE.md), [Architecture](docs/ARCHITECTURE.md) and [Decision Log](docs/DECISIONS.md). Repository implementation is authoritative where documentation has drifted; detailed historical implementation reports remain the record of their versions.
