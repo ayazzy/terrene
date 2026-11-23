@@ -12,7 +12,7 @@ the stated deliverable is complete; do not make a new task for every small edit.
 
 ```text
 Outcome: [one externally observable result]
-Why now: [customer decision or accepted sprint priority]
+Why now: [accepted sprint priority]
 Relevant context: [up to 3–8 files/URLs and exact IDs if needed]
 In scope: [one bounded change]
 Out of scope: [nearby work that must not be started]
@@ -46,7 +46,7 @@ model is warranted.
 | Ordinary production feature, code review, debugging with a known bounded surface | Terra | The result would establish scientific meaning, durable architecture or a safety-critical rule |
 | Evidence semantics, environmental/scientific interpretation, architecture, hard debugging, final high-risk review | Sol | Do not escalate further by default |
 
-Use standard speed. Do not use paid credits unless the founder explicitly asks.
+Use standard speed. Do not use paid credits unless explicitly asked.
 Avoid image generation, broad web research, optional plugins and parallel agents
 for a routine coding task. They may be useful for a named objective, but they are
 not free acceleration.
@@ -74,12 +74,6 @@ At a pause, record only: current branch/commit, completed deliverable, exact nex
 decision, relevant files and IDs, verification already passed, blockers and safe
 restart command. Never paste long historical summaries into a new task when a
 file link is enough.
-
-During founder-led research, capture buyer, decision, trigger/frequency, current
-workflow, delay/error cost, existing spend, required evidence and the smallest
-output they might pay for. Distinguish desk research from practitioner evidence
-and payment commitments. Bring one short comparison to a new planning task; do
-not begin implementation until a bounded deliverable is selected.
 
 ## Copyable restart request
 

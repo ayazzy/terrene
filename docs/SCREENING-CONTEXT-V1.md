@@ -4,7 +4,7 @@ Implemented 10 September 2026 from main `6dfeee6d31e71ecba79421b2e33255efc334ba1
 
 ## Outcome
 
-A reviewer can intentionally prepare a saved assessment's non-scoring context, inspect the persisted facts, gaps and provenance in Overview, select historical assessments, and preview/download a traceable self-contained HTML artifact. This improves Terrene's ability to reason about represented reality and tests a prospective screening workflow. It is a pilot learning instrument; its rules are not customer-validated requirements.
+A reviewer can intentionally prepare a saved assessment's non-scoring context, inspect the persisted facts, gaps and provenance in Overview, select historical assessments, and preview/download a traceable self-contained HTML artifact. This improves Terrene's ability to reason about represented reality and tests a prospective screening workflow.
 
 ## Architecture and identifiers
 

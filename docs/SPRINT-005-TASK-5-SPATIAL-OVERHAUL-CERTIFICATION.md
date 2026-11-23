@@ -4,7 +4,7 @@
 
 Sprint 005 is certified as an evidence-safe spatial foundation. Oxford Station remains the real-data proving scene, while failed cartography, missing or historical height evidence and late scene responses now have explicit presentation states. The changes improve Terrene's ability to represent reality without turning a basemap or an extrusion into evidence.
 
-This task does not claim that the current interface is customer-ready. It closes the engineering failure modes before a separate observation-led usability bug bash.
+This task does not claim that the current interface is production-ready. It closes the engineering failure modes before a separate observation-led usability bug bash.
 
 ## Root cause
 
@@ -64,4 +64,4 @@ Branch: `fix/spatial-overhaul-certification`.
 
 ## Recommended next task
 
-Conduct a founder-led usability bug bash as a separate discovery/fix iteration. Record observed failures against the portfolio, site-diligence and asset-intelligence tasks, reproduce and prioritize them, then agree one bounded post-certification UX sprint before implementation.
+Conduct a hands-on usability bug bash as a separate discovery/fix iteration. Record observed failures against the portfolio, site-diligence and asset-intelligence tasks, reproduce and prioritize them, then agree one bounded post-certification UX sprint before implementation.

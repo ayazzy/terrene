@@ -152,7 +152,7 @@ new read projections over the existing persistence model.
 
 The frontend does not consume the catalogue yet. The routes do not initiate
 acquisition, return raw evidence values or serve raster tiles/artifact downloads.
-No production deployment or customer workflow acceptance was performed. Catalogue
+No production deployment or end-user workflow acceptance was performed. Catalogue
 browsing checks metadata only; detail may read substantial retained raster data.
 A bounded application scan is not a national spatial index, and large inventories
 will need an indexed metadata projection. Polygon source coverage and all original

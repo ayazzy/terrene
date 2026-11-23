@@ -120,12 +120,10 @@ Read paths organization- and Project-scope every lookup, load the stored manifes
 
 The example Project packet and all project/source claims are explicitly synthetic and isolated under tests. No invented infrastructure facts are seeded into the portfolio. Optional land-link verification uses one already-retained land Evidence Snapshot fixture only to prove exact snapshot/Site/content-hash binding; it does not turn that land evidence into a project claim.
 
-No live URL, external service, hosted R2 bucket or production customer data is used by Project Evidence v1 verification.
+No live URL, external service, hosted R2 bucket or production data is used by Project Evidence v1 verification.
 
 ## Boundary with Terrene Reasoning
 
-Project Evidence v1 does not calculate project stage, progress, delay/risk, confidence, commercial opportunity, recommendation or pursue/monitor/dismiss decisions. Existing Site team-review status is neither copied into the bundle nor interpreted as Project stage.
+Project Evidence v1 does not calculate project stage, progress, delay/risk, confidence, opportunity, recommendation or pursue/monitor/dismiss decisions. Existing Site team-review status is neither copied into the bundle nor interpreted as Project stage.
 
 Sprint 002 resolved the next binding boundary with `project_evidence_binding_v1`: a run consumes an explicit non-empty set of bundle IDs, canonicalizes their order, pins their complete content/source/claim membership, requires complete acyclic correction ancestry and leaves contradictory active claims visible. It never selects a newest bundle or lets publication recency win. See [Project Intelligence v1](PROJECT-INTELLIGENCE-V1.md).
-
-Infrastructure project intelligence remains a customer hypothesis, not a validated market decision.

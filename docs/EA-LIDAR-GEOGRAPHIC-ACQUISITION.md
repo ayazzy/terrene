@@ -160,10 +160,9 @@ changed, so browser QA and production deployment were not performed.
 
 ## Delivery sequence
 
-The founder deferred Wales and Northern Ireland designation adapters in favour
+It was decided to defer Wales and Northern Ireland designation adapters in favour
 of LIDAR and additional data families. UK capability remains the broader goal;
 this EA source establishes England terrain support only. The next bounded
 candidate is independent DSM acquisition with explicit pairing rules for terrain
 and surface grids. Dated imagery, historical weather and application/map access
-remain subsequent separate tasks. No customer workflow or revenue hypothesis
-was validated by this engineering iteration.
+remain subsequent separate tasks.

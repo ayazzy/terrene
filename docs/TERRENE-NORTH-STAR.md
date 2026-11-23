@@ -12,7 +12,7 @@ Wetland is an early reasoning primitive, not Terrene's identity. The map is an i
 
 ## Terrene Earth — representation
 
-Terrene Earth is the canonical, evidence-backed representation of what exists and what is known about it. Its scope may include terrain, soil, hydrology, climate, vegetation, ecology, land use, parcels, habitats, watercourses, catchments, protected areas, buildings, roads, transmission and other infrastructure, dams, projects, layouts, surveys, permits, interventions, customer and field evidence, provenance, timestamps and uncertainty.
+Terrene Earth is the canonical, evidence-backed representation of what exists and what is known about it. Its scope may include terrain, soil, hydrology, climate, vegetation, ecology, land use, parcels, habitats, watercourses, catchments, protected areas, buildings, roads, transmission and other infrastructure, dams, projects, layouts, surveys, permits, interventions, field evidence, provenance, timestamps and uncertainty.
 
 Its question is:
 
@@ -46,10 +46,4 @@ Its question is:
 
 Terrene Applications turn the shared Earth, Reasoning and Scenario foundations into validated workflows. Potential applications include Screen, Diligence, Scenario, Monitor, Portfolio, Nature/BNG, Restoration, Field Evidence, and infrastructure or renewable-development applications.
 
-Applications should share the same foundations rather than create isolated evidence models. A horizontal architecture does not require a horizontal go-to-market strategy.
-
-## Product and commercial discipline
-
-Terrene is a company, not an open-ended research project. Technical sophistication matters only where it improves real, expensive decisions. Customer discovery should determine which vertical application receives priority and which evidence, reasoning and scenario capabilities are commercially necessary.
-
-The present wedge hypothesis is early-stage site screening and diligence for land-intensive development, potentially beginning with UK utility-scale solar, battery energy storage or related infrastructure. This remains a hypothesis until supported by customer evidence.
+Applications should share the same foundations rather than create isolated evidence models.

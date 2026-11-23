@@ -1,16 +1,14 @@
 # Sprint close — independent evidence and terrain display
 
-Closed 15 September 2026. Engineering pauses until the founder returns, expected
-20 September, while market research informs the next priority. This is a completed
-engineering checkpoint, not a claim of product-market fit or production launch.
+Closed 15 September 2026. Engineering is paused. This is a completed engineering
+checkpoint, not a production launch.
 No automatic restart, scheduled work or new implementation is authorized by this record.
 
 ## Outcome
 
 Terrene can acquire and retain independent geographic evidence, browse exact
 captures and display verified terrain in its operating map. The original Oxford
-analysis remains accessible. The founder will use the pause to investigate which
-customer decision and intelligence service should receive priority.
+analysis remains accessible.
 
 ## Implementation / architecture
 
@@ -30,8 +28,7 @@ See [Current State](CURRENT-STATE.md), [Oxford captures](OXFORD-CAPTURE-LIBRARY.
 
 ## Files changed
 
-This closeout adds this handoff, marks the pause in Current State and records the
-founder's research plan in Customer Discovery. Application code is unchanged.
+This closeout adds this handoff and marks the pause in Current State. Application code is unchanged.
 A local ignored backup preserves the active Oxford runtime data.
 
 ## Verification
@@ -92,7 +89,7 @@ The following are candidates, not an instruction to build every item:
 
 1. Verified exact-capture Sentinel-2 true-colour preview contract, then its map UI.
 2. Surface elevation display and historical weather charts as separate iterations.
-3. Customer-facing area/source selection, acquisition requests, progress and retries.
+3. User-facing area/source selection, acquisition requests, progress and retries.
 4. Explicit new snapshot/model bindings for newly acquired evidence.
 5. Broader England/Scotland coverage; Wales and Northern Ireland remain deferred.
 6. Indexed geographic discovery, larger-area processing and efficient tiled delivery.
@@ -102,10 +99,9 @@ The following are candidates, not an instruction to build every item:
    projections, local inputs, explicit scenarios and a validated impact model.
 10. Scenario editing and computed consequences for proposed interventions.
 11. Hosted end-to-end deployment, tenant acceptance, backup/recovery and operations.
-12. A customer-validated deliverable, onboarding, pricing and paid pilot.
 
 Historical weather is not a climate forecast. The wetland model remains unvalidated.
-National support is source-specific. The commercial market remains open.
+National support is source-specific.
 
 ## Resource-efficient working agreement for the next sprint
 
@@ -136,18 +132,6 @@ These recommendations align with the official usage guidance consulted on
 15 September: https://learn.chatgpt.com/docs/pricing . Account limits, model access
 and prices can change and should be checked when work resumes.
 
-## Market research during the pause
-
-Compare a few candidate workflows without committing the architecture to one market.
-For each, record the buyer, specific decision, trigger/frequency, current process,
-cost of delay/error, existing spend, necessary evidence and smallest useful paid
-output. Preserve source links and distinguish desk research from practitioner
-statements and actual payment commitments. Competitor breadth is not proof of demand.
-
-Bring back a short comparison of climate assessment, infrastructure intelligence
-and any stronger candidate uncovered. Record findings in Customer Discovery when
-available; no new interviews or validated demand are claimed today.
-
 ## Git
 
 Key recent commits: `fad83de` capture browser; `fe8d7c1` Oxford capture population;
@@ -158,13 +142,12 @@ No merge, push or deployment is part of closeout.
 
 ## Recommended next task
 
-Review the founder's market findings first and select one bounded deliverable.
-The provisional engineering next step is the Sentinel-2 preview contract; market
-evidence may change its priority. Resume only when the founder requests it.
+Select one bounded deliverable. The provisional engineering next step is the
+Sentinel-2 preview contract. Resume only when explicitly requested.
 
 Suggested restart prompt:
 
 > Read AGENTS.md, docs/CURRENT-STATE.md and docs/SPRINT-CLOSE-2026-09-15.md.
-> We are resuming from the completed terrain sprint. Here are my market findings:
-> [insert findings]. Help choose one bounded next task before implementing it.
+> We are resuming from the completed terrain sprint. Help choose one bounded
+> next task before implementing it.
 > Keep context and reporting concise and match verification to the change.

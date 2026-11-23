@@ -19,7 +19,7 @@ MODEL_VERSION = 'project_intelligence_v1'
 LIMITATIONS = [
     'This deterministic result interprets attributed source assertions; it does not independently verify that an assertion is true.',
     'Newer publication or recording time never resolves a conflict without an explicit correction relationship.',
-    'Evidence completeness is not predictive confidence. No risk, opportunity or commercial recommendation is produced.',
+    'Evidence completeness is not predictive confidence. No risk, opportunity or recommendation is produced.',
 ]
 
 EvidenceState = Literal['supported', 'conflicting', 'insufficient_evidence']

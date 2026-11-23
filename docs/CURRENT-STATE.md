@@ -4,15 +4,13 @@
 
 This is an operational map of what exists on 15 September 2026. Inspect the relevant code, tests and linked implementation reports before changing it.
 
-## Sprint status — closed for research pause
+## Sprint status — paused
 
-On 15 September the founder closed the evidence/terrain sprint and paused new
-engineering until their return, expected 20 September. Market research will inform
-the next priority; the satellite preview remains provisional. No automatic restart
-is scheduled. The completed implementation is at `8353700`; the original Oxford
-database and retained files have a verified local, Git-ignored backup outside the
-temporary runtime directory. Read [sprint closeout and restart notes](SPRINT-CLOSE-2026-09-15.md)
-before resuming. This pause does not establish customer validation.
+Engineering paused on 15 September 2026 after the evidence/terrain sprint. The
+completed implementation is at `8353700`; the original Oxford database and retained
+files have a verified local, Git-ignored backup outside the temporary runtime
+directory. Read [sprint closeout and restart notes](SPRINT-CLOSE-2026-09-15.md)
+before resuming.
 
 ## Product architecture
 
@@ -108,7 +106,7 @@ The historical wetland reasoning module is `wetland_restoration_v0_1`, using ret
 
 The 12 retained Oxford verification locations have inspectable physical and hydrological components, but the model still reports overall `INSUFFICIENT_DATA`. New Priority Habitat and OpenMap Local evidence is intentionally not silently rebound into the historical wetland model.
 
-`site_screening_context_v1` adds deterministic, offline human-review context over a committed snapshot through `screening_context_binding_v1`. It preserves source-bounded facts and gaps, qualifies mapped zeros, presents fixed source-semantic comparisons and asks unresolved review questions. It produces no score or progression decision. These are pilot rules, not customer-validated requirements.
+`site_screening_context_v1` adds deterministic, offline human-review context over a committed snapshot through `screening_context_binding_v1`. It preserves source-bounded facts and gaps, qualifies mapped zeros, presents fixed source-semantic comparisons and asks unresolved review questions. It produces no score or progression decision. These are pilot rules, not externally validated requirements.
 
 `project_intelligence_v1` is deterministic reasoning over one explicit `project_evidence_binding_v1`. It reports bounded lifecycle stage, separate planning/construction findings, grid target states, conflicts and evidence-grounded questions. Explicit corrections supersede active use without erasing history; recency alone never resolves conflict, and elapsed targets do not establish outcomes. Results include exact claim/source-version/passage references and no score or recommendation.
 
@@ -257,7 +255,7 @@ produced no new browser warnings or errors.
 - Acquisition discovery has a read-only browser in Data sources. Each backend response scans at most 50 retained successful request manifests and returns at most 20 matches (the browser requests 10); filtered pages can be empty with continuation. This is a live scan, not a national spatial index or transactional snapshot. Browser filters/selection are session-local, with no dedicated deep links, acquisition controls or raw-artifact downloads. A separate Layers control displays one retained EA DTM capture; other independent sources have no map overlay. The active development organization has four bounded Oxford captures; earlier verification datasets remain isolated.
 
 - No connected production soil drainage source; actual wetland extent/condition, measured groundwater, water quality, hydroperiod and complete habitat/infrastructure context remain missing.
-- Most legacy acquisition is bounded to the Oxford pilot; flood coverage is narrower. Independent SSSI acquisition supports bounded areas wholly inside the selected publisher's pinned England or Scotland footprint. England BFE v2 resolves the verified Broads tidal exclusion; historical BFC v1 retains its original limits. No profile establishes complete marine or legal designation coverage. Wales, Northern Ireland, cross-border composition and customer-facing acquisition remain incomplete. Source-specific mapped absence never proves real-world absence.
+- Most legacy acquisition is bounded to the Oxford pilot; flood coverage is narrower. Independent SSSI acquisition supports bounded areas wholly inside the selected publisher's pinned England or Scotland footprint. England BFE v2 resolves the verified Broads tidal exclusion; historical BFC v1 retains its original limits. No profile establishes complete marine or legal designation coverage. Wales, Northern Ireland, cross-border composition and user-facing acquisition remain incomplete. Source-specific mapped absence never proves real-world absence.
 - Independent LIDAR currently serves EA terrain and last-return surface elevation in England only, capped at 4 million cells per requested bounding window and 4,096 pixels per axis. These are historical composite rasters, not point clouds, current surveys or national bulk ingestion. Pairing checks grid compatibility and joint availability but does not establish survey-date equivalence or scientific suitability. The authenticated display-only DTM preview is selectable in the operating map; no DSM display or raster-to-model binding is implemented. Terrain selection is session-local, one capture at a time, with no elevation query, hillshade, terrain mesh or analytical resampling.
 - Independent satellite capture requires one compatible Sentinel-2 C1 scene to cover the entire request. Discovery is one bounded catalogue page; captures are capped at 1 million cells per band and 64 MB of HTTP responses. Original fetched ranges and native windows are retained, but complete publisher file checksums are not verified. SCL is provider classification, and non-nodata spectral cells can include clouds/shadows. No mosaic, imagery map layer, cloud mask, temporal change model or satellite-to-model binding exists.
 - Independent weather uses coarse MERRA-2 source grids (nominally 0.5° latitude × 0.625° longitude), queried at explicit points. It supports at most 366 daily UTC periods per capture and refuses periods less than 120 days old or mixed-model responses. It does not supply station observations, parcel-scale weather, current forecasts or climate projections; higher-resolution sources remain unconnected.
@@ -267,7 +265,7 @@ produced no new browser warnings or errors.
 - Scenario modelling is not implemented. Broader Terrene Applications remain hypotheses, not completed architecture.
 - Proposed design revisions accept bounded Polygon/MultiPolygon GeoJSON only; there is no CAD/PDF ingestion, centreline buffering, layout generation, environmental intersection, impact calculation or A/B consequence comparison.
 - The repository does not commit a local Oxford QA database; run the external Oxford provisioner before using that scene in a fresh development environment.
-- The operating picture is an evidence-complete engineering prototype, not yet a customer-validated analyst workflow. Dossier scrolling, responsive header layout, Site-to-Asset hierarchy and in-map Site creation are repaired, but several actions and evidence labels still expose engineering-oriented terminology.
+- The operating picture is an evidence-complete engineering prototype, not yet a validated analyst workflow. Dossier scrolling, responsive header layout, Site-to-Asset hierarchy and in-map Site creation are repaired, but several actions and evidence labels still expose engineering-oriented terminology.
 - Snapshot-bound run selection and detail disclosure are session-local and summary-only; they are not yet URL-addressable and there is no dedicated full-result read contract for these wetland ModuleRuns.
 
 ## Latest meaningful implementation
@@ -298,8 +296,8 @@ exact-capture Sentinel-2 true-colour preview contract: pinned observation, retai
 RGB bands/calibration, explicit cloud/nodata semantics, bounded geographic placement
 and source attribution. Consume it in the map in a subsequent UI iteration.
 
-The founder has deferred Wales and Northern Ireland designation adapters to
+Wales and Northern Ireland designation adapters are deferred to
 prioritize additional data families. Keep UK-wide capability as the broader
 objective and source-specific gaps explicit. Acquisition controls, higher-resolution
 weather, temporal analysis and validated climate/impact models remain separate
-iterations. The initial commercial market remains undecided and unvalidated.
+iterations.

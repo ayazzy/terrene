@@ -86,7 +86,7 @@ Sites now opens as a dark geographic portfolio overview, framed around the saved
 6. Export report opens a preview of a self-contained HTML report. Use Download HTML or Print / Save as PDF. Every finding includes evidence and limitations. Historical reports are explicitly marked.
 7. Edit site → upload/draw a replacement boundary. Previous results are labelled historical; rerun to assess the new version. Notes-only edits keep the boundary version unchanged. History lets you reopen any assessment.
 
-For a first real reference workflow, upload `docs/port-meadow-reference.geojson`, name it “Port Meadow — public reference site”, and note that this is a public SSSI reference boundary, not a commercial opportunity. Do not treat it as a restoration recommendation. Synthetic fixtures are separate and explicitly named.
+For a first real reference workflow, upload `docs/port-meadow-reference.geojson`, name it “Port Meadow — public reference site”, and note that this is a public SSSI reference boundary. Do not treat it as a restoration recommendation. Synthetic fixtures are separate and explicitly named.
 
 ## Architecture and stack choices
 
@@ -140,13 +140,10 @@ Tests cover one-hectare projected area and actual overlap, invalid input, missin
 
 See `docs/VERIFICATION.md` for the recorded browser journey and results, and `docs/DATA.md` for sources, licensing, counts, coverage and rule limitations.
 
-## Smallest customer pilot
-
-With one ecological consultancy, screen 5–10 consented Oxfordshire-area opportunities and compare the evidence/report against their manual desk research. Record time saved, missing datasets and whether prioritization changed. Before giving external users access: expand and validate flood coverage beyond the Oxford corridor, select the applicable AWI revision coverage, configure hosted auth/storage and complete a two-organization hosted acceptance test. More designations, contextual nearby reference layers, report maps, refresh-token UX and large-portfolio pagination are deferred. OS Open Rivers now provides distance and proximity to its mapped line network; this is not distance to all water and does not establish hydraulic connectivity.
-
+## Source acquisition
 
 Independent area-based source acquisition is available through the trusted
 operator CLI, beginning with Natural England SSSI. See the
 [setup, versioned request, coverage limits and live verification](docs/GEOGRAPHIC-EVIDENCE-ACQUISITION.md).
 The shared geometry contract accommodates all four UK nations; this does not yet
-provide four-nation source coverage or customer-facing map/API access.
+provide four-nation source coverage or a public map/API.

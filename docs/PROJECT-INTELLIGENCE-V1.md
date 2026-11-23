@@ -12,7 +12,6 @@ explicit project source assertions
   → read-only investigation UI
 ```
 
-This is a reusable architecture demonstration, not evidence that project intelligence is a validated customer workflow.
 
 ## Domain boundary
 
@@ -39,7 +38,7 @@ The pure module reports:
 - unresolved questions grounded in missing, unknown, conflicting or elapsed-target evidence;
 - exact claim, source-version, source-content and passage references plus model/binding identity and limitations.
 
-Publication recency never wins a conflict. `paused` remains compatible with construction stage. Refused/withdrawn planning and cancelled construction do not invent lifecycle stages. A past target never establishes completion, delay or failure. The contract contains no confidence/risk score, opportunity, recommendation or customer decision.
+Publication recency never wins a conflict. `paused` remains compatible with construction stage. Refused/withdrawn planning and cancelled construction do not invent lifecycle stages. A past target never establishes completion, delay or failure.
 
 ## Persistence and API
 
@@ -67,4 +66,4 @@ The combined Project Evidence, Design Study and Project Intelligence suite passe
 
 ## Exclusions
 
-No project editing, automated research, map redesign, Design Study linking, Scenario calculation, confidence bar, alert, recommendation or pursue/monitor/dismiss action is implemented. No actual infrastructure-project claim or customer validation is implied.
+No project editing, automated research, map redesign, Design Study linking, Scenario calculation, confidence bar, alert, recommendation or pursue/monitor/dismiss action is implemented.

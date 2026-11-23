@@ -58,4 +58,3 @@ The Design Study `/api/projects` compatibility surface and all retained `CRC` te
 - The local map remains visually sparse because the connected development records contain one saved Site and only one explicitly Site-linked synthetic Project Subject.
 - Built-world objects require a prepared immutable Screening Context run. The currently connected Site assessment has none.
 - The production bundle retains its pre-existing chunk-size advisory.
-- Product workflow and customer value remain unvalidated; this sprint certifies the interaction architecture, not a commercial recommendation.

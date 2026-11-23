@@ -1,8 +1,7 @@
 # Independent geographic evidence acquisition
 
 Implemented 14 September 2026 on the approved [first-iteration scope](GEOGRAPHIC-EVIDENCE-ACQUISITION-PLAN.md).
-This establishes reusable area-based evidence collection. It does not validate a
-customer workflow, an environmental model or product–market fit.
+This establishes reusable area-based evidence collection. It does not validate an environmental model.
 
 An additive [coverage v2 correction](GEOGRAPHIC-COVERAGE-V2.md) now supports the
 verified Broads tidal area through explicit BFE/extent-of-realm coverage. This
@@ -60,7 +59,7 @@ retrieved CRS, identifiers, terms, unknown resolution and bounded limits.
 Migration 9 adds `geographic_acquisitions` and
 `geographic_acquisition_attempts`; PostgreSQL enables RLS and revokes browser-role
 privileges. The CLI is a **trusted operator** interface: `--org` scopes persistence
-and reads but does not authenticate a customer. Run it only with server/operator
+and reads but does not authenticate a user. Run it only with server/operator
 credentials; an authenticated HTTP boundary is later work.
 
 New records never enter legacy `datasets` or `features`. Legacy `latest()`,
@@ -103,7 +102,7 @@ transaction: an undetected mid-query edit remains a limitation.
 From the repository root, configure the normal database/private-storage settings.
 For an isolated local run, set `CRC_ENV=development` and `CRC_DATA_DIR` to a private
 directory outside Git. A deliberately configured `DATABASE_URL` overrides the
-SQLite location. Never use an existing customer database for verification.
+SQLite location. Never use an existing production database for verification.
 
 ```sh
 .venv/bin/python -m backend.migrate

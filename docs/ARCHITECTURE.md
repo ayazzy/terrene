@@ -58,7 +58,7 @@ The historical wetland module is the deterministic `wetland_restoration_v0_1` mo
 
 `site_screening_context` is an additive non-scoring module, version `site_screening_context_v1`, using `screening_context_binding_v1`. It consumes validated committed `land_evidence_v1` content directly and copies source measurements, support, gaps and provenance into a typed review contract. Declared deterministic rules generate mapped-zero qualifications, source-semantic contexts and human questions. The specification signature pins configuration, rule declarations and result-contract schema; runtime timestamps and mutable team status are outside the semantic result. No network acquisition or free-form model interpretation occurs.
 
-`project_intelligence_v1` is a pure deterministic module over one validated `project_evidence_binding_v1`. It reports a bounded project stage plus separate planning and construction findings, reported grid targets, conflicts and unresolved questions. Every conclusion points to retained claim/source-version/passage identities. A correction changes the active conclusion only in a new binding/run; newer publication time alone never wins. Elapsed target dates remain `elapsed_unverified`. The module emits no confidence/risk score, commercial recommendation or workflow decision.
+`project_intelligence_v1` is a pure deterministic module over one validated `project_evidence_binding_v1`. It reports a bounded project stage plus separate planning and construction findings, reported grid targets, conflicts and unresolved questions. Every conclusion points to retained claim/source-version/passage identities. A correction changes the active conclusion only in a new binding/run; newer publication time alone never wins. Elapsed target dates remain `elapsed_unverified`. The module emits no confidence/risk score, recommendation or workflow decision.
 
 ### Immutable ModuleRuns
 
@@ -163,14 +163,11 @@ or ModuleRuns.
 ### Agreed intelligence-platform direction — 14 September 2026
 
 Terrene will develop shared capabilities for understanding places, assets and
-changes over time while its initial commercial market remains undecided. Climate
-assessment, infrastructure intelligence, monitoring and analyst investigations
-are candidate applications. Palantir Gotham and Stellaria are product references,
-not evidence of Terrene's readiness, access to their data feeds or a decision to
-serve a particular government, defence or commercial market.
+changes over time. Climate assessment, infrastructure intelligence, monitoring
+and analyst investigations are candidate applications.
 
 The architectural objective is to reduce the work required to add a supported
-geography, source, analytical question or customer workflow. Preserve the existing
+geography, source, analytical question or application workflow. Preserve the existing
 separation of objects, relationships, observations, interpretations and decisions;
 extend it through concrete implementations rather than introduce an exhaustive
 ontology, generic workflow engine or new database technology in advance.
@@ -222,20 +219,20 @@ The intended shared capabilities are:
   their own source/time/availability metadata; display resolution must not imply
   measurement resolution. Preserve existing snapshot-bound map semantics until
   an additive multi-source scene contract is implemented.
-- **Customer data and operational work:** progressively support private sources,
+- **Private data and operational work:** progressively support private sources,
   human review, decisions and assignments, with permissions carried through to
-  derived results. Public provider data does not make customer areas or queries
-  public. Purchased data must retain usage terms and acquisition-cost context.
+  derived results. Public provider data does not make private areas or queries
+  public. Licensed data must retain its usage terms.
 
 Independent acquisition now includes England and Scotland SSSI and bounded EA
-terrain and last-return surface raster capture. On 14 September 2026 the founder deferred Wales and
-Northern Ireland designation adapters to prioritize additional data families,
+terrain and last-return surface raster capture. On 14 September 2026 Wales and
+Northern Ireland designation adapters were deferred to prioritize additional data families,
 starting with LIDAR. UK-wide capability remains the broader objective, with
 source-family coverage and gaps kept explicit. Dated imagery and historical
 weather are subsequent candidates in bounded iterations,
 alongside the separate application-access work. Radar, climate projections,
-commercial feeds and richer workflows remain later candidates. This direction
-does not establish those integrations, customer demand or authorization to buy data.
+licensed feeds and richer workflows remain later candidates. This direction
+does not establish those integrations.
 
 ### Terrene Scenario
 
@@ -243,7 +240,7 @@ Scenario will compute consequences or alternative/future state from a pinned Des
 
 ### Terrene Applications
 
-The current UI implements early screening, portfolio navigation and evidence review. Screen, Diligence, Scenario, Monitor, Portfolio, Nature/BNG, Restoration, Field Evidence and infrastructure/renewable workflows are strategic application candidates, not a list of completed products. Customer evidence should determine which vertical workflow is hardened first.
+The current UI implements early screening, portfolio navigation and evidence review. Screen, Diligence, Scenario, Monitor, Portfolio, Nature/BNG, Restoration, Field Evidence and infrastructure/renewable workflows are strategic application candidates, not a list of completed products.
 
 ## Independent geographic acquisition (implemented)
 
@@ -352,7 +349,7 @@ capture history; it cannot silently replace evidence used by historical models.
 See [the operator contract and verified limits](GEOGRAPHIC-EVIDENCE-ACQUISITION.md).
 This is reusable evidence infrastructure. The read-only authenticated discovery
 contract below exposes retained captures; acquisition remains an operator service.
-It is not a new analytical model or evidence of product–market fit.
+It is not a new analytical model.
 
 ## Architectural constraints
 

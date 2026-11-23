@@ -41,7 +41,7 @@ copyable task card and model-selection guide.
 - Report only outcome, files changed, checks actually run, unresolved limits and
   commit. Link existing reports rather than reproducing their contents.
 - Do not spend paid credits, enable fast mode, create parallel agents or add
-  integrations merely to accelerate a routine Terrene task unless the founder
+  integrations merely to accelerate a routine Terrene task unless the maintainer
   explicitly asks for that trade-off.
 
 ## Branches and commits
@@ -65,7 +65,7 @@ copyable task card and model-selection guide.
 - Match verification to the risk and affected surface. Start with focused tests, then add relevant regression, type checking/compilation, lint on changed or relevant code, production build, browser QA for UI changes or real-data verification for evidence/model changes as warranted. Do not automatically run expensive unrelated suites when focused and relevant regression verification is sufficient.
 - Never claim a check that was not run. State credentials or service blockers explicitly.
 - Before completion, inspect the final diff for scope creep, run `git diff --check`, verify intended changes are committed, and confirm no secrets, local databases, raw/private/licensed data or generated junk are staged.
-- Update durable documentation only when warranted: Current State for material implementation changes; Architecture for durable architecture changes; Decisions for meaningful product/architecture decisions; Customer Discovery for actual market evidence or major hypothesis changes; North Star only for strategic thesis changes.
+- Update durable documentation only when warranted: Current State for material implementation changes; Architecture for durable architecture changes; Decisions for meaningful product/architecture decisions; North Star only for strategic thesis changes.
 
 Use this default completion structure:
 

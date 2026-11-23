@@ -23,7 +23,7 @@ When substantial frontend work depends on a new backend or data contract, normal
 
 ## Repository sync protocol
 
-When a ChatGPT Terrene strategy, product or engineering conversation creates a durable change to the North Star, architecture, current implementation understanding, commercial hypothesis/evidence or a major technical/product decision, create a bounded docs-only sync task for the corresponding repository document.
+When a ChatGPT Terrene strategy, product or engineering conversation creates a durable change to the North Star, architecture, current implementation understanding, a major technical/product decision, create a bounded docs-only sync task for the corresponding repository document.
 
 Important strategic knowledge must not remain only in chat history. Apply the maintenance rules in `AGENTS.md`; avoid documentation churn and do not rewrite historical implementation reports.
 

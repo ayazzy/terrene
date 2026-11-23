@@ -6,7 +6,7 @@ On 15 September 2026, four fresh captures were acquired in the active
 `local-development` organization and verified through the running Data sources
 browser. This makes real terrain, surface, spectral and historical weather evidence
 available for inspection and future reuse. It improves Terrene's representation
-of reality; it does not establish a forecast, assessment result or market fit.
+of reality; it does not establish a forecast or assessment result.
 
 | Capture | Requested evidence | Retained availability |
 | --- | --- | --- |

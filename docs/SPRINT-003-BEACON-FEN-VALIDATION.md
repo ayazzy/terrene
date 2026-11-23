@@ -1,14 +1,14 @@
-# Sprint 003 — Beacon Fen real-project validation
+# Sprint 003 — Beacon Fen real-project evidence test
 
 ## Status
 
-Closed early on 13 September 2026 after Tasks 1 and 2. One bounded official consent assertion is reproducibly committed through the existing immutable Project Evidence and Project Intelligence contracts. Tasks 3–5 were deliberately cancelled so the next sprint can address the infrastructure-intelligence interface. No customer evidence was collected, so this sprint did not validate the workflow or commercial hypothesis.
+Closed early on 13 September 2026 after Tasks 1 and 2 (the technical proof). One bounded official consent assertion is reproducibly committed through the existing immutable Project Evidence and Project Intelligence contracts. The remaining planned tasks were cancelled so the next sprint could address the infrastructure-intelligence interface.
 
 ## Closure decision
 
 The technical experiment achieved its bounded proof: Terrene can retain an exact real-project source assertion, bind it immutably and produce a truthful partial intelligence result without inventing construction or grid facts.
 
-The sprint stopped before practitioner walkthroughs or interviews. This is a product-priority decision, not positive or negative customer evidence. The untested workflow assumptions remain unvalidated.
+The sprint stopped after the technical proof; the planned review and evaluation tasks were not run.
 
 The next priority is [Sprint 004 — Infrastructure Operating Picture](SPRINT-004-INFRASTRUCTURE-OPERATING-PICTURE.md). It will make the spatial operating picture the continuous primary interaction surface while preserving the source, evidence, reasoning and history semantics proved here.
 
@@ -18,7 +18,6 @@ Test whether Terrene's inspectable Project Evidence and Project Intelligence loo
 
 > What is actually established about this project's consent, construction and grid timing, what is only reported by an interested party, and what remains unresolved?
 
-The sprint is successful only if a relevant practitioner can explain a concrete decision, handoff or investigation step that the result improves. A technically correct dossier without that workflow evidence does not validate the product.
 
 ## Selected Project Subject
 
@@ -31,19 +30,6 @@ The sprint is successful only if a relevant practitioner can explain a concrete 
 - **Evidence as-of for Task 1:** 13 September 2026
 
 Beacon Fen is a useful validation subject because it is recent, consequential and unusually inspectable. Development consent was granted on 21 August 2026. The public record includes government, Planning Inspectorate, statutory-notice and promoter material, while its milestone language varies between an anticipated 2026 construction start, an expected 2027 construction start, operation in 2029 and grid capability by 2030. Terrene must preserve those distinctions rather than convert them into one invented schedule.
-
-## Target user and decision hypothesis
-
-The first review is aimed at a UK renewable-development manager, infrastructure investment analyst or diligence adviser assessing a live project pipeline.
-
-The hypothesis is that a source-separated, historically inspectable account of consent and delivery timing will make it faster to identify:
-
-- which project states are established by an official decision;
-- which dates remain promoter targets rather than observed events;
-- where apparently current pages contain historical or internally inconsistent timing language; and
-- which questions require direct confirmation before a project memo or portfolio review.
-
-Terrene will not recommend acquisition, investment, pursuit, delay or rejection.
 
 ## Task 1 source register
 
@@ -76,7 +62,7 @@ The real source record validates one part of `project_evidence_v1`: the official
 
 It also exposes a deliberate limitation. Public project schedules frequently use year-level precision and distinguish construction start, commercial operation and grid connection. Version 1 represents only exact grid-connection dates and status assertions. Task 2 must therefore produce a truthful partial result—supported consent with insufficient construction/grid evidence—rather than extending the schema during ingestion.
 
-This is a validation finding, not yet sufficient evidence for a version 2 contract. The interview work should test whether the omitted milestone distinctions materially affect a real decision.
+This is a validation finding, not yet sufficient evidence for a version 2 contract.
 
 ## Sprint tasks
 
@@ -116,51 +102,18 @@ CRC_ENV=development .venv/bin/python scripts/seed_beacon_fen_validation.py --org
 
 Hosted execution must use the deployment's configured database, authentication and immutable object storage rather than this local development command.
 
-### Task 3 — Produce the practitioner walkthrough
-
-**Allocation:** Days 4–5
-
-Prepare a concise review script and evidence dossier using the existing read-only UI. The walkthrough must ask the practitioner to compare Terrene with their current project-screening or diligence process; it must not ask whether the interface is generally appealing.
-
-**Gate:** The walkthrough can be completed in 20 minutes and tests a named decision, current alternative, required evidence, trust conditions and next action.
-
-**Cancelled at sprint closure:** no walkthrough was produced.
-
-### Task 4 — Run five workflow interviews
-
-**Allocation:** Days 6–9
-
-Interview at least five relevant practitioners across development, investment/acquisition and diligence/advisory roles. Record observed workflow evidence, frequency, consequences, current artifacts, source distinctions that matter and whether the Terrene dossier changed or accelerated an action.
-
-**Gate:** At least three interviews concern a recurring live workflow rather than general market opinion. Polite interest does not count as validation.
-
-**Cancelled at sprint closure:** no interviews were run and no customer evidence was recorded.
-
-### Task 5 — Decide the next product bet
-
-**Allocation:** Day 10
-
-Synthesize confirmed, weakened and disconfirmed assumptions. Decide whether to deepen Project Intelligence, return priority to Site/Scenario diligence, or stop this wedge. Only then propose a versioned evidence-contract or workflow change.
-
-**Gate:** The decision cites interview evidence, names the expensive recurring job and defines a measurable next experiment. If the evidence is weak, the outcome is a documented stop or pivot rather than more features.
-
-**Cancelled at sprint closure:** the required interview evidence does not exist, so no validated continue/change/stop decision is claimed.
-
 ## Sprint acceptance criteria
 
-**Closure result:** the first three technical criteria below were met by Task 2. The practitioner and product-decision criteria were not met because Tasks 3–5 were cancelled. Sprint 003 is closed incomplete rather than accepted.
+**Closure result:** the technical criteria below were met by Task 2.
 
 - One real Project Subject and immutable run are inspectable end to end.
 - Every admitted conclusion resolves to retained official source evidence.
 - Year-only and semantically different milestones are not coerced into exact grid dates.
 - Official, promoter and historical assertions remain visibly distinct.
-- At least five practitioner interviews are recorded, with at least three tied to a live recurring workflow.
-- The sprint ends with a supported continue, change or stop decision.
-- No confidence score, commercial recommendation, automated research, alerting or Scenario capability is added.
+- No confidence score, recommendation, automated research, alerting or Scenario capability is added.
 
 ## Known dependencies
 
-- Task 4 requires access to suitable practitioners; repository work cannot substitute for those conversations.
 - Public pages can change. Task 2 must record capture time, bounded retained excerpts and deterministic hashes.
 - The current Project Intelligence UI is read-only; Task 2 may use the existing authenticated API or a bounded local ingestion script, but it must not introduce an evidence editor.
 

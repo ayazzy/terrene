@@ -26,7 +26,7 @@ GROUPS = (
     ('built_transport', 'Built-world and transport evidence'),
 )
 LIMITATIONS = [
-    'Pilot learning instrument: these rules are not customer-validated requirements.',
+    'Pilot learning instrument: these rules are not externally validated requirements.',
     'Source-bounded review context only. It does not establish suitability or make a site-progression decision.',
     'Mapped absence does not prove real-world absence. Evidence completeness is not predictive confidence.',
     'Evidence is fixed to this snapshot; source age, acquired coverage and inventory limitations still apply.',

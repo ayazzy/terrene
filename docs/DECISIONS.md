@@ -50,7 +50,7 @@ This is a lightweight append-only log of durable product and architecture decisi
 
 **References:** [North Star](TERRENE-NORTH-STAR.md), [Architecture](ARCHITECTURE.md), repository history.
 
-## 2026-09-10 — Wetland/restoration is a module, not company identity
+## 2026-09-10 — Wetland/restoration is a module, not Terrene's identity
 
 **Decision:** Treat wetland restoration as an early Terrene Reasoning primitive rather than the definition of Terrene.
 
@@ -62,7 +62,7 @@ This is a lightweight append-only log of durable product and architecture decisi
 
 **Decision:** Build value through normalization, representation, reasoning, simulation and operational learning rather than treating access to public datasets or a map viewer as the product.
 
-**Rationale:** Durable commercial value must improve expensive decisions and workflows. Source data remains essential, attributable evidence but is not sufficient differentiation by itself.
+**Rationale:** Source data remains essential, attributable evidence, but durable value comes from improving decisions and workflows rather than from access to the data itself.
 
 **References:** [North Star](TERRENE-NORTH-STAR.md).
 
@@ -70,7 +70,7 @@ This is a lightweight append-only log of durable product and architecture decisi
 
 **Decision:** Terrene Applications should operationalize land decisions rather than merely visualize Terrene Earth.
 
-**Rationale:** Terrene's evidence and reasoning become commercially more useful when they participate in a workflow around durable land opportunities: triage, unresolved evidence, collaboration, decisions, next actions and progression. Competitive analysis of LandTech supports the existence of this workflow pattern, but customer discovery must determine Terrene's exact implementation.
+**Rationale:** Terrene's evidence and reasoning become more useful when they participate in a workflow around durable land decisions: triage, unresolved evidence, collaboration, decisions, next actions and progression.
 
 Terrene Earth continues to represent reality and evidence; Terrene Reasoning interprets it; Terrene Scenario tests interventions; and Terrene Applications operationalize useful workflows. Workflow state must not turn Terrene Earth into a CRM or become mixed with core environmental facts.
 
@@ -86,11 +86,9 @@ Terrene Earth continues to represent reality and evidence; Terrene Reasoning int
 
 ## 2026-09-13 — Project source assertions are Earth evidence, not Terrene findings
 
-**Decision:** Store attributed infrastructure-project source assertions as immutable `project_evidence_v1` evidence in Terrene Earth. Terrene-derived findings such as stage, progress, delay, risk, confidence, commercial opportunity or recommendation belong in a separately versioned Terrene Reasoning module and must not be editable fields on the evidence record.
+**Decision:** Store attributed infrastructure-project source assertions as immutable `project_evidence_v1` evidence in Terrene Earth. Terrene-derived findings such as stage, progress, delay, risk, confidence, opportunity or recommendation belong in a separately versioned Terrene Reasoning module and must not be editable fields on the evidence record.
 
 **Rationale:** A citation establishes who asserted something, not that the assertion is true. Source claims can conflict, target dates can pass without becoming completed events, and corrections must preserve what was originally recorded. Keeping those assertions separate from derived findings makes future reasoning inspectable and reproducible.
-
-Infrastructure project intelligence remains an application hypothesis. Implementing its reusable evidence input does not constitute customer validation or a decision that this is Terrene's chosen market.
 
 **References:** [Project Evidence v1](PROJECT-EVIDENCE-V1.md), [Architecture](ARCHITECTURE.md), [North Star](TERRENE-NORTH-STAR.md).
 
@@ -235,17 +233,16 @@ silently alter `wetland_restoration_v0_1`.
 
 **References:** [Snapshot-bound Site reasoning](SITE-REASONING-INPUT-CONTRACT.md), [Architecture](ARCHITECTURE.md), [wetland binding and ModuleRuns](WETLAND-SNAPSHOT-MODULE-RUN.md).
 
-## 2026-09-14 — Develop reusable intelligence capabilities while the market remains open
+## 2026-09-14 — Develop reusable intelligence capabilities
 
-**Status:** Founder-approved direction; acquisition implementation is planned.
+**Status:** Approved direction; acquisition implementation is planned.
 
 **Decision:** Develop Terrene toward an extensible intelligence platform around
 geography, time, evidence, entities and analytical models. Preserve the existing
 Earth/Reasoning/Scenario/Application separation. Support future climate,
-infrastructure, monitoring and analyst workflows through shared capabilities;
-no initial buyer or vertical is selected by this decision. Earlier renewable
-screening hypotheses and technical experiments remain historical records, not
-customer validation or binding architectural requirements.
+infrastructure, monitoring and analyst workflows through shared capabilities.
+Earlier technical experiments remain historical records, not binding
+architectural requirements.
 
 Begin with geographic evidence acquisition independent of assessments, using
 explicit source capabilities and one existing source in two bounded areas.
@@ -255,11 +252,10 @@ discovery/provenance metadata rather than flatten every data family into one
 measurement schema. Expand types and workflows only as concrete work needs them.
 
 **Rationale:** Architectural work should reduce the cost of supporting a new
-customer geography, source, model or workflow. The Oxford prototype and wetland
-module should not dictate the eventual product. Public, commercial and customer
+geography, source, model or workflow. The Oxford prototype and wetland
+module should not dictate the eventual design. Public, licensed and private
 data need compatible discovery and lineage, with truthful differences in access,
-coverage, time and resolution. Product references such as Gotham and Stellaria
-inform ambition without establishing demand, data access or equivalent capability.
+coverage, time and resolution.
 
 **Compatibility:** Retain historical CRC identities and all existing assessments,
 snapshots, runs, imports and map contracts. New regional acquisitions must not
@@ -271,7 +267,7 @@ them. Source collection must not silently execute a model or fabricate a Site.
 
 ## 2026-09-14 — UK-wide coverage is a near-term requirement
 
-**Decision:** Following the founder's clarification, prioritize delivery across
+**Decision:** Prioritize delivery across
 England, Scotland, Wales and Northern Ireland, including their islands. The
 initial two-area England proof remains bounded, but its shared geometry, identity
 and capability contracts must accommodate the whole UK from the outset. Follow
@@ -317,7 +313,7 @@ England profile to Scotland, Wales or Northern Ireland.
 
 **Evidence:** Live Oxford and western Norfolk selections match independent
 provider polygon queries. SQLite and PostgreSQL acquisition/legacy checks pass;
-retained Oxford results are unchanged. No customer/workflow validation is implied.
+retained Oxford results are unchanged.
 See [implementation and verification](GEOGRAPHIC-EVIDENCE-ACQUISITION.md).
 
 
@@ -366,7 +362,7 @@ remain separate work.
 
 ## 2026-09-14 — Prioritize LIDAR and data-family breadth before more designation publishers
 
-**Decision:** The founder explicitly deferred Wales and Northern Ireland
+**Decision:** Defer Wales and Northern Ireland
 designation work and asked to continue acquiring data such as LIDAR. Preserve
 the broader UK capability requirement while advancing one data family at a time.
 This supersedes the earlier requirement to finish those designation adapters
@@ -383,7 +379,7 @@ nodata area; a successfully retained response does not imply usable terrain.
 manifest/object identities, source profiles, legacy terrain/height processing,
 snapshots and model inputs. Scotland LIDAR is not established by Scottish SSSI
 coverage. Surface models, imagery, weather and application access remain separate
-subsequent iterations. No market-validation or purchasing decision is implied.
+subsequent iterations.
 
 **Reference:** [Independent LIDAR acquisition](EA-LIDAR-GEOGRAPHIC-ACQUISITION.md).
 
@@ -432,7 +428,7 @@ request defaults/hashes or adding a migration. DTM/DSM, vector captures, pairing
 legacy assessments, snapshots and model inputs remain unchanged. Wales/NI
 satellite discovery does not implement their deferred designation adapters.
 Map rendering, temporal analysis and historical weather remain separate tasks.
-No market-validation or predictive-model claim is made.
+No predictive-model claim is made.
 
 **Reference:** [Dated satellite acquisition](SENTINEL2-GEOGRAPHIC-ACQUISITION.md).
 
@@ -458,8 +454,8 @@ LIDAR, satellite, assessment, snapshot and model identities are unchanged.
 
 **Next boundary:** An authenticated read-only acquisition catalogue can make
 these captures discoverable by location/time before frontend integration. No
-station, farm-scale climate model, current forecast, map layer or validated
-commercial workflow is claimed by weather acquisition alone.
+station, farm-scale climate model, current forecast or map layer
+is claimed by weather acquisition alone.
 
 **Reference:** [Historical weather implementation](HISTORICAL-WEATHER-ACQUISITION.md).
 

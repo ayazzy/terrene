@@ -2,7 +2,7 @@
 
 The overlay rules documented below remain the retained V0 evidence layer. The new [Nature Intelligence model](NATURE-INTELLIGENCE.md) consumes canonical observations derived from these overlays and retains their limitations. New imports preserve original assembled source geometry before repair in `source.json` and save prepared geometry separately. Historical snapshots remain unchanged.
 
-Default pilot: a rectangular Oxfordshire-area extract, **[-1.65, 51.50, -0.85, 52.05]** in longitude/latitude. This is an engineering default, not a selected business market or the exact Oxfordshire administrative boundary. Flood data uses the smaller Oxford corridor **[-1.33, 51.72, -1.22, 51.82]**. Only boundaries fully inside each source’s extract receive covered observations. Polygon selection retrieves complete intersecting source features; it does not download national datasets.
+Default pilot: a rectangular Oxfordshire-area extract, **[-1.65, 51.50, -0.85, 52.05]** in longitude/latitude. Flood data uses the smaller Oxford corridor **[-1.33, 51.72, -1.22, 51.82]**. Only boundaries fully inside each source’s extract receive covered observations. Polygon selection retrieves complete intersecting source features; it does not download national datasets.
 
 ## Authoritative integrations verified 7 September 2026
 
@@ -37,7 +37,7 @@ The successful flood version `f877fc6b-de26-4085-a244-4cbcf1877c2f` contains 440
 - Rule `crc-screening-1`: overlap above zero → geographic constraint to investigate, with the question of ecological implications and consents. No overlap → observation limited to that inventory/version. Missing source or coverage → measured result `null`, category missing, request further data. No overall score.
 - Rule `crc-flood-1`: combined present-day river/sea Flood Zones 2 and 3 overlap prompts flood-risk specialist review. This ignores benefits of defences; Zone 1 is not mapped. No overlap does not establish no flood risk, and overlap does not establish wetland or restoration suitability. No climate-change projections or functional-floodplain classification are inferred.
 - Legacy and revised ancient woodland are separate measured observations, **not two independent confirmations of absence**. “Covered” means the extraction covered the boundary, not a complete ecological inventory.
-- Field habitat/condition survey, tenure/consents and local recovery/connectivity checks are explicit next steps. No automated habitat-condition, BNG-unit, price, revenue or suitability predictions.
+- Field habitat/condition survey, tenure/consents and local recovery/connectivity checks are explicit next steps. No automated habitat-condition, BNG-unit or suitability predictions.
 
 Each overlay finding retains source URL, immutable dataset ID, retrieval date, boundary version, method/rule versions, measured hectares, coverage, limitations, attribution and clipped overlap geometry. Assessments snapshot the boundary and name at submission; later edits do not alter them. Reports use that saved evidence and label the current user review status separately at export time.
 

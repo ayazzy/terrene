@@ -90,7 +90,7 @@ There is no frontend, CAD/PDF/centreline ingestion, geometry editing, impact or
 intersection calculation, alternative comparison, solar layout, scoring,
 simulation, workflow scheduling or construction-grade validation. The initial
 roles and `solar` type are intentionally narrow. PostgreSQL/PostGIS verification
-depends on an available disposable test database. No customer or scientific
+depends on an available disposable test database. No scientific
 validation is claimed. No unresolved blocking review finding remains. A committed
 stress test for truly simultaneous PostgreSQL retry/stale writers remains a
 verification limitation; database locking and uniqueness were exercised by the

@@ -494,7 +494,7 @@ The first bridge reads legacy states/results into a precise core projection. A l
 
 Historic results remain authoritative records of what CRC computed then. Reports currently combine saved findings with an explicitly labelled **current** team decision at export; that is not immutable historic decision history. A future decision log should distinguish decision-at-assessment, later decisions and present status without altering saved model evidence.
 
-## 10. Commercial usefulness: 100 candidate parcels, 10 investigations
+## 10. Analytical limits: 100 candidate parcels, 10 investigations
 
 The proposed foundation would support a defensible evidence-first shortlist: assemble the same requested facts, identify material conflicts and gaps, explain why expert investigation is warranted, and show which records are actually comparable. It would also reduce repeated desk research by reusing source acquisitions, typed observations and provenance across decisions.
 
@@ -510,7 +510,6 @@ CRC cannot yet convincingly choose the “best 10 restoration opportunities” f
 
 Until those are addressed, “10 deserving expert investigation” should be a documented expert triage decision with explicit uncertainty and selection rationale, not an automatically claimed restoration ranking. Unknown parcels should enter an evidence-acquisition/review queue rather than drop to the bottom as low-potential land. Comparative runs need a coherent evidence manifest even before any comparison UI is expanded.
 
-Evaluate the commercial foundation with consenting expert users against their current desk-research workflow: time per parcel, proportion of claims traceable to source, corrections after review, missed material constraints, reasons for requesting further evidence and whether the investigation shortlist changes. Predictive validation would need separate independent outcome/field evidence. Do not use the same 12 illustrative sites to calibrate and claim validation.
 
 ## 11. Incremental migration and single next implementation
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-Completed 14 September 2026. All five tasks are implemented and certified. This sprint began from GitHub `main` at `e40a9f4`, after the Beacon Fen Task 2 merge. Sprint 003 remains closed incomplete; no practitioner or customer validation is implied.
+Completed 14 September 2026. All five tasks are implemented and certified. This sprint began from GitHub `main` at `e40a9f4`, after the Beacon Fen Task 2 merge.
 
 ## Repository basis
 
@@ -164,7 +164,7 @@ The sprint is complete when:
 - Current and historical evidence move as one immutable envelope.
 - Source assertions, Terrene conclusions, conflicts, unknowns and mapped-coverage states remain explicit.
 - All confirmed navigation, resize, stale-response, focus and narrow-layout defects are closed or named as acceptance blockers.
-- The interface introduces no fake telemetry, live-source claim, confidence score, risk score or commercial recommendation.
+- The interface introduces no fake telemetry, live-source claim, confidence score, risk score or recommendation.
 - No new paid basemap, 3D engine, external live feed or generic entity persistence abstraction is added.
 
 ## Explicit exclusions
@@ -173,12 +173,11 @@ The sprint is complete when:
 - Satellite, drone, traffic, camera or other live feeds.
 - AI chat, voice control or autonomous research.
 - Alerting, monitoring automation or notifications.
-- Risk/confidence scoring and commercial recommendations.
+- Risk/confidence scoring and recommendations.
 - Project Evidence editing or Project Subject lifecycle management.
 - Design Study/Scenario authoring or consequence modelling.
 - New scientific reasoning models or environmental datasets.
 - Approximate/geocoded project pins without versioned source evidence.
-- Customer-validation claims.
 
 ## Task and branch operating model
 

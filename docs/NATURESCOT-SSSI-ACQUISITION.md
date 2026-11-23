@@ -166,7 +166,6 @@ dependency is introduced. Hosted storage/database acceptance has not been run.
 | Northern Ireland | Not connected to this service | Preserve ASSI meaning and verify separate publisher coverage |
 
 All entries concern this designation family only. Cross-border composition,
-customer-facing acquisition and map/evidence assembly remain separate tasks.
-These source integrations create reusable intelligence inputs; they do not
-establish demand or validate a commercial workflow. The next bounded task is the
-Welsh publisher adapter, followed by Northern Ireland.
+user-facing acquisition and map/evidence assembly remain separate tasks.
+These source integrations create reusable intelligence inputs. The next bounded
+task is the Welsh publisher adapter, followed by Northern Ireland.

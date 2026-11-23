@@ -154,7 +154,7 @@ This is a library view, not a raster map layer, point-cloud viewer, source acqui
 control, forecast or climate model. Filters/selection reset when the browser unmounts
 and have no dedicated deep links. Presets are bounding boxes; geocoding and exact
 administrative-boundary search are absent. Backend bounded-scan/coverage limits remain.
-Hosted end-to-end authentication and customer workflow acceptance are unverified.
+Hosted end-to-end authentication and end-user workflow acceptance are unverified.
 
 The standard local-development organization currently has **no independent
 captures**, so its library is empty. Real-data UI checks used the separately retained

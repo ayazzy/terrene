@@ -6,7 +6,7 @@ Scoped on 14 September 2026 against repository baseline `bf6e927`. This document
 records the approved scope following the intelligence-platform direction. The
 first iteration is now implemented; see [implementation, verification and limits](GEOGRAPHIC-EVIDENCE-ACQUISITION.md).
 England and Scotland designation acquisition are implemented. On 14 September
-2026 the founder deferred Wales and Northern Ireland designation expansion to
+2026 it was decided to defer Wales and Northern Ireland designation expansion to
 prioritize LIDAR and additional data families. The original iteration constraints
 below remain historical scope; use [Current State](CURRENT-STATE.md) and the
 append-only [Decisions](DECISIONS.md) for the current sequence.
@@ -17,14 +17,13 @@ changing the legacy Oxford source catalogue. Demonstrate the same implementation
 in Oxford and a second bounded area outside the pilot rectangle.
 
 **Near-term delivery target:** the whole UK: England, Scotland, Wales and Northern
-Ireland, including their islands. The founder clarified this after approving the
+Ireland, including their islands. This was clarified after approving the
 first plan. The first source remains an England proof; four-nation expansion is
 the immediate follow-on priority, not an indefinite future extension. No calendar
 deadline has been specified.
 
 This improves Terrene's ability to represent reality by making evidence collection
 reusable across geographies and independent of a particular analytical workflow.
-It is an architectural proof, not validation of a customer or scientific model.
 
 ## Implementation findings that determine scope
 
@@ -52,7 +51,7 @@ be presented as a historical archive.
 
 Expose a typed backend service and an operator CLI accepting a request file and
 explicit organization context, plus an integrity-checked result read operation.
-The CLI is a trusted operator surface, not customer authentication. HTTP submission,
+The CLI is a trusted operator surface, not user authentication. HTTP submission,
 background scheduling and map/UI integration are separate iterations; a synchronous
 bounded command is sufficient for this first acquisition proof.
 
@@ -173,7 +172,8 @@ The implementation is complete only when:
    four-nation data coverage.
 
 Choose and verify the second small England area during implementation; Norfolk is
-a candidate, not a selected customer market or a claim of current retained coverage.
+a candidate, not a claim of current retained coverage.
+
 Keep downloaded data and local databases outside Git. Commit only permitted small
 verification manifests/reports with exact provenance; test fixtures must remain
 clearly synthetic. No live provider download was performed for this scoping task.
@@ -217,7 +217,7 @@ part of an area or erasing jurisdiction distinctions.
 
 ## Scope boundary and follow-on sequence
 
-This iteration does not implement a customer-facing API, dynamic map layers,
+This iteration does not implement a user-facing API, dynamic map layers,
 imagery, weather, radar, climate projections, arbitrary provider URLs, paid data
 ordering, monitoring schedules, entity resolution, scenario calculations, model
 changes or generalized source migration. It requires no new runtime dependency
@@ -226,8 +226,8 @@ unless implementation demonstrates a concrete need.
 After this proof, prioritize the UK coverage sequence above. Then introduce dated Sentinel-2
 imagery and its presentation, followed by historical weather, in bounded iterations
 with source-specific processing and validation. Preserve the distinction between
-historical weather and future climate projections. Commercial access agreements,
-production deployment and the eventual market remain separate decisions.
+historical weather and future climate projections. Licensed data access and
+production deployment remain separate decisions.
 
 ## Suggested next-task prompt
 

@@ -82,7 +82,7 @@ a refresh uses a new idempotency key. Failed attempts remain inspectable.
 
 Limits are 1 MB per response, 2 MB total, a 120-second network deadline and
 45 seconds per request. The fixed public endpoint uses the existing bounded HTTP
-client and does not follow redirects. No customer endpoint, map layer, climate
+client and does not follow redirects. No public endpoint, map layer, climate
 projection, calibrated impact model, wetland binding or station adapter is added.
 
 ## Operator commands

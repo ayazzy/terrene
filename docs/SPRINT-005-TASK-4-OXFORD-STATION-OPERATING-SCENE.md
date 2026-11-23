@@ -4,7 +4,7 @@
 
 Oxford Station is now a reproducible analyst workflow rather than an implicit local demo. One command provisions a fresh database outside the repository from the retained Oxford assessment, reacquires the official Environment Agency DSM/DTM pair, verifies the exact object inventory and exposes the result through the existing application. The operating picture moves explicitly from Portfolio to Site diligence to Asset intelligence, with the selected immutable object and related-parcel view preserved in the URL.
 
-This iteration improves Terrene's ability to represent and inspect reality. It does not add a customer workflow, invent infrastructure connectivity or promote the Oxford exemplar into product validation.
+This iteration improves Terrene's ability to represent and inspect reality.
 
 ## Source
 
@@ -62,4 +62,4 @@ Historical assessments, v1–v3 snapshots, wetland ModuleRuns, `screening_contex
 
 ## Known limitations
 
-Oxford Station is an engineering and interaction exemplar, not evidence of customer validation. The public development basemap remains non-SLA. Full responsive certification, failed-basemap and missing/partial DSM hardening, durable architecture decisions and the final staging audit remain Sprint 005 Task 5.
+The public development basemap remains non-SLA. Full responsive certification, failed-basemap and missing/partial DSM hardening, durable architecture decisions and the final staging audit remain Sprint 005 Task 5.
